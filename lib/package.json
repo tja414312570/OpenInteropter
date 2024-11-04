@@ -24,9 +24,11 @@
     "build": "tsc"
   },
   "devDependencies": {
+    "@types/uuid": "^10.0.0",
     "http-mitm-proxy": "^1.1.0"
   },
   "dependencies": {
+    "electron": "^32.1.2",
     "uuid": "^10.0.0"
   }
 }
