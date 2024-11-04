@@ -117,7 +117,7 @@ class ChatGptBridge extends AbstractPlugin implements Bridge, Pluginlifecycle {
   send2webview(props: string) {
     pluginContext.sendIpcRender("webview-api.send-content", props);
   }
-  onUnmounted(ctx: PluginExtensionContext): void {
+  onUnmounted(): void {
     pluginContext.ipcMain.removeHandler("webview-api.webview.agent.ready");
   }
 }

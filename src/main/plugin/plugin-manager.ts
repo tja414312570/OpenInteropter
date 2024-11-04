@@ -1,10 +1,10 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { PluginInfo, PluginManifest, PluginProxy, PluginStatus, PluginType, pluginContext } from '@lib/main';
+import { PluginInfo, PluginManifest, PluginProxy, PluginStatus, PluginType } from '@lib/main';
 import { v4 as uuidv4 } from 'uuid';
 import { MapSet } from '../utils/MapSet';
 import assert from 'assert';
-import init from './context-inited'
+import { PluginContext } from './plugin-context'
 import '../ipc-bind/plugin-ipc-bind'
 
 const manifest_keys: Array<string> = ['name', 'main', 'version', 'description', 'author', 'appId']
@@ -17,7 +17,7 @@ class PluginManager {
     private idMapping: { [key: string]: PluginInfo } = {}
     private typeMapping: MapSet<PluginInfo> = new MapSet();
     constructor() {
-        init()
+
     }
     add(pluginInfo: PluginInfo) {
         this.idMapping[pluginInfo.id] = pluginInfo;
@@ -124,8 +124,8 @@ class PluginManager {
         assert.ok(typeof orgin.default === 'object' && orgin.default !== null, `插件${pluginInfo.manifest.name}的入口文件导出非对象,文件位置:${pluginInfo.manifest.main}`)
         pluginInfo.module = orgin.default; // 或使用 import(pluginEntryPath) 来加载模块
         pluginInfo.proxy = this.wrapperModule(pluginInfo);
+        const pluginContext = new PluginContext(pluginInfo);
         pluginContext.register(pluginInfo);
-        pluginContext.workPath = path.join(pluginContext._pluginPath, pluginInfo.appId);
         if (!fs.existsSync(pluginContext.workPath)) {
             fs.mkdirSync(pluginContext.workPath)
         }
@@ -143,9 +143,8 @@ class PluginManager {
         if (!pluginInfo.module) {
             return;
         }
-        pluginInfo.module.onUnmounted(pluginContext);
+        pluginInfo.module.onUnmounted();
         pluginInfo.status = PluginStatus.unload;
-        pluginContext.remove(pluginInfo);
         // this.remove(pluginInfo)
         // 清除 require.cache 中的模块缓存
         delete require.cache[require.resolve(pluginInfo.main)];
@@ -154,7 +153,7 @@ class PluginManager {
         console.log(`插件 ${pluginInfo.manifest.name} 已卸载`);
     }
     public reload(pluginInfo: PluginInfo) {
-        pluginInfo.module.onUnmounted(pluginContext);
+        pluginInfo.module.onUnmounted();
         pluginInfo.status = PluginStatus.unload;
         delete require.cache[require.resolve(pluginInfo.main)];
         pluginInfo.status = PluginStatus.ready;

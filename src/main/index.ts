@@ -15,7 +15,6 @@ import fs, { glob } from "fs"
 import { init as ptyInit } from './services/service-inner-shell'
 import { notify } from "./ipc/notify-manager";
 import { listeners } from "process";
-import pluginContext from '../../lib/src/main/plugin-context'
 import pluginManager from "./plugin/plugin-manager";
 import path from "path";
 import { showErrorDialog } from "./utils/dialog";
@@ -68,12 +67,13 @@ handleChannelEvent('pty.terminal-output', {
 handleChannelEvent('ipc-notify.show-notification', {
   onBind: (webId: number): void => {
     notify("gpt拦截器已初始化完成！")
+    pluginManager.loadPluginFromDir(innerPluginPath)
   }
 })
 app.whenReady().then(() => {
   startProxyServer().then(proxy => {
     onAppReady(`http://${proxy.httpHost}:${proxy.httpPort}`);
-    pluginManager.loadPluginFromDir(innerPluginPath)
+
   })
 });
 // 由于9.x版本问题，需要加入该配置关闭跨域问题

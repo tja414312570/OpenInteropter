@@ -11,5 +11,5 @@ export interface Pluginlifecycle {
     /**
      * 卸载插件
      */
-    onUnmounted(ctx: PluginExtensionContext): void
+    onUnmounted(): void
 }

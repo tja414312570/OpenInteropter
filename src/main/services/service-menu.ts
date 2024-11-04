@@ -9,7 +9,7 @@ import { v4 as uuidv4 } from 'uuid'
 
 import { type, arch, release } from "os";
 import { version } from "../../../package.json";
-import { pluginContext } from "@lib/main";
+import appContext from "./app-context";
 const eventer = new EventEmitter();
 export const onSettingChange = (path: string, callback: (value: any) => void) => {
     eventer.on("SettingChange", callback);
@@ -161,7 +161,7 @@ const settins_menu: Array<MenuDesc> = [
                         message: "GPT解释器",
                         detail: `版本信息：${version}\n引擎版本：${process.versions.v8
                             }\n当前系统：${type()} ${arch()} ${release()}
-                            \n应用路径：${pluginContext.appPath}`,
+                            \n应用路径：${appContext.appPath}`,
                         noLink: true,
                         buttons: ["查看github", "确定"],
                     });

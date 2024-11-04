@@ -6,6 +6,7 @@ import _ from 'lodash';
 import '../ipc-bind/setting-ipc-bind'
 import EventEmitter from "events";
 import { ISetting, ISettingManager } from "@lib/main";
+import { accessSync, readFileSync } from "fs";
 
 const userDataPath = app.getPath('userData');
 const configPath = path.join(userDataPath, 'settings.json')
@@ -76,6 +77,11 @@ class SettingManager implements ISettingManager {
         const value = _.get(config, key)
         return value;
     }
+    getSettingValueSync = (key: string) => {
+        const config = this.getSettingConfigSync();
+        const value = _.get(config, key)
+        return value;
+    }
     saveSettingValue = async (key: string | object, value?: any) => {
         const config = await this.getSettingConfig();
         if (typeof key === 'string') {
@@ -108,6 +114,22 @@ class SettingManager implements ISettingManager {
         try {
             await access(configPath, constants.F_OK);
             const data = await readFile(configPath, 'utf8');
+            return JSON.parse(data);
+        } catch (err) {
+            // 如果文件不存在，创建文件并返回空对象
+            if (err.code === 'ENOENT') {
+                return {};
+            } else {
+                // 如果是其他错误，则抛出
+                throw new Error("读取文件时异常" + configPath, { cause: err });
+            }
+        }
+    }
+    getSettingConfigSync = () => {
+        // 先检查文件是否存在
+        try {
+            accessSync(configPath, constants.F_OK);
+            const data = readFileSync(configPath, 'utf8');
             return JSON.parse(data);
         } catch (err) {
             // 如果文件不存在，创建文件并返回空对象

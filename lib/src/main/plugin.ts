@@ -72,6 +72,7 @@ export interface ISettingManager {
   getSettings(path?: string): ISetting[] | ISetting;
 }
 export interface PluginExtensionContext {
+  plugin: PluginInfo,
   settingManager: ISettingManager;
   envDir: string;
   resourceManager: ResourceManager;

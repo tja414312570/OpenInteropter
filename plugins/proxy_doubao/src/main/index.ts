@@ -79,7 +79,7 @@ class ChatGptBridge extends AbstractPlugin implements Bridge, Pluginlifecycle {
       // let logData = `拦截处理:${requestOptions?.method}:${requestOptions?.port === 443 ? 'https' : 'http'}://${requestOptions?.host}${requestOptions?.path}\n`;
       const start = performance.now();
       const handler = new SseHandler();
-      handler.onMessage((message) => {});
+      handler.onMessage((message) => { });
       handler.onEnd((data: any) => {
         const end = performance.now();
         console.log(
@@ -138,7 +138,7 @@ class ChatGptBridge extends AbstractPlugin implements Bridge, Pluginlifecycle {
   send2webview(props: string) {
     pluginContext.sendIpcRender("webview-api.send-content", props);
   }
-  onUnmounted(ctx: PluginExtensionContext): void {
+  onUnmounted(): void {
     pluginContext.ipcMain.removeHandler("webview-api.webview.agent.ready");
   }
 }

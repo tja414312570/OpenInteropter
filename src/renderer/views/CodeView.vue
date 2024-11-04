@@ -245,4 +245,10 @@ onMounted(() => {
 :deep(.code-layout-split-dragger) {
   z-index: 10;
 }
+
+:deep(.code-layout-status) {
+  background: none;
+  height: 21px;
+  border-top: 1px solid #444;
+}
 </style>

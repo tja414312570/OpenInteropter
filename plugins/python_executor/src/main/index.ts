@@ -80,8 +80,7 @@ class ExecuteContext {
 
 class PythonExecutor
   extends AbstractPlugin
-  implements InstructExecutor, Pluginlifecycle
-{
+  implements InstructExecutor, Pluginlifecycle {
   currentTask(): string[] {
     return this.executeContext ? [""] : [];
   }
@@ -228,7 +227,7 @@ class PythonExecutor
     });
   }
 
-  onMounted(ctx: PluginExtensionContext): void {}
-  onUnmounted(ctx: PluginExtensionContext): void {}
+  onMounted(ctx: PluginExtensionContext): void { }
+  onUnmounted(): void { }
 }
 export default new PythonExecutor();

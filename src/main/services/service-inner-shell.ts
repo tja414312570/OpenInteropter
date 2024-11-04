@@ -4,7 +4,7 @@ import * as pty from 'node-pty';
 import resourceManager from "@main/plugin/resource-manager";
 import settingManager from "./service-setting";
 import path from "path";
-import { pluginContext } from "@lib/main";
+import appContext from "./app-context";
 let isinit = false;
 function init() {
     console.log(new Error(isinit + ''))
@@ -24,7 +24,7 @@ function init() {
             cols: 80,
             rows: 30,
             cwd: process.env.HOME,
-            env: { ...process.env, gpt_interopter: pluginContext.envDir },
+            env: { ...process.env, gpt_interopter: appContext.envPath },
         });
         resourceManager.put('pty', ptyProcess)
         // 监听输入事件

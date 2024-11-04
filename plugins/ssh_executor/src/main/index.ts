@@ -102,16 +102,15 @@ const isDebug = true;
 export function debug(data: string) {
   return isDebug
     ? data.replace(/[\x00-\x1F\x7F]/g, (char) => {
-        const hex = char.charCodeAt(0).toString(16).padStart(2, "0");
-        return `\\x${hex}`;
-      })
+      const hex = char.charCodeAt(0).toString(16).padStart(2, "0");
+      return `\\x${hex}`;
+    })
     : data;
 }
 
 class SshExecutor
   extends AbstractPlugin
-  implements InstructExecutor, Pluginlifecycle
-{
+  implements InstructExecutor, Pluginlifecycle {
   private cache: Map<string, ExecuteContext> = new Map();
   currentTask(): string[] {
     return [...this.cache.keys()];
@@ -288,7 +287,7 @@ class SshExecutor
     });
   }
 
-  onMounted(ctx: PluginExtensionContext): void {}
-  onUnmounted(ctx: PluginExtensionContext): void {}
+  onMounted(ctx: PluginExtensionContext): void { }
+  onUnmounted(): void { }
 }
 export default new SshExecutor();

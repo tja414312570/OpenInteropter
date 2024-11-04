@@ -1,10 +1,9 @@
-import { pluginContext, ResourceManager, ResourceStatus } from "@lib/main";
+import { ResourceManager, ResourceStatus } from "@lib/main";
 
 class ResourceManagerImpl implements ResourceManager {
     private resources: Map<string, any>;
     constructor() {
         this.resources = new Map();
-        pluginContext.resourceManager = this;
     }
     require<T>(id: string): Promise<T> {
         return new Promise<T>((resolve, reject) => {

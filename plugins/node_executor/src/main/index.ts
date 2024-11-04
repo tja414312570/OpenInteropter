@@ -83,8 +83,7 @@ class ExecuteContext {
 
 class NodeExecutor
   extends AbstractPlugin
-  implements Pluginlifecycle, InstructExecutor
-{
+  implements Pluginlifecycle, InstructExecutor {
   private executeContext: null | ExecuteContext = null;
   currentTask(): string[] {
     return this.executeContext ? [""] : [];
@@ -256,7 +255,7 @@ class NodeExecutor
     }
   }
 
-  onUnmounted(ctx: PluginExtensionContext): void {
+  onUnmounted(): void {
     // 插件卸载时的处理逻辑
   }
 }
