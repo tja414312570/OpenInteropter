@@ -1,0 +1,13 @@
+{
+  "appId": "default.agent.doubao",
+  "name": "Doubao解析",
+  "version": "1.0.0",
+  "description": "此脚本作为解释器和chatgpt网页的桥接器，支持解析gpt的请求和响应，并提供界面桥接操作，如输入、发送信息等",
+  "pluginType": "默认插件",
+  "author": "默认开发者",
+  "icon": "./dist/assets/logo.svg",
+  "main": "./dist/main.js",
+  "license": "MIT",
+  "type": "agent",
+  "match": ["https://www.doubao.com/*"]
+}

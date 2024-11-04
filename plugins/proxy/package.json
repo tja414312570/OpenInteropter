@@ -1,0 +1,36 @@
+{
+  "name": "ts-plugin-project",
+  "version": "0.0.1",
+  "description": "A Node.js plugin project using TypeScript and Webpack",
+  "main": "dist/main.js",
+  "scripts": {
+    "lint": "eslint 'src/**/*.{ts,js}' --fix",
+    "build": "webpack --config webpack.config.js && webpack --config webpack.zip.js",
+    "clean": "rimraf build dist",
+    "test": "tsx test/test.ts",
+    "zip": "npm run clean && npm run build"
+  },
+  "devDependencies": {
+    "@types/vue": "^1.0.31",
+    "@typescript-eslint/eslint-plugin": "^8.8.0",
+    "@typescript-eslint/parser": "^8.8.0",
+    "archiver": "^5.3.0",
+    "copy-webpack-plugin": "^11.0.0",
+    "eslint": "^9.12.0",
+    "mylib": "file://../../lib",
+    "rimraf": "^3.0.2",
+    "ts-loader": "^9.3.1",
+    "typescript": "^4.5.4",
+    "webpack": "^5.65.0",
+    "webpack-cli": "^4.9.1"
+  },
+  "dependencies": {
+    "@smithy/eventstream-codec": "^3.1.6",
+    "eventsource-parser": "^2.0.1",
+    "fast-json-patch": "^3.1.1",
+    "immer": "^10.1.1",
+    "jsonpatch": "^3.1.0",
+    "perf_hooks": "^0.0.1",
+    "vue": "^2.7.16"
+  }
+}

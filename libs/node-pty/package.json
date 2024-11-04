@@ -1,0 +1,61 @@
+{
+  "name": "node-pty",
+  "description": "Fork pseudoterminals in Node.JS",
+  "author": {
+    "name": "Microsoft Corporation"
+  },
+  "version": "1.0.0",
+  "license": "MIT",
+  "main": "./lib/index.js",
+  "types": "./typings/node-pty.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/microsoft/node-pty.git"
+  },
+  "files": [
+    "binding.gyp",
+    "lib/",
+    "scripts/",
+    "src/",
+    "deps/",
+    "third_party/",
+    "typings/"
+  ],
+  "homepage": "https://github.com/microsoft/node-pty",
+  "bugs": {
+    "url": "https://github.com/microsoft/node-pty/issues"
+  },
+  "keywords": [
+    "pty",
+    "tty",
+    "terminal",
+    "pseudoterminal",
+    "forkpty",
+    "openpty"
+  ],
+  "scripts": {
+    "build": "tsc -b ./src/tsconfig.json",
+    "watch": "tsc -b -w ./src/tsconfig.json",
+    "lint": "eslint -c .eslintrc.js --ext .ts src/",
+    "postinstall": "node scripts/post-install.js",
+    "test": "cross-env NODE_ENV=test mocha -R spec --exit lib/*.test.js",
+    "posttest": "npm run lint",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "node-addon-api": "^8.1.0"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.8",
+    "@types/node": "22",
+    "@typescript-eslint/eslint-plugin": "^8.8.0",
+    "@typescript-eslint/parser": "^8.8.0",
+    "cross-env": "^7.0.3",
+    "eslint": "^9.11.1",
+    "mocha": "10",
+    "node-gyp": "^10.2.0",
+    "ps-list": "^8.1.1",
+    "typescript": "^5.6.2"
+  }
+}

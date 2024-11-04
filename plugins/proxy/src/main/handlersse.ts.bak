@@ -1,0 +1,63 @@
+import { applyPatch, Operation } from 'fast-json-patch';
+
+class DeltaProcessor {
+    prevObjByChannel: any[];
+
+    constructor() {
+        this.prevObjByChannel = [];
+    }
+
+    applyDelta(channelId: number, delta: Operation[]): any {
+        try {
+            const previousObject = this.prevObjByChannel[channelId] || {};
+            const updatedObject = applyPatch(previousObject, delta).newDocument;
+            this.prevObjByChannel[channelId] = updatedObject;
+            return updatedObject;
+        } catch (error) {
+            console.error(`Error applying delta: ${error}`);
+        }
+    }
+}
+
+interface Delta {
+    channel: number;
+    operations: Operation[];
+}
+
+function handleServerEvent(event: any): void {
+    // 模拟流追踪器
+    console.log("Tracking bytes received", event.data);
+
+    // 检查是否是结束信号
+    if (event.data === "[DONE]") {
+        console.log("Request aborted and stream ended");
+        console.log({ type: "done" });
+        console.log("Cleanup completed");
+        return;
+    }
+
+    if (event.event !== "ping") {
+        try {
+            let parsedData = JSON.parse(event.data);
+            let deltaProcessor = new DeltaProcessor();
+
+            if (event.event === "delta_encoding") {
+                console.log("Current encoding set to", parsedData);
+            } else if (event.event === "delta") {
+                const updatedObject = deltaProcessor.applyDelta(parsedData.channel, parsedData.operations);
+                console.log("Updated object:", updatedObject);
+            } else {
+                console.warn("Unrecognized event type", event.event);
+            }
+
+            if (event.event === "message" && parsedData.message) {
+                const message = parsedData.message;
+                if (message.author && message.author.role === "assistant" && message.content?.content_type === "text" && message.content.parts[0] !== "") {
+                    console.log("Message processing ended for assistant message.");
+                }
+            }
+        } catch (error) {
+            console.error("Error handling server event", error);
+        }
+    }
+}

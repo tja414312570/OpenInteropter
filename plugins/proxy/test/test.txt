@@ -1,0 +1,760 @@
+event: delta_encoding
+data: "v1"
+
+event: delta
+data: {"p": "", "o": "add", "v": {"message": {"id": "2fbb6a89-5387-4146-9471-10f792d0e284", "author": {"role": "assistant", "name": null, "metadata": {}}, "create_time": 1729089493.91924, "update_time": null, "content": {"content_type": "text", "parts": [""]}, "status": "in_progress", "end_turn": null, "weight": 1.0, "metadata": {"citations": [], "content_references": [], "gizmo_id": null, "message_type": "next", "model_slug": "gpt-4o", "default_model_slug": "gpt-4o", "parent_id": "aaa2fd24-fda4-4885-9442-8134d5ff2396", "model_switcher_deny": []}, "recipient": "all", "channel": null}, "conversation_id": "670fce41-4328-800b-8b72-f52b274345f0", "error": null}, "c": 0}    
+
+event: delta
+data: {"p": "/message/content/parts/0", "o": "append", "v": "\u597d\u7684"}   
+
+event: delta
+data: {"v": "\uff0c\u6211"}   
+
+event: delta
+data: {"v": "\u660e"} 
+
+event: delta
+data: {"v": "\u767d"} 
+
+event: delta
+data: {"v": "\u4f60\u7684"}   
+
+event: delta
+data: {"v": "\u8981\u6c42"}   
+
+event: delta
+data: {"v": "\u3002"} 
+
+event: delta
+data: {"v": "\u4e3a\u4e86"}   
+
+event: delta
+data: {"v": "\u83b7\u53d6"}   
+
+event: delta
+data: {"v": "\u4f60\u7684"}   
+
+event: delta
+data: {"v": "\u73af\u5883"}   
+
+event: delta
+data: {"v": "\u4fe1\u606f"}   
+
+event: delta
+data: {"v": "\uff0c\u6211"}   
+
+event: delta
+data: {"v": "\u4f1a"} 
+
+event: delta
+data: {"v": "\u7f16"} 
+
+event: delta
+data: {"v": "\u5199"} 
+
+event: delta
+data: {"v": "\u4ee5\u4e0b"}   
+
+event: delta
+data: {"v": "\u4ee3\u7801"}   
+
+event: delta
+data: {"v": "\u6765"} 
+
+event: delta
+data: {"v": "\u68c0\u67e5"}   
+
+event: delta
+data: {"v": "\u4f60\u7684"}   
+
+event: delta
+data: {"v": "\u64cd\u4f5c"}   
+
+event: delta
+data: {"v": "\u7cfb\u7edf"}   
+
+event: delta
+data: {"v": "\u3001"} 
+
+event: delta
+data: {"v": "Python"} 
+
+event: delta
+data: {"v": "\u7248\u672c"}   
+
+event: delta
+data: {"v": "\u4ee5\u53ca"}   
+
+event: delta
+data: {"v": "\u662f\u5426"}   
+
+event: delta
+data: {"v": "\u652f\u6301"}   
+
+event: delta
+data: {"v": "B"}      
+
+event: delta
+data: {"v": "ash"}    
+
+event: delta
+data: {"v": "\u3002\n\n"}     
+
+event: delta
+data: {"v": "\u8bf7"} 
+
+event: delta
+data: {"v": "\u6267\u884c"}   
+
+event: delta
+data: {"v": "\u4ee5\u4e0b"}   
+
+event: delta
+data: {"v": "bash"}   
+
+event: delta
+data: {"v": "\u811a"} 
+
+event: delta
+data: {"v": "\u672c"} 
+
+event: delta
+data: {"v": "\uff0c\u5b83"}   
+
+event: delta
+data: {"v": "\u4f1a"} 
+
+event: delta
+data: {"v": "\u8f93\u51fa"}   
+
+event: delta
+data: {"v": "\u76f8\u5173"}   
+
+event: delta
+data: {"v": "\u7684"} 
+
+event: delta
+data: {"v": "\u64cd\u4f5c"}   
+
+event: delta
+data: {"v": "\u7cfb\u7edf"}   
+
+event: delta
+data: {"v": "\u548c"} 
+
+event: delta
+data: {"v": "\u73af\u5883"}   
+
+event: delta
+data: {"v": "\u4fe1\u606f"}   
+
+event: delta
+data: {"v": "\uff1a\n\n"}     
+
+event: delta
+data: {"v": "```"}    
+
+event: delta
+data: {"v": "bash"}   
+
+event: delta
+data: {"v": "\n"}     
+
+event: delta
+data: {"v": "#!/"}    
+
+event: delta
+data: {"v": "bin"}    
+
+event: delta
+data: {"v": "/bash"}  
+
+event: delta
+data: {"v": "\n\n"}   
+
+event: delta
+data: {"v": "#"}      
+
+event: delta
+data: {"v": " \u6253"}
+
+event: delta
+data: {"v": "\u5370"} 
+
+event: delta
+data: {"v": "\u64cd\u4f5c"}   
+
+event: delta
+data: {"v": "\u7cfb\u7edf"}   
+
+event: delta
+data: {"v": "\u4fe1\u606f"}   
+
+event: delta
+data: {"v": "\n"}     
+
+event: delta
+data: {"v": "echo"}   
+
+event: delta
+data: {"v": " \""}    
+
+event: delta
+data: {"v": "\u64cd\u4f5c"}   
+
+event: delta
+data: {"v": "\u7cfb\u7edf"}   
+
+event: delta
+data: {"v": "\u4fe1\u606f"}   
+
+event: delta
+data: {"v": "\uff1a"} 
+
+event: delta
+data: {"v": "\"\n"}   
+
+event: delta
+data: {"v": "uname"}  
+
+event: delta
+data: {"v": " -"}     
+
+event: delta
+data: {"v": "a"}      
+
+event: delta
+data: {"v": "\n\n"}   
+
+event: delta
+data: {"v": "#"}      
+
+event: delta
+data: {"v": " \u68c0"}
+
+event: delta
+data: {"v": "\u67e5"} 
+
+event: delta
+data: {"v": "bash"}   
+
+event: delta
+data: {"v": "\u662f\u5426"}   
+
+event: delta
+data: {"v": "\u53ef"} 
+
+event: delta
+data: {"v": "\u7528"} 
+
+event: delta
+data: {"v": "\n"}     
+
+event: delta
+data: {"v": "if"}     
+
+event: delta
+data: {"v": " command"}       
+
+event: delta
+data: {"v": " -"}     
+
+event: delta
+data: {"v": "v"}      
+
+event: delta
+data: {"v": " bash"}  
+
+event: delta
+data: {"v": " >/"}    
+
+event: delta
+data: {"v": "dev"}    
+
+event: delta
+data: {"v": "/null"}  
+
+event: delta
+data: {"v": " "}      
+
+event: delta
+data: {"v": "2"}      
+
+event: delta
+data: {"v": ">&"}     
+
+event: delta
+data: {"v": "1"}      
+
+event: delta
+data: {"v": ";"}      
+
+event: delta
+data: {"v": " then"}  
+
+event: delta
+data: {"v": "\n"}     
+
+event: delta
+data: {"v": " "}      
+
+event: delta
+data: {"v": " echo"}  
+
+event: delta
+data: {"v": " \""}    
+
+event: delta
+data: {"v": "B"}      
+
+event: delta
+data: {"v": "ash"}    
+
+event: delta
+data: {"v": " \u5df2"}
+
+event: delta
+data: {"v": "\u5b89\u88c5"}   
+
+event: delta
+data: {"v": "\"\n"}   
+
+event: delta
+data: {"v": " "}      
+
+event: delta
+data: {"v": " bash"}  
+
+event: delta
+data: {"v": " --"}    
+
+event: delta
+data: {"v": "version"}
+
+event: delta
+data: {"v": "\n"}     
+
+event: delta
+data: {"v": "else"}   
+
+event: delta
+data: {"v": "\n"}     
+
+event: delta
+data: {"v": " "}      
+
+event: delta
+data: {"v": " echo"}  
+
+event: delta
+data: {"v": " \""}    
+
+event: delta
+data: {"v": "B"}      
+
+event: delta
+data: {"v": "ash"}    
+
+event: delta
+data: {"v": " \u672a"}
+
+event: delta
+data: {"v": "\u5b89\u88c5"}   
+
+event: delta
+data: {"v": "\"\n"}   
+
+event: delta
+data: {"v": "fi"}     
+
+event: delta
+data: {"v": "\n\n"}   
+
+event: delta
+data: {"v": "#"}      
+
+event: delta
+data: {"v": " \u68c0"}
+
+event: delta
+data: {"v": "\u67e5"} 
+
+event: delta
+data: {"v": "Python"} 
+
+event: delta
+data: {"v": "\u7248\u672c"}   
+
+event: delta
+data: {"v": "\n"}     
+
+event: delta
+data: {"v": "if"}     
+
+event: delta
+data: {"v": " command"}       
+
+event: delta
+data: {"v": " -"}     
+
+event: delta
+data: {"v": "v"}      
+
+event: delta
+data: {"v": " python"}
+
+event: delta
+data: {"v": "3"}      
+
+event: delta
+data: {"v": " >/"}    
+
+event: delta
+data: {"v": "dev"}    
+
+event: delta
+data: {"v": "/null"}  
+
+event: delta
+data: {"v": " "}      
+
+event: delta
+data: {"v": "2"}      
+
+event: delta
+data: {"v": ">&"}     
+
+event: delta
+data: {"v": "1"}      
+
+event: delta
+data: {"v": ";"}      
+
+event: delta
+data: {"v": " then"}  
+
+event: delta
+data: {"v": "\n"}     
+
+event: delta
+data: {"v": " "}      
+
+event: delta
+data: {"v": " echo"}  
+
+event: delta
+data: {"v": " \""}    
+
+event: delta
+data: {"v": "Python"} 
+
+event: delta
+data: {"v": " "}      
+
+event: delta
+data: {"v": "\u7248\u672c"}   
+
+event: delta
+data: {"v": "\u4fe1\u606f"}   
+
+event: delta
+data: {"v": "\uff1a"} 
+
+event: delta
+data: {"v": "\"\n"}   
+
+event: delta
+data: {"v": " "}      
+
+event: delta
+data: {"v": " python"}
+
+event: delta
+data: {"v": "3"}      
+
+event: delta
+data: {"v": " --"}    
+
+event: delta
+data: {"v": "version"}
+
+event: delta
+data: {"v": "\n"}     
+
+event: delta
+data: {"v": "else"}   
+
+event: delta
+data: {"v": "\n"}     
+
+event: delta
+data: {"v": " "}      
+
+event: delta
+data: {"v": " echo"}  
+
+event: delta
+data: {"v": " \""}    
+
+event: delta
+data: {"v": "Python"} 
+
+event: delta
+data: {"v": " \u672a"}
+
+event: delta
+data: {"v": "\u5b89\u88c5"}   
+
+event: delta
+data: {"v": "\"\n"}   
+
+event: delta
+data: {"v": "fi"}     
+
+event: delta
+data: {"v": "\n\n"}   
+
+event: delta
+data: {"v": "#"}      
+
+event: delta
+data: {"v": " \u5217"}
+
+event: delta
+data: {"v": "\u51fa"} 
+
+event: delta
+data: {"v": "\u5df2"} 
+
+event: delta
+data: {"v": "\u5b89\u88c5"}   
+
+event: delta
+data: {"v": "\u7684"} 
+
+event: delta
+data: {"v": "Python"} 
+
+event: delta
+data: {"v": "\u5e93"} 
+
+event: delta
+data: {"v": "\n"}     
+
+event: delta
+data: {"v": "if"}     
+
+event: delta
+data: {"v": " command"}       
+
+event: delta
+data: {"v": " -"}     
+
+event: delta
+data: {"v": "v"}      
+
+event: delta
+data: {"v": " pip"}   
+
+event: delta
+data: {"v": "3"}      
+
+event: delta
+data: {"v": " >/"}    
+
+event: delta
+data: {"v": "dev"}    
+
+event: delta
+data: {"v": "/null"}  
+
+event: delta
+data: {"v": " "}      
+
+event: delta
+data: {"v": "2"}      
+
+event: delta
+data: {"v": ">&"}     
+
+event: delta
+data: {"v": "1"}      
+
+event: delta
+data: {"v": ";"}      
+
+event: delta
+data: {"v": " then"}  
+
+event: delta
+data: {"v": "\n"}     
+
+event: delta
+data: {"v": " "}      
+
+event: delta
+data: {"v": " echo"}  
+
+event: delta
+data: {"v": " \""}    
+
+event: delta
+data: {"v": "\u5df2"} 
+
+event: delta
+data: {"v": "\u5b89\u88c5"}   
+
+event: delta
+data: {"v": "\u7684"} 
+
+event: delta
+data: {"v": "Python"} 
+
+event: delta
+data: {"v": "\u5e93"} 
+
+event: delta
+data: {"v": "\uff1a"} 
+
+event: delta
+data: {"v": "\"\n"}   
+
+event: delta
+data: {"v": " "}      
+
+event: delta
+data: {"v": " pip"}   
+
+event: delta
+data: {"v": "3"}      
+
+event: delta
+data: {"v": " list"}  
+
+event: delta
+data: {"v": "\n"}     
+
+event: delta
+data: {"v": "else"}   
+
+event: delta
+data: {"v": "\n"}     
+
+event: delta
+data: {"v": " "}      
+
+event: delta
+data: {"v": " echo"}  
+
+event: delta
+data: {"v": " \""}    
+
+event: delta
+data: {"v": "pip"}    
+
+event: delta
+data: {"v": "3"}      
+
+event: delta
+data: {"v": " \u672a"}
+
+event: delta
+data: {"v": "\u5b89\u88c5"}   
+
+event: delta
+data: {"v": "\"\n"}   
+
+event: delta
+data: {"v": "fi"}     
+
+event: delta
+data: {"v": "\n"}     
+
+event: delta
+data: {"v": "``"}     
+
+event: delta
+data: {"v": "`\n\n"}  
+
+event: delta
+data: {"v": "\u8bf7"} 
+
+event: delta
+data: {"v": "\u6267\u884c"}   
+
+event: delta
+data: {"v": "\u6b64"} 
+
+event: delta
+data: {"v": "\u4ee3\u7801"}   
+
+event: delta
+data: {"v": "\uff0c\u5e76"}   
+
+event: delta
+data: {"v": "\u5c06"} 
+
+event: delta
+data: {"v": "\u7ed3\u679c"}   
+
+event: delta
+data: {"v": "\u8fd4\u56de"}   
+
+event: delta
+data: {"v": "\u7ed9"} 
+
+event: delta
+data: {"v": "\u6211"} 
+
+event: delta
+data: {"v": "\u3002\u6211"}   
+
+event: delta
+data: {"v": "\u4f1a"} 
+
+event: delta
+data: {"v": "\u6839\u636e"}   
+
+event: delta
+data: {"v": "\u7ed3\u679c"}   
+
+event: delta
+data: {"v": "\u8fdb\u884c"}   
+
+event: delta
+data: {"v": "\u8fdb\u4e00\u6b65"}     
+
+event: delta
+data: {"v": "\u5206\u6790"}   
+
+event: delta
+data: {"v": "\u5e76"} 
+
+event: delta
+data: {"v": "\u63d0\u51fa"}   
+
+event: delta
+data: {"v": "\u540e"} 
+
+event: delta
+data: {"v": "\u7eed"} 
+
+event: delta
+data: {"v": "\u7684"} 
+
+event: delta
+data: {"v": "\u5efa\u8bae"}   
+
+event: delta
+data: {"v": "\u3002"} 
+
+event: delta
+data: {"p": "", "o": "patch", "v": [{"p": "/message/status", "o": "replace", "v": "finished_successfully"}, {"p": "/message/end_turn", "o": "replace", "v": true}]}   
+
+event: delta
+data: {"p": "/message/metadata", "o": "append", "v": {"timestamp_": "absolute", "request_id": "8d38ca976d4dcba4-LAX", "finish_details": {"type": "stop", "stop_tokens": [200002]}, "is_complete": true}}      
+
+data: 
+
+data: [DONE]
+

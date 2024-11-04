@@ -1,0 +1,51 @@
+{
+  "name": "node(内置)",
+  "version": "1.0.0",
+  "description": "A Node.js plugin project using TypeScript and Webpack",
+  "main": "dist/main.js",
+  "scripts": {
+    "lint": "eslint 'src/**/*.{ts,js}' --fix",
+    "build": "webpack --config webpack.config.js && webpack --config webpack.zip.js",
+    "clean": "rimraf build dist",
+    "test": "npx ts-node test/test.ts",
+    "zip": "npm run clean && npm run build"
+  },
+  "devDependencies": {
+    "@types/circular-json": "^0.4.0",
+    "@types/cross-spawn": "^6.0.6",
+    "@types/decompress": "^4.2.7",
+    "@types/node-7z": "^2.1.10",
+    "@types/progress": "^2.0.7",
+    "@types/progress-stream": "^2.0.5",
+    "@types/tar": "^6.1.13",
+    "@types/unzipper": "^0.10.10",
+    "@typescript-eslint/eslint-plugin": "^8.8.0",
+    "@typescript-eslint/parser": "^8.8.0",
+    "archiver": "^5.3.0",
+    "copy-webpack-plugin": "^11.0.0",
+    "eslint": "^9.12.0",
+    "mylib": "file://../../lib",
+    "rimraf": "^3.0.2",
+    "ts-loader": "^9.3.1",
+    "typescript": "^4.5.4",
+    "webpack": "^5.65.0",
+    "webpack-cli": "^4.9.1"
+  },
+  "dependencies": {
+    "7zip-bin": "^5.2.0",
+    "circular-json": "^0.5.9",
+    "compressing": "^1.10.1",
+    "cross-spawn": "^7.0.3",
+    "decompress": "^4.2.1",
+    "global-agent": "^3.0.0",
+    "hasha": "^6.0.0",
+    "https-proxy-agent": "^7.0.5",
+    "node-7z": "^3.0.0",
+    "node-downloader-helper": "^2.1.9",
+    "progress-stream": "^2.0.0",
+    "sudo-prompt": "^9.2.1",
+    "superjson": "^2.2.1",
+    "unzipper": "^0.12.3",
+    "vue": "^3.5.12"
+  }
+}

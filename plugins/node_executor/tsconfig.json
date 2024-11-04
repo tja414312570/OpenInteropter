@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "moduleResolution": "nodenext",
+    "forceConsistentCasingInFileNames": true,
+    "noEmitOnError": true,
+    "outDir": "./dist"
+  },
+  "include": ["src/**/*.ts" ],       // 包含的源文件路径
+  "exclude": ["node_modules"]       // 排除的文件夹
+}

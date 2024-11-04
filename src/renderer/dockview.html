@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" href="/favicon.ico" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>open-interpreter</title>
+</head>
+
+<body>
+  <div id="app" style="height: 100vh;"></div>
+  <script>
+    // 获取 URL 参数
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
+
+    // 动态创建 script 标签
+    const script = document.createElement('script');
+    script.type = 'module';
+
+    // 获取 tsFile 路径，比如 ?tsFile=./ts/custom-header.ts
+    const tsFile = getQueryParam('tsFile') || './main.ts'; // 默认加载 main.ts
+
+    // 设置 src 属性
+    script.src = tsFile;
+
+    // 将 script 添加到 body 中
+    document.body.appendChild(script);
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,15 @@
+{
+  "appId": "default.executor.python",
+  "name": "python(内置)",
+  "version": "1.0.0",
+  "description": "此脚本作为内置终端执行器等",
+  "pluginType": "默认插件",
+  "author": "默认开发者",
+  "icon": "./dist/assets/logo.svg",
+  "main": "./dist/main.js",
+  "license": "MIT",
+  "type": "executor",
+  "instruct": [
+    "python"
+  ]
+}

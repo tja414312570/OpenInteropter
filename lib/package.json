@@ -1,0 +1,32 @@
+{
+  "name": "plugin-lib",
+  "version": "0.0.1",
+  "description": "A Node.js plugin project using TypeScript and Webpack",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "types/global.d.ts"
+  ],
+  "exports": {
+    "./main": {
+      "import": "./dist/main.js",
+      "types": "./dist/main.d.ts",
+      "require": "./dist/main.js"
+    },
+    "./render": {
+      "import": "./dist/preload.js",
+      "types": "./dist/preload.d.ts",
+      "require": "./dist/preload.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "http-mitm-proxy": "^1.1.0"
+  },
+  "dependencies": {
+    "uuid": "^10.0.0"
+  }
+}
