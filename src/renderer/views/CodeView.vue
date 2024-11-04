@@ -13,7 +13,7 @@
     </template>
     <!-- https://github.com/imengyu/vue-code-layout/blob/master/examples/views/BasicUseage.vue -->
     <template #centerArea>
-      <MainWebView />
+      <!-- <MainWebView /> -->
     </template>
     <template #statusBar>
       <StatusBar />
@@ -226,8 +226,8 @@ function loadLayout() {
   });
   //向底栏加入面板
   bottomGroup.addPanel({
-    title: '输出',
-    tooltip: '输出',
+    title: '任务',
+    tooltip: '任务',
     name: 'bottom.output',
     iconSmall: () => h(IconSearch),
   });

@@ -7,7 +7,9 @@
 
         <div class="status-bar-center">
             <!-- 中间区域，显示其他信息 -->
-            <p>{{ editor_status }}</p>
+            <span v-show="task.name">{{ task.name }}：task.content</span>
+            <span style="flex: 1;"><v-progress-linear buffer-value="0" color="white" bg-color="grey-lighten"
+                    model-value="20" indeterminate stream></v-progress-linear></span>
         </div>
 
         <div class="status-bar-right">
@@ -25,8 +27,17 @@
 import { getIpcApi } from '@lib/preload';
 import { ref, onMounted, onUnmounted } from 'vue';
 
+type TaskType = {
+    name: string,
+    progress: undefined | number,
+    content: string
+}
 // 使用 ref 定义响应式数据
-const editor_status = ref('编辑器状态信息');
+const task = ref<TaskType>({
+    name: 'xx组件',
+    progress: -1,
+    content: '描述'
+});
 const notification = ref<{ message: string; is_error: boolean } | null>(null);
 const api = getIpcApi('ipc-notify') as any;
 // 监听来自预加载脚本的通知
@@ -67,7 +78,10 @@ const clearNotification = () => {
 
 .status-bar-center {
     flex: 2;
+    cursor: pointer;
     text-align: center;
+    display: flex;
+    justify-content: center;
     font-size: 12px;
 }
 
