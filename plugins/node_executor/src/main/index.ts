@@ -350,10 +350,12 @@ class NodeExecutor
           await symlink(path.join(extNodePath, 'node.exe'), path.join(pluginContext.envDir, 'node.exe'), 'file')
           await symlink(path.join(extNodePath, 'npm.cmd'), path.join(pluginContext.envDir, 'npm.cmd'), 'file')
           await symlink(path.join(extNodePath, 'npx.cmd'), path.join(pluginContext.envDir, 'npx.cmd'), 'file')
+          await symlink(path.join(extNodePath, 'node_modules'), path.join(pluginContext.envDir, 'node_modules'), 'junction')
         } else {
           await symlink(path.join(extNodePath, 'node'), path.join(pluginContext.envDir, 'node'), 'file')
           await symlink(path.join(extNodePath, 'npm.cmd'), path.join(pluginContext.envDir, 'npm.cmd'), 'file')
           await symlink(path.join(extNodePath, 'npx.cmd'), path.join(pluginContext.envDir, 'npx.cmd'), 'file')
+          await symlink(path.join(extNodePath, 'node_modules'), path.join(pluginContext.envDir, 'node_modules'), 'dir')
         }
         return;
       }
