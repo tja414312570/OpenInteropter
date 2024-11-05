@@ -1,4 +1,6 @@
 import {
+  BrowserWindow,
+  BrowserWindowConstructorOptions,
   IpcMainEvent,
   MessageBoxOptions,
   MessageBoxReturnValue,
@@ -60,6 +62,15 @@ export type ISetting = {
   hide?: boolean;
   subs?: Array<ISetting> | null;
 };
+
+export type IBrowserWindowOptions = BrowserWindowConstructorOptions & {
+  showMenu?: boolean
+}
+
+export interface IWindowManager {
+  createWindow: (windowId: string, options?: IBrowserWindowOptions) => void;
+  getWindow: (windowId: string) => BrowserWindow;
+}
 export interface ISettingManager {
   onSettingChange(path: string, callback: (value: any) => void): void;
   registeSetting(menus: ISetting | ISetting[], path_?: string): void;

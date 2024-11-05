@@ -1,15 +1,29 @@
 {
+  "compileOnSave": false,
   "compilerOptions": {
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "outDir": "./dist/main",
+    "sourceMap": true,
+    "declaration": false,
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "allowSyntheticDefaultImports": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "isolatedModules": true,
     "target": "ES2022",
-    "module": "NodeNext",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "moduleResolution": "nodenext",
-    "forceConsistentCasingInFileNames": true,
-    "noEmitOnError": true,
-    "outDir": "./dist"
+    "paths": {
+      "@config/*": ["config/*"],
+      "@renderer/*": ["src/renderer/*"],
+      "@main/*": ["src/main/*"],
+      "@store/*": ["src/renderer/store/modules/*"],
+      "@lib/*": ["lib/src/*"]
+    },
+    "typeRoots": ["node_modules/@types"],
+    "lib": ["ES2022", "dom"]
   },
-  "include": ["src/**/*.ts" ],       // 包含的源文件路径
-  "exclude": ["node_modules"]       // 排除的文件夹
+  "include": ["src/**/*", "customTypes/*", "lib/**/*", ".vite/**/*"],
+  "exclude": ["node_modules"]
 }

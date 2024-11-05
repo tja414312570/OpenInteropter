@@ -12,12 +12,12 @@ import { createContext, runInContext } from "vm";
 import { stringify } from "circular-json";
 import { rejects } from "assert";
 import fs from "fs";
-import { symlink } from 'fs/promises'
+import { symlink } from "fs/promises";
 import { v4 as uuidv4 } from "uuid";
 import { ChildProcess, exec, fork } from "child_process";
 import VirtualWindow from "./virtual-window";
 import path from "path";
-import util from 'util'
+import util from "util";
 import { getFileName, getNodeSha, getNodeVersions } from "./install";
 import DownloadNode from "./download";
 import { extractNode } from "./extract";
@@ -88,7 +88,8 @@ class ExecuteContext {
 
 class NodeExecutor
   extends AbstractPlugin
-  implements Pluginlifecycle, InstructExecutor {
+  implements Pluginlifecycle, InstructExecutor
+{
   private executeContext: null | ExecuteContext = null;
   env = {} as any;
   currentTask(): string[] {
@@ -252,116 +253,198 @@ class NodeExecutor
 
   async onMounted(ctx: PluginExtensionContext) {
     // 插件挂载时的处理逻辑
-    pluginContext.notifyManager.showTask({ content: "正在检查环境", progress: -1 });
+    pluginContext.notifyManager.showTask({
+      content: "正在检查环境",
+      progress: -1,
+    });
     const plugHome = pluginContext.workPath;
     if (fs.existsSync(plugHome)) {
       fs.mkdirSync(plugHome, { recursive: true });
     }
-    const nodeVersion = await pluginContext.settingManager.getSettingValue(`${pluginContext.plugin.appId}.nodejs.version`);
-    const nodePath = await pluginContext.settingManager.getSettingValue(`${pluginContext.plugin.appId}.nodejs.path`);
+    const nodeVersion = await pluginContext.settingManager.getSettingValue(
+      `version`
+    );
+    const nodePath = await pluginContext.settingManager.getSettingValue(`path`);
     const execPromise = util.promisify(exec);
     if (nodeVersion && nodePath) {
-      pluginContext.notifyManager.showTask({ content: "正在获取node信息", progress: -1 });
+      pluginContext.notifyManager.showTask({
+        content: "正在获取node信息",
+        progress: -1,
+      });
       //使用默认nodejs
-      let nodeCmd = 'node -v'
+      let nodeCmd = "node";
       let env = {};
-      if (nodePath !== 'default') {
-        if (platform() === "win32") {
-          nodeCmd = path.join(nodePath, nodeCmd);
-        } else {
-          nodeCmd = path.join(nodePath, 'bin', nodeCmd);
-        }
+      if (nodePath !== "default") {
+        // if (platform() === "win32") {
+        nodeCmd = path.join(nodePath, nodeCmd);
+        // } else {
+        //   nodeCmd = path.join(nodePath, nodeCmd);
+        // }
       } else {
         env = { ...process.env };
       }
       try {
-        const { stdout, stderr } = await execPromise(nodeCmd, { env });
+        const { stdout, stderr } = await execPromise(`"${nodeCmd}" -v`, {
+          env,
+        });
         const getVersion = stdout.trim();
         if (getVersion.length > 0) {
-          this.env = env
+          this.env = env;
           if (nodeVersion.trim() !== getVersion) {
-            pluginContext.settingManager.saveSettingValue(`${pluginContext.plugin.appId}.nodejs.version`, getVersion);
+            pluginContext.settingManager.saveSettingValue(
+              `version`,
+              getVersion
+            );
           }
-          pluginContext.notifyManager.showTask({ content: `已获取到Node，版本:${stdout}` });
+          pluginContext.notifyManager.showTask({
+            content: `已获取到Node，版本:${stdout}`,
+          });
           return;
         }
-        console.error('STD Error:', stderr)
+        console.error("STD Error:", stderr);
       } catch (err) {
-        console.error('Error:', err);
+        console.error("Error:", err);
       }
       pluginContext.notifyManager.showTask({ content: `Node环境已损坏` });
     }
-    pluginContext.notifyManager.showTask({ content: "尝试从当前环境获取！", progress: -1 });
-    try {
-      const env = { ...process.env };
-      const { stdout, stderr } = await execPromise('node -v', { env });
-      const getVersion = stdout.trim();
-      if (getVersion.length > 0) {
-        pluginContext.settingManager.saveSettingValue(`${pluginContext.plugin.appId}.nodejs.version`, getVersion);
-        pluginContext.settingManager.saveSettingValue(`${pluginContext.plugin.appId}.nodejs.path`, 'default');
-        pluginContext.notifyManager.showTask({ content: `已获取到Node，版本:${stdout}` });
-        return;
-      }
-      console.error('STD Error:', stderr)
-    } catch (err) {
-      console.error('Error:', err);
-    }
-    pluginContext.notifyManager.showTask({ content: "正在下载最新的nodejs版本", progress: -1 });
+    // pluginContext.notifyManager.showTask({ content: "尝试从当前环境获取！", progress: -1 });
+    // try {
+    //   const env = { ...process.env };
+    //   const { stdout, stderr } = await execPromise('node -v', { env });
+    //   const getVersion = stdout.trim();
+    //   if (getVersion.length > 0) {
+    //     pluginContext.settingManager.saveSettingValue(`version`, getVersion);
+    //     pluginContext.settingManager.saveSettingValue(`path`, 'default');
+    //     pluginContext.notifyManager.showTask({ content: `已获取到Node，版本:${stdout}` });
+    //     return;
+    //   }
+    //   console.error('STD Error:', stderr)
+    // } catch (err) {
+    //   console.error('Error:', err);
+    // }
+    pluginContext.notifyManager.showTask({
+      content: "正在下载最新的nodejs版本",
+      progress: -1,
+    });
     const versions = (await getNodeVersions()) as any;
     const latestVersion = versions[0].version;
-    pluginContext.notifyManager.showTask({ content: `找到nodejs版本:${latestVersion}`, progress: -1 });
+    pluginContext.notifyManager.showTask({
+      content: `找到nodejs版本:${latestVersion}`,
+      progress: -1,
+    });
     const fileName = `node-${latestVersion}-${getFileName()}`;
-    pluginContext.notifyManager.showTask({ content: `文件名:${fileName}`, progress: -1 });
+    pluginContext.notifyManager.showTask({
+      content: `文件名:${fileName}`,
+      progress: -1,
+    });
     const downloadUrl = `https://nodejs.org/dist/${latestVersion}/${fileName}`;
     console.log(`下载地址:${downloadUrl}`);
     const sha256 = await getNodeSha(latestVersion, fileName);
     console.log("256:" + sha256);
-    const downpath = pluginContext.getPath('downloads')
+    const downpath = pluginContext.getPath("downloads");
     const filePath = path.join(downpath, fileName);
     console.log(filePath, "\n", path.basename(filePath));
-    await DownloadNode(downloadUrl, filePath, (progress) => {
-      pluginContext.notifyManager.showTask({ content: `正在下载文件:${fileName}`, progress: progress });
-    }, sha256);
+    await DownloadNode(
+      downloadUrl,
+      filePath,
+      (progress) => {
+        pluginContext.notifyManager.showTask({
+          content: `正在下载文件:${fileName}`,
+          progress: progress,
+        });
+      },
+      sha256
+    );
     console.log("下载后的文件地址:" + filePath);
-    const extSaveNodePath = path.join(pluginContext.workPath, 'node-' + latestVersion);
+    const extSaveNodePath = path.join(
+      pluginContext.workPath,
+      "node-" + latestVersion
+    );
     if (fs.existsSync(extSaveNodePath)) {
       fs.mkdirSync(extSaveNodePath, { recursive: true });
     }
-    pluginContext.notifyManager.showTask({ content: `正在解压文件:${fileName}`, progress: -1 });
-    let extNodePath: string = await extractNode(filePath, (progress) => {
-      pluginContext.notifyManager.showTask({ content: `正在解压文件:${fileName}`, progress: progress });
-    }, extSaveNodePath);
-    pluginContext.notifyManager.showTask({ content: `文件解压完成:${fileName}`, progress: -2 });
+    pluginContext.notifyManager.showTask({
+      content: `正在解压文件:${fileName}`,
+      progress: -1,
+    });
+    let extNodePath: string = await extractNode(
+      filePath,
+      (progress) => {
+        pluginContext.notifyManager.showTask({
+          content: `正在解压文件:${fileName}`,
+          progress: progress,
+        });
+      },
+      extSaveNodePath
+    );
+    pluginContext.notifyManager.showTask({
+      content: `文件解压完成:${fileName}`,
+      progress: -2,
+    });
     console.log("解压后的文件路径:" + extNodePath);
     if (platform() !== "win32") {
-      extNodePath = path.join(extNodePath, 'bin');
+      extNodePath = path.join(extNodePath, "bin");
     }
-    const nodeCmd = path.join(extNodePath, 'node')
+    const nodeCmd = path.join(extNodePath, "node");
     try {
       const env = {};
-      const { stdout, stderr } = await execPromise(`${nodeCmd} -v`, { env });
+      const { stdout, stderr } = await execPromise(`"${nodeCmd}" -v`, { env });
       const getVersion = stdout.trim();
       if (getVersion.length > 0) {
-        this.env = env
-        pluginContext.settingManager.saveSettingValue(`${pluginContext.plugin.appId}.nodejs.version`, getVersion);
-        pluginContext.settingManager.saveSettingValue(`${pluginContext.plugin.appId}.nodejs.path`, extNodePath);
-        pluginContext.notifyManager.showTask({ content: `NodeJs，版本:${stdout}` });
+        this.env = env;
+        pluginContext.settingManager.saveSettingValue(`version`, getVersion);
+        pluginContext.settingManager.saveSettingValue(`path`, extNodePath);
+        pluginContext.notifyManager.showTask({
+          content: `NodeJs，版本:${stdout}`,
+        });
         if (platform() === "win32") {
-          await symlink(path.join(extNodePath, 'node.exe'), path.join(pluginContext.envDir, 'node.exe'), 'file')
-          await symlink(path.join(extNodePath, 'npm.cmd'), path.join(pluginContext.envDir, 'npm.cmd'), 'file')
-          await symlink(path.join(extNodePath, 'npx.cmd'), path.join(pluginContext.envDir, 'npx.cmd'), 'file')
-          await symlink(path.join(extNodePath, 'node_modules'), path.join(pluginContext.envDir, 'node_modules'), 'junction')
+          await symlink(
+            path.join(extNodePath, "node.exe"),
+            path.join(pluginContext.envDir, "node.exe"),
+            "file"
+          );
+          await symlink(
+            path.join(extNodePath, "npm.cmd"),
+            path.join(pluginContext.envDir, "npm.cmd"),
+            "file"
+          );
+          await symlink(
+            path.join(extNodePath, "npx.cmd"),
+            path.join(pluginContext.envDir, "npx.cmd"),
+            "file"
+          );
+          await symlink(
+            path.join(extNodePath, "node_modules"),
+            path.join(pluginContext.envDir, "node_modules"),
+            "junction"
+          );
         } else {
-          await symlink(path.join(extNodePath, 'node'), path.join(pluginContext.envDir, 'node'), 'file')
-          await symlink(path.join(extNodePath, 'npm.cmd'), path.join(pluginContext.envDir, 'npm.cmd'), 'file')
-          await symlink(path.join(extNodePath, 'npx.cmd'), path.join(pluginContext.envDir, 'npx.cmd'), 'file')
-          await symlink(path.join(extNodePath, 'node_modules'), path.join(pluginContext.envDir, 'node_modules'), 'dir')
+          await symlink(
+            path.join(extNodePath, "node"),
+            path.join(pluginContext.envDir, "node"),
+            "file"
+          );
+          await symlink(
+            path.join(extNodePath, "npm"),
+            path.join(pluginContext.envDir, "npm"),
+            "file"
+          );
+          await symlink(
+            path.join(extNodePath, "npx"),
+            path.join(pluginContext.envDir, "npx"),
+            "file"
+          );
+          await symlink(
+            path.join(extNodePath, "node_modules"),
+            path.join(pluginContext.envDir, "node_modules"),
+            "dir"
+          );
         }
         return;
       }
-      console.error('STD Error:', stderr)
+      console.error("STD Error:", stderr);
     } catch (err) {
-      console.error('Error:', err);
+      console.error("Error:", err);
     }
   }
 

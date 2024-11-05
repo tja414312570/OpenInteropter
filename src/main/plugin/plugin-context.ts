@@ -5,6 +5,7 @@ import path from 'path';
 import appContext from '@main/services/app-context';
 import resourceManager from './resource-manager';
 import { app } from 'electron';
+import windowManager from '@main/services/window-manager';
 
 
 export class PluginContext implements PluginExtensionContext {
@@ -25,23 +26,25 @@ export class PluginContext implements PluginExtensionContext {
     showDialog: (message: DialogOpt) => Promise<DialogReturnValue>;
     constructor(plugin: PluginInfo) {
         this.plugin = plugin;
+        const appid = plugin.appId.replaceAll('.', '-');
         this.settingManager = {
             onSettingChange: (path: string, callback: (value: any) => void) => {
-                settingManager.onSettingChange(`plugin.${path}`, callback);
+                settingManager.onSettingChange(`plugin.${appid}.${path}`, callback);
             },
             registeSetting: (menus: ISetting | ISetting[], path_?: string) => {
-                settingManager.registeSetting(menus, `plugin${path_ ? '.' + path_ : ''}`);
+                settingManager.registeSetting(menus, `plugin.${appid}${path_ ? '.' + path_ : ''}`);
             },
             getSettingValue: (key: string) => {
-                return settingManager.getSettingValue(`plugin.${key}`);
+                return settingManager.getSettingValue(`plugin.${appid}.${key}`);
             },
             saveSettingValue: (key: string, value?: any) => {
-                return settingManager.saveSettingValue(`plugin.${key}`, value)
+                return settingManager.saveSettingValue(`plugin.${appid}.${key}`, value)
             },
             getSettings: (path?: string) => {
-                return settingManager.getSettings(`plugin.${path}`)
+                return settingManager.getSettings(`plugin.${appid}.${path}`)
             }
         }
+        this.windowManager = windowManager;
         this.workPath = path.join(appContext.pluginPath, plugin.appId);
         this.envDir = appContext.envPath;
         this.resourceManager = resourceManager;

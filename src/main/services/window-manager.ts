@@ -6,6 +6,7 @@ import "./executor";
 import _ from "lodash";
 import { registeMenu } from "./service-menu";
 import { showErrorDialog } from "@main/utils/dialog";
+import { IBrowserWindowOptions, IWindowManager } from "@lib/main";
 
 export const DefaultWindowId = {
   LOADING: 'DEFAULT_WINDOW',
@@ -15,12 +16,12 @@ export type ExtBrowserWindowOptions = {
   showMenu?: boolean
 }
 
-class WindowManager {
+class WindowManager implements IWindowManager {
   private windowMap: Map<string, BrowserWindow>
   constructor() {
     this.windowMap = new Map();
   }
-  createWindow(windowId: string, options?: BrowserWindowConstructorOptions & ExtBrowserWindowOptions) {
+  createWindow(windowId: string, options?: IBrowserWindowOptions) {
     let window = this.windowMap.get(windowId);
     if (!window) {
       const mergedOptions = _.merge({}, options, {

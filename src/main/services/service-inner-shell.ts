@@ -16,7 +16,7 @@ function init() {
     const pathKey = Object.keys(process.env).find(key => key.toLowerCase() === 'path') || 'PATH';
     const env = {
         ...process.env,
-        [pathKey]: `${appContext.envPath}${path.delimiter}${process.env[pathKey]}`
+        [pathKey]: `${appContext.envPath.replaceAll(' ', '\\ ')}${path.delimiter}${process.env[pathKey]}`
     };
     console.log("环境变量:", JSON.stringify(env, null, 2))
     try {
