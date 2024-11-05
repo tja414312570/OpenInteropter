@@ -1,0 +1,11 @@
+{
+  "default": {
+    "executor": {
+      "node": {
+        "nodejs": {
+          "version": "v20.18.0"
+        }
+      }
+    }
+  }
+}

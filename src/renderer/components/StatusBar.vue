@@ -8,7 +8,7 @@
         <div class="status-bar-center">
             <!-- 中间区域，显示其他信息 -->
             <span v-show="task.name">{{ task.name }}：{{ task.content }}</span>
-            <span v-show="task.progress > 0" style="margin-left: 12px;">
+            <span v-show="task.progress > -2" style="margin-left: 12px;">
                 <v-progress-circular color="green" :size="16" :width="2" indeterminate></v-progress-circular>
             </span>
         </div>
@@ -71,12 +71,17 @@ onMounted(() => {
     api.onNotify((notifyData) => {
         console.log(`收到通知：`, notifyData)
         notification.value = notifyData;
+        // task.name = notifyData.name;
+        // task.id = notifyData.id;
+        // task.content = notifyData.message;
+        // task.progress = notifyData.progress;
     });
-    api.on('show-task', (taskParam) => {
+    api.on('show-task', (event, taskParam) => {
+        console.log(`收到任务：`, taskParam)
         task.name = taskParam.name;
         task.id = taskParam.id;
         task.content = taskParam.content;
-        task.progress = taskParam;
+        task.progress = taskParam.progress | -2;
     })
     // 监听清理通知事件
     api.onClearNotification(() => {

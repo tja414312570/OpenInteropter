@@ -63,7 +63,7 @@ export type ISetting = {
 export interface ISettingManager {
   onSettingChange(path: string, callback: (value: any) => void): void;
   registeSetting(menus: ISetting | ISetting[], path_?: string): void;
-  getSettingValue(key: string): Promise<any>;
+  getSettingValue(key: string): any;
   saveSettingValue(
     key: string | Record<string, any>,
     value?: any
@@ -71,6 +71,11 @@ export interface ISettingManager {
   getSettingConfig(): Promise<Record<string, any>>;
   getSettings(path?: string): ISetting[] | ISetting;
 }
+export type NotifyManager = {
+  notify: (message: string) => void;
+  notifyError: (message: string) => void;
+  showTask: (task: { content: string, progress?: number }) => void;
+};
 export interface PluginExtensionContext {
   plugin: PluginInfo,
   settingManager: ISettingManager;
@@ -91,10 +96,7 @@ export interface PluginExtensionContext {
   /**
    * 通知管理
    */
-  notifyManager: {
-    notify: (message: string) => void;
-    notifyError: (message: string) => void;
-  };
+  notifyManager: NotifyManager
   ipcMain: IIpcMain;
   appPath: string;
 

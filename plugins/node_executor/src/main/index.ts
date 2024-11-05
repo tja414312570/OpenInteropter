@@ -11,13 +11,12 @@ import { PluginExtensionContext } from "mylib/main";
 import { createContext, runInContext } from "vm";
 import { stringify } from "circular-json";
 import { rejects } from "assert";
-import util from "util";
 import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
-import { ChildProcess, fork } from "child_process";
+import { ChildProcess, exec, fork } from "child_process";
 import VirtualWindow from "./virtual-window";
 import path from "path";
-
+import util from 'util'
 class ExecuteContext {
   private _data: ((data: string) => void) | undefined;
   private _write: ((data: string) => void) | undefined;
@@ -85,6 +84,7 @@ class NodeExecutor
   extends AbstractPlugin
   implements Pluginlifecycle, InstructExecutor {
   private executeContext: null | ExecuteContext = null;
+  env = {} as any;
   currentTask(): string[] {
     return this.executeContext ? [""] : [];
   }
@@ -244,14 +244,64 @@ class NodeExecutor
     });
   }
 
-  onMounted(ctx: PluginExtensionContext): void {
+  async onMounted(ctx: PluginExtensionContext) {
     // 插件挂载时的处理逻辑
-    pluginContext.notifyManager.notify("正在检查环境");
+    pluginContext.notifyManager.showTask({ content: "正在检查环境", progress: -1 });
     const plugHome = pluginContext.workPath;
     if (fs.existsSync(plugHome)) {
       fs.mkdirSync(plugHome, { recursive: true });
     }
-    if (fs.existsSync(pluginContext.workPath)) {
+    const nodeVersion = await pluginContext.settingManager.getSettingValue(`${pluginContext.plugin.appId}.nodejs.version`);
+    const nodePath = await pluginContext.settingManager.getSettingValue(`${pluginContext.plugin.appId}.nodejs.path`);
+    const execPromise = util.promisify(exec);
+    if(nodeVersion && nodePath) {
+      pluginContext.notifyManager.showTask({ content: "正在获取node信息", progress: -1 });
+      //使用默认nodejs
+      let cmd = 'node -v'
+      let binPath = ''
+      if(nodePath == 'default'){
+        binPath = nodePath;
+      }
+      try {
+        const env = { ...process.env, PATH: `${binPath}:${process.env.PATH}` } ;
+        const { stdout, stderr } = await execPromise('node -v',{ env });
+        const getVersion = stdout.trim();
+        if(getVersion.length>0){
+            this.env = env
+            if(nodeVersion.trim() !== getVersion){
+              pluginContext.settingManager.saveSettingValue(`${pluginContext.plugin.appId}.nodejs.version`,getVersion);
+            }
+            pluginContext.notifyManager.showTask({ content: `已获取到Node，版本:${stdout}`});
+            return;
+        }
+        console.error('STD Error:',stderr)
+      } catch (err) {
+        console.error('Error:', err);
+      }
+      pluginContext.notifyManager.showTask({ content: `Node环境已损坏`});
+    }
+    pluginContext.notifyManager.showTask({ content: "尝试从当前环境获取！", progress: -1 });
+    try {
+      const env = { ...process.env} ;
+      const { stdout, stderr } = await execPromise('node -v',{ env });
+      const getVersion = stdout.trim();
+      if(getVersion.length>0){
+          pluginContext.settingManager.saveSettingValue(`${pluginContext.plugin.appId}.nodejs.version`,getVersion);
+          pluginContext.settingManager.saveSettingValue(`${pluginContext.plugin.appId}.nodejs.path`,'default');
+          pluginContext.notifyManager.showTask({ content: `已获取到Node，版本:${stdout}`});
+          return;
+      }
+      console.error('STD Error:',stderr)
+    } catch (err) {
+      console.error('Error:', err);
+    }
+    try {
+      const { stdout, stderr } = await execPromise('node -v');
+      console.log("=======================");
+      console.log('stdout:', stdout);
+      console.log('stderr:', stderr);
+    } catch (err) {
+      console.error('Error:', err);
     }
   }
 

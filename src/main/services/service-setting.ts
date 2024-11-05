@@ -7,6 +7,7 @@ import '../ipc-bind/setting-ipc-bind'
 import EventEmitter from "events";
 import { ISetting, ISettingManager } from "@lib/main";
 import { accessSync, readFileSync } from "fs";
+import { showErrorDialog } from "@main/utils/dialog";
 
 const userDataPath = app.getPath('userData');
 const configPath = path.join(userDataPath, 'settings.json')
@@ -40,6 +41,9 @@ const settins_menu: Array<ISetting> = [
 
 class SettingManager implements ISettingManager {
     private eventer = new EventEmitter();
+    private cache: any;
+    private state: 'read' | 'write' | 'empty' = 'empty'
+    private lock = 0;
     constructor() { }
     onSettingChange(path: string, callback: (value: any) => void) {
         this.eventer.on("SettingChange", callback);
@@ -72,22 +76,17 @@ class SettingManager implements ISettingManager {
             _target_menus.push(menu);
         }
     }
-    getSettingValue = async (key: string) => {
-        const config = await this.getSettingConfig();
+    getSettingValue = (key: string) => {
+        const config = this.getSettingConfig();
         const value = _.get(config, key)
         return value;
     }
-    getSettingValueSync = (key: string) => {
-        const config = this.getSettingConfigSync();
-        const value = _.get(config, key)
-        return value;
-    }
-    saveSettingValue = async (key: string | object, value?: any) => {
-        const config = await this.getSettingConfig();
+    saveSettingValue = (key: string | object, value?: any) => {
+        const config = this.getSettingConfig();
         if (typeof key === 'string') {
             const currentValue = _.get(config, key);
             if (_.isEqual(currentValue, value)) { // 值相同时跳过写入
-                return;
+                return Promise.resolve();
             }
             _.set(config, key, value);
             this.eventer.emit("SettingChange", value);
@@ -103,43 +102,46 @@ class SettingManager implements ISettingManager {
                 }
             }
             if (!hasNews) {
-                return;
+                return Promise.resolve();
             }
         }
-        console.log("写入设置:", JSON.stringify(config))
-        await writeFile(configPath, JSON.stringify(config), 'utf8');
+        this.cache = config;
+        return this.write();
     }
-    getSettingConfig = async () => {
-        // 先检查文件是否存在
+
+    write = async () => {
+        this.lock++;
+        if (this.lock > 1) return; // 只允许首次进入写操作，后续重复调用无效
+        const configStr = JSON.stringify(this.cache, null, 2);
         try {
-            await access(configPath, constants.F_OK);
-            const data = await readFile(configPath, 'utf8');
-            return JSON.parse(data);
-        } catch (err) {
-            // 如果文件不存在，创建文件并返回空对象
-            if (err.code === 'ENOENT') {
-                return {};
-            } else {
-                // 如果是其他错误，则抛出
-                throw new Error("读取文件时异常" + configPath, { cause: err });
+            while (this.lock > 0) {
+                await writeFile(configPath, configStr, 'utf8');
+                this.lock = 0; // 重置锁
             }
+        } catch (err) {
+            showErrorDialog("写入设置文件异常，当前设置未保存成功!" + err);
+            throw err;
         }
     }
-    getSettingConfigSync = () => {
+    getSettingConfig = () => {
         // 先检查文件是否存在
-        try {
-            accessSync(configPath, constants.F_OK);
-            const data = readFileSync(configPath, 'utf8');
-            return JSON.parse(data);
-        } catch (err) {
-            // 如果文件不存在，创建文件并返回空对象
-            if (err.code === 'ENOENT') {
-                return {};
-            } else {
-                // 如果是其他错误，则抛出
-                throw new Error("读取文件时异常" + configPath, { cause: err });
+        if (!this.cache) {
+            try {
+                accessSync(configPath, constants.F_OK);
+                const data = readFileSync(configPath, 'utf8');
+                this.cache = JSON.parse(data);
+            } catch (err) {
+                // 如果文件不存在，创建文件并返回空对象
+                if (err.code === 'ENOENT') {
+                    return {};
+                } else {
+                    showErrorDialog('设置文件异常！请检查设置文件:' + configPath)
+                    // 如果是其他错误，则抛出
+                    throw new Error("读取文件时异常" + configPath, { cause: err });
+                }
             }
         }
+        return this.cache;
     }
     getSettings = (path?: string) => {
         return path ? foundSetting(path) : settins_menu;

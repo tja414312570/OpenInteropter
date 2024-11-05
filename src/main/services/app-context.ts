@@ -45,7 +45,7 @@ const appContext = new Proxy(context, {
         if (prop in target && (value = target[prop]) !== undefined && value !== null) {
             if (typeof value === 'object' && 'key' in value && 'default' in value) {
                 const settingKey = value['key'];
-                let sValue = settingManager.getSettingValueSync(settingKey);
+                let sValue = settingManager.getSettingValue(settingKey);
                 sValue = (sValue === undefined ? value['default'] : sValue);
                 if ('before' in value) {
                     value['before'](sValue);

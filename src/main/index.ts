@@ -27,7 +27,8 @@ import './services/service-setting'
 import './services/service-menu'
 import "./services/window-settings";
 import { handleChannelEvent } from "./services/web-content-listener";
-function onAppReady(proxy: string) {
+import { onAppReady } from "./ipc-bind/core-ipc-bind";
+function startWindow(proxy: string) {
   // const { disableF12 } = useDisableButton();
   // const { renderProcessGone } = useProcessException();
   // const { defaultIpc } = useMainDefaultIpc()
@@ -60,11 +61,11 @@ app.on('certificate-error', (event, webContents, url, error, certificate, callba
 //当终端ui就绪时
 handleChannelEvent('pty.terminal-output', {
   onBind: function (webId: number): void {
-    ptyInit()
+    // ptyInit()
   }
 })
 //当通知ui就绪时
-handleChannelEvent('ipc-notify.show-notification', {
+handleChannelEvent('ipc-notify.show-task', {
   onBind: (webId: number): void => {
     notify("gpt拦截器已初始化完成！")
     pluginManager.loadPluginFromDir(innerPluginPath)
@@ -72,7 +73,7 @@ handleChannelEvent('ipc-notify.show-notification', {
 })
 app.whenReady().then(() => {
   startProxyServer().then(proxy => {
-    onAppReady(`http://${proxy.httpHost}:${proxy.httpPort}`);
+    startWindow(`http://${proxy.httpHost}:${proxy.httpPort}`);
 
   })
 });

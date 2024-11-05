@@ -1,4 +1,4 @@
-import { DialogOpt, DialogReturnValue, IIpcMain, ISettingManager, PluginExtensionContext, PluginInfo, Pluginlifecycle, ResourceManager } from '@lib/main'
+import { DialogOpt, DialogReturnValue, IIpcMain, ISettingManager, NotifyManager, PluginExtensionContext, PluginInfo, Pluginlifecycle, ResourceManager } from '@lib/main'
 import { send_ipc_render } from '@main/ipc/send_ipc';
 import settingManager from '@main/services/service-setting'
 import path from 'path';
@@ -14,7 +14,7 @@ export class PluginContext implements PluginExtensionContext {
     resourceManager: ResourceManager;
     _pluginPath: string;
     workPath: string;
-    notifyManager: { notify: (message: string) => void; notifyError: (message: string) => void; };
+    notifyManager: NotifyManager;
     ipcMain: IIpcMain;
     appPath: string;
     sendIpcRender: (event_: string, message: any) => void;
@@ -33,7 +33,17 @@ export class PluginContext implements PluginExtensionContext {
                     id: this.plugin.id,
                     is_error: false,
                 });
-            }, notifyError: (message: string) => {
+            }, showTask: (task) => {
+                const { content, progress } = task;
+                send_ipc_render('ipc-notify.show-task', {
+                    content,
+                    progress,
+                    name: this.plugin.name,
+                    id: this.plugin.id,
+                    is_error: false,
+                });
+            },
+            notifyError: (message: string) => {
                 send_ipc_render('ipc-notify.show-notification', {
                     message,
                     name: this.plugin.name,

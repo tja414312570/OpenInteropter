@@ -16,3 +16,4 @@ build/
 *.ntvs*
 *.njsproj
 *.sln
+plugins/node_executor/test/报文检查.ts
