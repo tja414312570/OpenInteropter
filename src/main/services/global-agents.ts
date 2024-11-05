@@ -69,7 +69,6 @@ export const setProxy = (proxy: Proxy) => {
 }
 
 (async () => {
-  // await saveSettingValue('net.proxy', { http: 'http://127.0.0.1:7890', https: 'https://127.0.0.1:7890' });
   const proxySettings = await settingManager.getSettingValue('network.proxy') as ProxySettings;
   const proxy = buildProxy(proxySettings);
   setProxy(proxy)

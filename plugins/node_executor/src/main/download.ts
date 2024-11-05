@@ -2,7 +2,6 @@ import { DownloaderHelper } from "node-downloader-helper";
 import path from "path";
 import fs, { createReadStream, unlinkSync } from "fs";
 import { createHash } from "crypto";
-import { Agent } from "http";
 
 function getFileSHA256Sync(filePath: string) {
   return new Promise((resolve, reject) => {
@@ -17,6 +16,7 @@ function getFileSHA256Sync(filePath: string) {
 const downloadNode = async (
   url: string,
   filePath: string,
+  onProgress: (progress: number) => void,
   hash?: string | null
 ): Promise<string> => {
   if (hash && fs.existsSync(filePath)) {
@@ -24,6 +24,7 @@ const downloadNode = async (
     console.log("文件hash值");
     if (hash === file_hash) {
       console.log("文件已下载:", filePath);
+      onProgress(100)
       return filePath;
     } else {
       console.log("文件不完整，重新下载");
@@ -41,6 +42,7 @@ const downloadNode = async (
 
   dl.on("progress", (stats) => {
     process.stdout.write(`\r下载进度: ${stats.progress.toFixed(2)}%`);
+    onProgress(stats.progress)
   });
 
   dl.on("end", () => {
@@ -49,8 +51,8 @@ const downloadNode = async (
 
   dl.on("error", (err) => {
     console.error(`下载出错: ${err.message}`);
+    throw err;
   });
-
   try {
     await dl.start();
     return filePath;

@@ -9,7 +9,8 @@
             <!-- 中间区域，显示其他信息 -->
             <span v-show="task.name">{{ task.name }}：{{ task.content }}</span>
             <span v-show="task.progress > -2" style="margin-left: 12px;">
-                <v-progress-circular color="green" :size="16" :width="2" indeterminate></v-progress-circular>
+                <v-progress-circular color="green" :size="16" :width="2" :model-value="task.progress"
+                    :indeterminate='task.progress === -1'></v-progress-circular>
             </span>
         </div>
 
@@ -81,7 +82,7 @@ onMounted(() => {
         task.name = taskParam.name;
         task.id = taskParam.id;
         task.content = taskParam.content;
-        task.progress = taskParam.progress | -2;
+        task.progress = taskParam.progress || -2;
     })
     // 监听清理通知事件
     api.onClearNotification(() => {

@@ -13,7 +13,12 @@ function init() {
         throw new Error("已经初始化")
     }
     isinit = true;
-
+    const pathKey = Object.keys(process.env).find(key => key.toLowerCase() === 'path') || 'PATH';
+    const env = {
+        ...process.env,
+        [pathKey]: `${appContext.envPath}${path.delimiter}${process.env[pathKey]}`
+    };
+    console.log("环境变量:", JSON.stringify(env, null, 2))
     try {
         // 创建 PTY 实例
         const shell = process.platform === 'win32' ? 'powershell.exe' : 'bash';
@@ -24,7 +29,7 @@ function init() {
             cols: 80,
             rows: 30,
             cwd: process.env.HOME,
-            env: { ...process.env, gpt_interopter: appContext.envPath },
+            env
         });
         resourceManager.put('pty', ptyProcess)
         // 监听输入事件

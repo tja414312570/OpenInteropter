@@ -81,7 +81,7 @@ class SettingManager implements ISettingManager {
         const value = _.get(config, key)
         return value;
     }
-    saveSettingValue = (key: string | object, value?: any) => {
+    saveSettingValue = (key: string | Record<string, any>, value?: any) => {
         const config = this.getSettingConfig();
         if (typeof key === 'string') {
             const currentValue = _.get(config, key);
@@ -108,20 +108,23 @@ class SettingManager implements ISettingManager {
         this.cache = config;
         return this.write();
     }
-
     write = async () => {
         this.lock++;
-        if (this.lock > 1) return; // 只允许首次进入写操作，后续重复调用无效
-        const configStr = JSON.stringify(this.cache, null, 2);
-        try {
-            while (this.lock > 0) {
-                await writeFile(configPath, configStr, 'utf8');
-                this.lock = 0; // 重置锁
-            }
-        } catch (err) {
-            showErrorDialog("写入设置文件异常，当前设置未保存成功!" + err);
-            throw err;
+        if (this.state === 'write') {
+            return;
         }
+        this.state = 'write'
+        const currentLock = this.lock;
+        const configStr = JSON.stringify(this.cache, null, 2);
+        writeFile(configPath, configStr, 'utf8').then(() => {
+            this.state = 'empty'
+            if (currentLock != this.lock) {
+                this.write()
+            }
+        }).catch(err => {
+            showErrorDialog("写入设置文件异常，当前设置未保存成功!" + err)
+            throw err;
+        });
     }
     getSettingConfig = () => {
         // 先检查文件是否存在

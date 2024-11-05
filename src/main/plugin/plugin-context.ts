@@ -1,9 +1,10 @@
-import { DialogOpt, DialogReturnValue, IIpcMain, ISettingManager, NotifyManager, PluginExtensionContext, PluginInfo, Pluginlifecycle, ResourceManager } from '@lib/main'
+import { DialogOpt, DialogReturnValue, IIpcMain, ISetting, ISettingManager, NotifyManager, PluginExtensionContext, PluginInfo, Pluginlifecycle, ResourceManager } from '@lib/main'
 import { send_ipc_render } from '@main/ipc/send_ipc';
 import settingManager from '@main/services/service-setting'
 import path from 'path';
 import appContext from '@main/services/app-context';
 import resourceManager from './resource-manager';
+import { app } from 'electron';
 
 
 export class PluginContext implements PluginExtensionContext {
@@ -17,11 +18,30 @@ export class PluginContext implements PluginExtensionContext {
     notifyManager: NotifyManager;
     ipcMain: IIpcMain;
     appPath: string;
+    getPath(path: 'home' | 'appData' | 'userData' | 'sessionData' | 'temp' | 'exe' | 'module' | 'desktop' | 'documents' | 'downloads' | 'music' | 'pictures' | 'videos' | 'recent' | 'logs' | 'crashDumps') {
+        return app.getPath(path);
+    }
     sendIpcRender: (event_: string, message: any) => void;
     showDialog: (message: DialogOpt) => Promise<DialogReturnValue>;
     constructor(plugin: PluginInfo) {
         this.plugin = plugin;
-        this.settingManager = settingManager
+        this.settingManager = {
+            onSettingChange: (path: string, callback: (value: any) => void) => {
+                settingManager.onSettingChange(`plugin.${path}`, callback);
+            },
+            registeSetting: (menus: ISetting | ISetting[], path_?: string) => {
+                settingManager.registeSetting(menus, `plugin${path_ ? '.' + path_ : ''}`);
+            },
+            getSettingValue: (key: string) => {
+                return settingManager.getSettingValue(`plugin.${key}`);
+            },
+            saveSettingValue: (key: string, value?: any) => {
+                return settingManager.saveSettingValue(`plugin.${key}`, value)
+            },
+            getSettings: (path?: string) => {
+                return settingManager.getSettings(`plugin.${path}`)
+            }
+        }
         this.workPath = path.join(appContext.pluginPath, plugin.appId);
         this.envDir = appContext.envPath;
         this.resourceManager = resourceManager;

@@ -30,7 +30,7 @@ const moveSingleSubdirectoryUp = (outputDir: string) => {
 };
 
 // 解压函数，支持 .tar.gz 和 .zip
-const extractNode = (filePath: string, saveDir?: string) => {
+const extractNode = (filePath: string, onProgress: (progress: number) => void, saveDir?: string) => {
   return new Promise<string>((resolve, reject) => {
     const outputDir = saveDir || getOutputDir(filePath);
 
@@ -45,6 +45,7 @@ const extractNode = (filePath: string, saveDir?: string) => {
     const progressStream = progress({ length: fileSize, time: 100 });
     progressStream.on("progress", (p) => {
       process.stdout.write(`\r解压进度: ${p.percentage.toFixed(2)}%`);
+      onProgress(p.percentage)
     });
 
     const ext = path.extname(filePath).toLowerCase();

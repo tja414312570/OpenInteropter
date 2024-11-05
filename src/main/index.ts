@@ -61,7 +61,7 @@ app.on('certificate-error', (event, webContents, url, error, certificate, callba
 //当终端ui就绪时
 handleChannelEvent('pty.terminal-output', {
   onBind: function (webId: number): void {
-    // ptyInit()
+    ptyInit()
   }
 })
 //当通知ui就绪时

@@ -68,7 +68,6 @@ export interface ISettingManager {
     key: string | Record<string, any>,
     value?: any
   ): Promise<void>;
-  getSettingConfig(): Promise<Record<string, any>>;
   getSettings(path?: string): ISetting[] | ISetting;
 }
 export type NotifyManager = {
@@ -83,6 +82,7 @@ export interface PluginExtensionContext {
   resourceManager: ResourceManager;
   _pluginPath: string;
   workPath: string;
+  getPath(path: 'home' | 'appData' | 'userData' | 'sessionData' | 'temp' | 'exe' | 'module' | 'desktop' | 'documents' | 'downloads' | 'music' | 'pictures' | 'videos' | 'recent' | 'logs' | 'crashDumps'): string;
   /**
    *
    * @param plugin 用于获取组件的id
