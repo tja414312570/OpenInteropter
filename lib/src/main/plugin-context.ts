@@ -1,4 +1,4 @@
-import { PluginExtensionContext } from "./plugin";
+import { ExtensionContext } from "./plugin";
 
 let context = {} as any;
 const extensionContext = new Proxy(context, {
@@ -15,4 +15,4 @@ const _setContext = (ctx: any) => {
     context = ctx;
 }
 export { _setContext }
-export default extensionContext as PluginExtensionContext;
+export default extensionContext as ExtensionContext;

@@ -1,5 +1,5 @@
-import { send_ipc_render } from "./send_ipc"
-
+import { getIpcApi } from "./ipc-wrapper"
+const api = getIpcApi('webview-api')
 export const sendMessage = (message: string) => {
-    send_ipc_render('webview-api.send-content', message)
+    api.send('send-content', message)
 }

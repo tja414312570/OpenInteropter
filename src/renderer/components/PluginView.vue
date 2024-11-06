@@ -21,6 +21,14 @@
                                     mdi-information-outline
                                 </v-icon>
                             </template>
+                            <span>{{ plugin.event }}</span>
+                        </v-tooltip>
+                        <v-tooltip bottom>
+                            <template v-slot:activator="{ props }">
+                                <v-icon v-bind="props" color="yellow" small @click="showDetails(plugin)">
+                                    mdi-information-outline
+                                </v-icon>
+                            </template>
                             <span>查看详情</span>
                         </v-tooltip>
 
@@ -123,13 +131,31 @@ interface PluginInfo {
     id: string;
     manifest: PluginManifest;
     status: string;
-    enable: boolean
+    enable: boolean;
+    event: string;
 }
 
 const dialog = ref(false);
 const selectedPlugin = ref<PluginInfo | null>(null);
 
 const plugins = ref<PluginInfo[]>([]);
+const found = (id: string) => {
+    for (const [pos, plugin] of plugins.value.entries()) {
+        if (plugin.id === id) {
+            return { plugin, pos };
+        }
+    }
+    return {};
+}
+const sync = (event: string, plugin_: PluginInfo) => {
+    plugin_['event'] = event;
+    const { plugin } = found(plugin_.id);
+    if (plugin) {
+        Object.assign(plugin, plugin_);
+    } else {
+        plugins.value.push(plugin_)
+    }
+}
 onMounted(() => {
     pluginViewApi.invoke('get-plugin-list').then(pluginList => {
         console.log("获取到插件列表", pluginList)
@@ -137,6 +163,31 @@ onMounted(() => {
         loading.value = false
     }).catch(err => {
         console.error("获取到插件失败", err)
+    })
+
+    pluginViewApi.on('load', (event, plugin: PluginInfo) => {
+        sync('load', plugin)
+    })
+    pluginViewApi.on('loaded', (event, plugin: PluginInfo) => {
+        sync('loaded', plugin)
+    })
+    pluginViewApi.on('reload', (event, plugin: PluginInfo) => {
+        sync('reload', plugin)
+    })
+    pluginViewApi.on('reloaded', (event, plugin: PluginInfo) => {
+        sync('reloaded', plugin)
+    })
+    pluginViewApi.on('unload', (event, plugin: PluginInfo) => {
+        sync('unload', plugin)
+    })
+    pluginViewApi.on('unloaded', (event, plugin: PluginInfo) => {
+        sync('unloaded', plugin)
+    })
+    pluginViewApi.on('remove', (event, plugin_: PluginInfo) => {
+        const { pos } = found(plugin_.id);
+        if (pos) {
+            plugins.value.splice(pos, 1);
+        }
     })
 })
 

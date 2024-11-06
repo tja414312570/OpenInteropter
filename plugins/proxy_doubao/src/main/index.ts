@@ -2,7 +2,7 @@ import {
   AbstractPlugin,
   Bridge,
   pluginContext,
-  PluginExtensionContext,
+  ExtensionContext,
 } from "mylib/main";
 import { Pluginlifecycle } from "mylib/main";
 import { IContext } from "http-mitm-proxy";
@@ -79,7 +79,7 @@ class ChatGptBridge extends AbstractPlugin implements Bridge, Pluginlifecycle {
       // let logData = `拦截处理:${requestOptions?.method}:${requestOptions?.port === 443 ? 'https' : 'http'}://${requestOptions?.host}${requestOptions?.path}\n`;
       const start = performance.now();
       const handler = new SseHandler();
-      handler.onMessage((message) => { });
+      handler.onMessage((message) => {});
       handler.onEnd((data: any) => {
         const end = performance.now();
         console.log(
@@ -116,8 +116,8 @@ class ChatGptBridge extends AbstractPlugin implements Bridge, Pluginlifecycle {
       });
     }
   }
-  onMounted(ctx: PluginExtensionContext): void {
-    console.log("proxy代理已挂载");
+  async onMounted(ctx: ExtensionContext) {
+    console.log("doubao代理已挂载");
     pluginContext.ipcMain.handle(
       "webview-api.webview.agent.ready",
       (event, urlString) => {

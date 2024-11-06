@@ -68,9 +68,24 @@ handleChannelEvent('pty.terminal-output', {
 handleChannelEvent('ipc-notify.show-task', {
   onBind: (webId: number): void => {
     notify("gpt拦截器已初始化完成！")
-    pluginManager.loadPluginFromDir(innerPluginPath)
+    pluginManager.on('error', (event_, plugin_path, err) => {
+      if (event_ === 'scan') {
+        showErrorDialog(`加载扩展异常${plugin_path},错误:${String(err)}`)
+      }
+
+    })
+
   }
 })
+//当通知ui就绪时
+handleChannelEvent('plugin-view-api.load', {
+  onBind: (webId: number): void => {
+    pluginManager.loadPluginFromDir(innerPluginPath).catch(err => {
+      notify("插件加载异常:" + err)
+    })
+  }
+})
+
 app.whenReady().then(() => {
   startProxyServer().then(proxy => {
     startWindow(`http://${proxy.httpHost}:${proxy.httpPort}`);

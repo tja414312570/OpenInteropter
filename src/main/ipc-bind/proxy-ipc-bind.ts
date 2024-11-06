@@ -1,8 +1,8 @@
+import { getIpcApi } from "@main/ipc/ipc-wrapper";
 import { buildProxy } from "@main/services/global-agents";
 import { proxyRequest } from "@main/utils/nets";
-import { ipcMain } from "electron";
-
-ipcMain.handle('ipc-settings.proxy-test', async (event, proxyInfo, url) => {
+const api = getIpcApi('ipc-settings')
+api.handle('proxy-test', async (event, proxyInfo, url) => {
     const newProxy = buildProxy(proxyInfo);
     try {
         const httpResponse = await proxyRequest({

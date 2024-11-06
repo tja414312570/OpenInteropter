@@ -25,7 +25,7 @@ window.addEventListener('DOMContentLoaded', () => {
     };
     document.head.appendChild(script);  // 将 script 标签插入到页面
   }
-  ipcRenderer.invoke("load-script", location.href).then(file_addr => {
+  ipcRenderer.invoke("plugin-view-api.load-script", location.href).then(file_addr => {
     // 调用示例，加载模块化的 JavaScript 文件
     if (file_addr.length > 0) {
       loadModule(file_addr);

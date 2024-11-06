@@ -7,7 +7,7 @@ import {
   pluginContext,
 } from "mylib/main";
 import { Pluginlifecycle } from "mylib/main";
-import { PluginExtensionContext } from "mylib/main";
+import { ExtensionContext } from "mylib/main";
 import { createContext, runInContext } from "vm";
 import { stringify } from "circular-json";
 import { rejects } from "assert";
@@ -25,7 +25,7 @@ import { startNodeChildProcess } from "./node-executor";
 import { platform } from "os";
 import { getUrl } from "./static-path";
 import { watcher } from "mylib/dev";
-watcher()
+watcher();
 class ExecuteContext {
   private _data: ((data: string) => void) | undefined;
   private _write: ((data: string) => void) | undefined;
@@ -91,8 +91,7 @@ class ExecuteContext {
 
 class NodeExecutor
   extends AbstractPlugin
-  implements Pluginlifecycle, InstructExecutor
-{
+  implements Pluginlifecycle, InstructExecutor {
   private executeContext: null | ExecuteContext = null;
   env = {} as any;
   currentTask(): string[] {
@@ -254,30 +253,32 @@ class NodeExecutor
     });
   }
 
-  async onMounted(ctx: PluginExtensionContext) {
+  async onMounted(ctx: ExtensionContext) {
     // 插件挂载时的处理逻辑
     pluginContext.notifyManager.showTask({
       content: "正在检查环境",
       progress: -1,
     });
-    const url  = getUrl();
-    console.log('ui渲染地址:'+url)
-    const window = pluginContext.windowManager.createWindow(pluginContext.plugin.appId,{
-      width:720,
-      height:360,
-      minimizable:false,
-      resizable: false, // 禁用调整窗口大小
-    })
+    const url = getUrl();
+    console.log("ui渲染地址:" + url);
+    const window = pluginContext.windowManager.createWindow(
+      pluginContext.plugin.appId,
+      {
+        width: 720,
+        height: 360,
+        minimizable: false,
+        resizable: false, // 禁用调整窗口大小
+      }
+    );
     window.loadURL(url);
-    if(true)return;
+    throw new Error("未捕获异常");
+    if (true) return;
     const plugHome = pluginContext.workPath;
     if (fs.existsSync(plugHome)) {
       fs.mkdirSync(plugHome, { recursive: true });
     }
-    const nodeVersion = await pluginContext.settingManager.getSettingValue(
-      `version`
-    );
-    const nodePath = await pluginContext.settingManager.getSettingValue(`path`);
+    const nodeVersion = await pluginContext.settingManager.get(`version`);
+    const nodePath = await pluginContext.settingManager.get(`path`);
     const execPromise = util.promisify(exec);
     if (nodeVersion && nodePath) {
       pluginContext.notifyManager.showTask({
@@ -304,10 +305,7 @@ class NodeExecutor
         if (getVersion.length > 0) {
           this.env = env;
           if (nodeVersion.trim() !== getVersion) {
-            pluginContext.settingManager.saveSettingValue(
-              `version`,
-              getVersion
-            );
+            pluginContext.settingManager.save(`version`, getVersion);
           }
           pluginContext.notifyManager.showTask({
             content: `已获取到Node，版本:${stdout}`,
@@ -326,8 +324,8 @@ class NodeExecutor
     //   const { stdout, stderr } = await execPromise('node -v', { env });
     //   const getVersion = stdout.trim();
     //   if (getVersion.length > 0) {
-    //     pluginContext.settingManager.saveSettingValue(`version`, getVersion);
-    //     pluginContext.settingManager.saveSettingValue(`path`, 'default');
+    //     pluginContext.settingManager.save(`version`, getVersion);
+    //     pluginContext.settingManager.save(`path`, 'default');
     //     pluginContext.notifyManager.showTask({ content: `已获取到Node，版本:${stdout}` });
     //     return;
     //   }
@@ -405,8 +403,8 @@ class NodeExecutor
       const getVersion = stdout.trim();
       if (getVersion.length > 0) {
         this.env = env;
-        pluginContext.settingManager.saveSettingValue(`version`, getVersion);
-        pluginContext.settingManager.saveSettingValue(`path`, extNodePath);
+        pluginContext.settingManager.save(`version`, getVersion);
+        pluginContext.settingManager.save(`path`, extNodePath);
         pluginContext.notifyManager.showTask({
           content: `NodeJs，版本:${stdout}`,
         });
@@ -467,4 +465,3 @@ class NodeExecutor
 }
 
 export default new NodeExecutor();
-

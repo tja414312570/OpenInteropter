@@ -1,23 +1,22 @@
 import { InstructContent, executeCodeCompleted } from "@main/ipc/code-manager";
-import { loadModules } from "./modules";
-import { notify } from "@main/ipc/notify-manager";
-import { send_ipc_render } from "@main/ipc/send_ipc";
-import { ipcMain } from "electron";
 import { sendMessage } from "@main/ipc/webview-api";
 import pluginManager from "@main/plugin/plugin-manager";
-import { PluginInfo, PluginType } from '@lib/main';
+import { PluginType } from '@lib/main';
 import { InstructExecutor, InstructResult } from '@lib/main';
 import { showErrorDialog } from "@main/utils/dialog";
+import { PluginInfo } from "@main/plugin/plugin-context";
+import { getIpcApi } from "@main/ipc/ipc-wrapper";
 
-ipcMain.on('code-view-api.send_execute-result', (event, input) => {
+const api = getIpcApi('code-view-api')
+api.on('send_execute-result', (event, input) => {
     console.log("发送消息到webview", input)
     sendMessage(input)
 });
 
-ipcMain.handle('code-view-api.execute', (event, code: InstructContent) => {
+api.handle('execute', (event, code: InstructContent) => {
     return executeCode(code)
 })
-ipcMain.handle('code-view-api.execute.stop', (event, code: InstructContent) => {
+api.handle('execute.stop', (event, code: InstructContent) => {
     return stopExecute(code)
 })
 export const stopExecute = async (code_body: InstructContent) => {

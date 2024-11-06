@@ -1,5 +1,7 @@
-import { DialogOpt, DialogReturnValue, IIpcMain, ISetting, ISettingManager, IWindowManager, NotifyManager, PluginExtensionContext, PluginInfo, Pluginlifecycle, ResourceManager } from '@lib/main'
-import { send_ipc_render } from '@main/ipc/send_ipc';
+import {
+    DialogOpt, DialogReturnValue, ExtensionContext as ExtExtensionContext, IIpcMain, ISetting, ISettingManager, IWindowManager, NotifyManager, PluginInfo as ExtPluginInfo,
+    ResourceManager
+} from '@lib/main'
 import settingManager from '@main/services/service-setting'
 import path from 'path';
 import appContext from '@main/services/app-context';
@@ -8,11 +10,30 @@ import { app } from 'electron';
 import windowManager from '@main/services/window-manager';
 import pluginManager from './plugin-manager';
 import { getPreloadFile, getUrl } from "@main/config/static-path";
+import { getIpcApi } from '@main/ipc/ipc-wrapper';
 
-export class PluginContext implements PluginExtensionContext {
+export interface ExtensionContext extends ExtExtensionContext {
+    /**
+       *
+       * @param plugin 用于获取组件的id
+       */
+    create(): void;
+    /**
+     * 用于当组件卸载时主动清理上线文中的钩子
+     * @param plugin
+     */
+    destory(): void;
+}
+
+export interface PluginInfo extends ExtPluginInfo {
+    context: ExtensionContext
+}
+const notifyApi = getIpcApi('ipc-notify')
+export class PluginContext implements ExtensionContext {
     plugin: PluginInfo;
     settingManager: ISettingManager;
     private settings: Set<string> = new Set;
+    private closeCleanResource: Set<() => void> = new Set;
     envDir: string;
     resourceManager: ResourceManager;
     _pluginPath: string;
@@ -36,25 +57,37 @@ export class PluginContext implements PluginExtensionContext {
         this.plugin = plugin;
         const appid = plugin.appId.replaceAll('.', '-');
         this.settingManager = {
-            onSettingChange: (path: string, callback: (value: any) => void) => {
-                settingManager.onSettingChange(`plugin.${appid}.${path}`, callback);
+            on(_evnent: string, listener: (...args: any) => void) {
+                settingManager.on(_evnent, listener)
+                this.closeCleanResource.add(() => settingManager.off(_evnent, listener))
             },
-            registeSetting: (menus: ISetting | ISetting[], path_?: string) => {
-                // this.settings.add(menus.key)
-                settingManager.registeSetting(menus, `plugin.${appid}${path_ ? '.' + path_ : ''}`);
+            off: settingManager.off,
+            offAllValueChange(key: any) {
+                settingManager.offAllValueChange(`plugin.${appid}.${key}`)
             },
-            getSettingValue: (key: string) => {
-                return settingManager.getSettingValue(`plugin.${appid}.${key}`);
+            remove(menus: ISetting | ISetting[]) {
+                settingManager.remove(menus);
             },
-            saveSettingValue: (key: string, value?: any) => {
-                return settingManager.saveSettingValue(`plugin.${appid}.${key}`, value)
+            onValueChange(key: any, listener: (value: any) => void) {
+                return settingManager.onValueChange(`plugin.${appid}.${key}`, listener);
+            },
+            register: (menus: ISetting | ISetting[], path_?: string) => {
+                const promise = settingManager.register(menus, `plugin.${appid}${path_ ? '.' + path_ : ''}`);
+                this.closeCleanResource.add(() => settingManager.remove(menus))
+                return promise;
+            },
+            get: (key: string) => {
+                return settingManager.get(`plugin.${appid}.${key}`);
+            },
+            save: (key: string, value?: any) => {
+                return settingManager.save(`plugin.${appid}.${key}`, value)
             },
             getSettings: (path?: string) => {
                 return settingManager.getSettings(`plugin.${appid}.${path}`)
             }
-        }
+        } as any;
         this.windowManager = {
-            createWindow(windowId, options) {
+            createWindow: (windowId, options) => {
                 options = {
                     ...options, webPreferences: {
                         devTools: true,
@@ -73,6 +106,7 @@ export class PluginContext implements PluginExtensionContext {
                     mode: "undocked",
                     activate: true,
                 });
+                this.closeCleanResource.add(window.close.bind(window))
                 return windowManager.createWindow(windowId, options)
             },
             getWindow: windowManager.getWindow
@@ -83,7 +117,7 @@ export class PluginContext implements PluginExtensionContext {
         this.resourceManager = resourceManager;
         this.notifyManager = {
             notify: (message: string) => {
-                send_ipc_render('ipc-notify.show-notification', {
+                notifyApi.send('show-notification', {
                     message,
                     name: this.plugin.name,
                     id: this.plugin.id,
@@ -91,7 +125,7 @@ export class PluginContext implements PluginExtensionContext {
                 });
             }, showTask: (task) => {
                 const { content, progress } = task;
-                send_ipc_render('ipc-notify.show-task', {
+                notifyApi.send('show-task', {
                     content,
                     progress,
                     name: this.plugin.name,
@@ -100,7 +134,7 @@ export class PluginContext implements PluginExtensionContext {
                 });
             },
             notifyError: (message: string) => {
-                send_ipc_render('ipc-notify.show-notification', {
+                notifyApi.send('show-notification', {
                     message,
                     name: this.plugin.name,
                     id: this.plugin.id,
@@ -110,10 +144,13 @@ export class PluginContext implements PluginExtensionContext {
         }
     }
 
-    register(plugin: Pluginlifecycle & any): void {
+    create(): void {
         console.log("组件开始注册")
     }
-    remove(plugin: Pluginlifecycle & any): void {
+    destory(): void {
         console.log("组件开始移除")
+        for (const fun of this.closeCleanResource) {
+            fun();
+        }
     }
 }

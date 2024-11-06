@@ -1,9 +1,24 @@
-import { ipcMain } from "electron";
 import _ from 'lodash';  // 使用 ES6 import 语法
 import { Bridge, InstructExecutor, PluginInfo, PluginType } from '@lib/main';
-import pluginManager from "@main/plugin/plugin-manager";
+import pluginManager, { PluginEventMap } from "@main/plugin/plugin-manager";
 import { getAgentFromUrl } from "@main/services/proxy";
+import { getIpcApi } from "@main/ipc/ipc-wrapper";
 
+const api = getIpcApi('plugin-view-api')
+const bind = (event: keyof PluginEventMap) => {
+    pluginManager.on(event, (plugin: PluginInfo) => {
+        api.send(event, copy(plugin))
+    })
+}
+export const initBind = () => {
+    bind('load')
+    bind('loaded')
+    bind('reload')
+    bind('reloaded')
+    bind('unload')
+    bind('unloaded')
+    bind('remove')
+}
 
 const arrayPool = {
     pool: [],  // 存储空闲数组
@@ -25,7 +40,7 @@ const arrayPool = {
 };
 
 const _clone = (pluginInfo: PluginInfo) => {
-    return _.omit(pluginInfo, ['getModule', 'proxy', 'module'])
+    return _.omit(pluginInfo, ['getModule', 'proxy', 'module', 'context'])
 }
 const copy = (pluginList: undefined | null | PluginInfo | PluginInfo[]) => {
     if (!pluginList) {
@@ -45,22 +60,22 @@ const copy = (pluginList: undefined | null | PluginInfo | PluginInfo[]) => {
     return list;
 };
 
-ipcMain.handle('plugin-view-api.get-plugin-list', (event, args) => {
+api.handle('get-plugin-list', (event, args) => {
     const cloneObj = copy(pluginManager.filtePlugins(args));
     return cloneObj;
 })
 
-ipcMain.handle('plugin-view-api.get-plugin-tasks', async (event, args) => {
+api.handle('get-plugin-tasks', async (event, args) => {
     const plugin = pluginManager.filtePlugins(args);
     const instance = await pluginManager.getModule(plugin[0] as any) as InstructExecutor;
     return instance.currentTask();
 })
 
-ipcMain.handle('plugin-view-api.plugin-reload', async (event, id: string) => {
+api.handle('plugin-reload', async (event, id: string) => {
     return copy(await pluginManager.reload(pluginManager.getPluginFromId(id)));
 })
 
-ipcMain.handle('load-script', (event, url) => {
+api.handle('load-script', (event, url) => {
     return new Promise<string>(async (resolve, reject) => {
         try {
             const agent = await getAgentFromUrl(url);

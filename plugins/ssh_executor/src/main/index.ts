@@ -7,7 +7,7 @@ import {
   pluginContext,
 } from "mylib/main";
 import { Pluginlifecycle } from "mylib/main";
-import { PluginExtensionContext } from "mylib/main";
+import { ExtensionContext } from "mylib/main";
 import { v4 as uuidv4 } from "uuid";
 import VirtualWindow from "./virtual-window";
 import fs from "fs";
@@ -102,15 +102,16 @@ const isDebug = true;
 export function debug(data: string) {
   return isDebug
     ? data.replace(/[\x00-\x1F\x7F]/g, (char) => {
-      const hex = char.charCodeAt(0).toString(16).padStart(2, "0");
-      return `\\x${hex}`;
-    })
+        const hex = char.charCodeAt(0).toString(16).padStart(2, "0");
+        return `\\x${hex}`;
+      })
     : data;
 }
 
 class SshExecutor
   extends AbstractPlugin
-  implements InstructExecutor, Pluginlifecycle {
+  implements InstructExecutor, Pluginlifecycle
+{
   private cache: Map<string, ExecuteContext> = new Map();
   currentTask(): string[] {
     return [...this.cache.keys()];
@@ -287,7 +288,7 @@ class SshExecutor
     });
   }
 
-  onMounted(ctx: PluginExtensionContext): void { }
-  onUnmounted(): void { }
+  async onMounted(ctx: ExtensionContext) {}
+  onUnmounted(): void {}
 }
 export default new SshExecutor();

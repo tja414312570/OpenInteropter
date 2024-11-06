@@ -3,7 +3,7 @@ import { createGlobalProxyAgent, bootstrap, ProxyAgentConfigurationType } from "
 import settingManager from "./service-setting";
 import '../ipc-bind/proxy-ipc-bind'
 bootstrap();
-settingManager.registeSetting({
+settingManager.register({
   name: "代理设置",
   key: "proxy",
 }, 'network')
@@ -69,11 +69,11 @@ export const setProxy = (proxy: Proxy) => {
 }
 
 (async () => {
-  const proxySettings = await settingManager.getSettingValue('network.proxy') as ProxySettings;
+  const proxySettings = await settingManager.get('network.proxy') as ProxySettings;
   const proxy = buildProxy(proxySettings);
   setProxy(proxy)
   console.log("代理设置", proxySettings, proxy)
-  settingManager.onSettingChange('network.proxy', (value: ProxySettings) => {
+  settingManager.onValueChange('network.proxy', (value: ProxySettings) => {
     const proxy = buildProxy(value);
     setProxy(proxy)
     console.log("代理设置", value, proxy, getProxy())

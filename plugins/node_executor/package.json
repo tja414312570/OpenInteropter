@@ -6,9 +6,7 @@
   "type": "commonjs",
   "scripts": {
     "dev": "cross-env NODE_ENV=development tsx .vite/dev-runner.ts",
-    "build2": "cross-env NODE_ENV=production tsx .vite/build.ts",
-    "build": "NODE_ENV=production webpack --config webpack.config.js && webpack --config webpack.zip.js",
-    "start": "NODE_ENV=development webpack serve --config webpack.config.js",
+    "build": "cross-env NODE_ENV=production tsx .vite/build.ts",
     "clean": "rimraf build dist",
     "test": "npx ts-node test/test.ts",
     "zip": "npm run clean && npm run build"

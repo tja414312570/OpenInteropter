@@ -7,7 +7,7 @@ import {
   pluginContext,
 } from "mylib/main";
 import { Pluginlifecycle } from "mylib/main";
-import { PluginExtensionContext } from "mylib/main";
+import { ExtensionContext } from "mylib/main";
 import { v4 as uuidv4 } from "uuid";
 import { runPythonCode } from "./python";
 import { stringify } from "circular-json";
@@ -80,7 +80,8 @@ class ExecuteContext {
 
 class PythonExecutor
   extends AbstractPlugin
-  implements InstructExecutor, Pluginlifecycle {
+  implements InstructExecutor, Pluginlifecycle
+{
   currentTask(): string[] {
     return this.executeContext ? [""] : [];
   }
@@ -227,7 +228,7 @@ class PythonExecutor
     });
   }
 
-  onMounted(ctx: PluginExtensionContext): void { }
-  onUnmounted(): void { }
+  async onMounted(ctx: ExtensionContext) {}
+  onUnmounted(): void {}
 }
 export default new PythonExecutor();

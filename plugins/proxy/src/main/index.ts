@@ -2,7 +2,7 @@ import {
   AbstractPlugin,
   Bridge,
   pluginContext,
-  PluginExtensionContext,
+  ExtensionContext,
 } from "mylib/main";
 import { Pluginlifecycle } from "mylib/main";
 import { IContext } from "http-mitm-proxy";
@@ -95,7 +95,7 @@ class ChatGptBridge extends AbstractPlugin implements Bridge, Pluginlifecycle {
       });
     }
   }
-  onMounted(ctx: PluginExtensionContext): void {
+  async onMounted(ctx: ExtensionContext) {
     console.log("proxy代理已挂载");
     pluginContext.ipcMain.handle(
       "webview-api.webview.agent.ready",

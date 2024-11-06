@@ -37,7 +37,7 @@ export default defineConfig({
     target: "esnext",
     cssCodeSplit: false,
   },
-  server: { open: true },
+  server: {},
   plugins: [
     vueJsx(),
     vuePlugin({

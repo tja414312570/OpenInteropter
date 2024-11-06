@@ -1,10 +1,10 @@
-import { send_ipc_render } from "@main/ipc/send_ipc";
-import { app, ipcMain } from "electron";
+import { app } from "electron";
 import * as pty from 'node-pty';
 import resourceManager from "@main/plugin/resource-manager";
-import settingManager from "./service-setting";
 import path from "path";
 import appContext from "./app-context";
+import { getIpcApi } from "@main/ipc/ipc-wrapper";
+const api = getIpcApi('pty')
 let isinit = false;
 function init() {
     console.log(new Error(isinit + ''))
@@ -33,20 +33,20 @@ function init() {
         });
         resourceManager.put('pty', ptyProcess)
         // 监听输入事件
-        ipcMain.on('pty.terminal-input', (event, input) => {
+        api.on('terminal-input', (event, input) => {
             ptyProcess.write(input);
         });
         // 监听终端数据输出
         ptyProcess.onData((data) => {
-            send_ipc_render('pty.terminal-output', data);
+            api.send('terminal-output', data);
         });
 
-        ipcMain.on('pty.terminal-into', (event, data) => {
+        api.on('terminal-into', (event, data) => {
             ptyProcess.write(data);
         });
 
         // 调整终端大小
-        ipcMain.on('pty.terminal-resize', (event, cols, rows) => {
+        api.on('terminal-resize', (event, cols, rows) => {
             if (cols > 0 && rows > 0) {
                 ptyProcess.resize(cols, rows);
             } else {

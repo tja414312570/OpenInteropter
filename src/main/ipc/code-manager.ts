@@ -1,5 +1,5 @@
-import { send_ipc_render } from "./send_ipc"
 import { v4 as uuidV4 } from 'uuid'
+import { getIpcApi } from './ipc-wrapper'
 export type InstructContent = {
     code: string,
     language: string,
@@ -14,11 +14,12 @@ export type ExecuteResult = {
 export const wrapperInstruct = (instruction: string, content: string): InstructContent => {
     return { language: instruction, code: content, id: uuidV4() }
 }
+const api = getIpcApi('code-view-api')
 export const previewCode = (code: Array<InstructContent>) => {
     console.error("执行错误:", new Error())
-    send_ipc_render('code-view-api.code', code)
+    api.send('code', code)
 }
 
 export const executeCodeCompleted = (code: ExecuteResult) => {
-    send_ipc_render('code-view-api.code.executed', code)
+    api.send('code.executed', code)
 }

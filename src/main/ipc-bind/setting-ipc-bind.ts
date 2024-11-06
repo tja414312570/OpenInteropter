@@ -1,14 +1,15 @@
+import { getIpcApi } from "@main/ipc/ipc-wrapper";
 import settingManager from "@main/services/service-setting";
-import { ipcMain } from "electron";
+const ipc = getIpcApi('ipc-settings')
 
-ipcMain.handle('ipc-settings.get-settings', (event, args) => {
+ipc.handle('get-settings', (event, args) => {
     return settingManager.getSettings();
 });
-ipcMain.handle('ipc-settings.get-setting-value', (event, key) => {
-    return settingManager.getSettingValue(key);
+ipc.handle('get-setting-value', (event, key) => {
+    return settingManager.get(key);
 });
 
-ipcMain.handle('ipc-settings.save-setting-value', (event, json) => {
-    settingManager.saveSettingValue(json)
+ipc.handle('save-setting-value', (event, json) => {
+    settingManager.save(json)
     return;
 });

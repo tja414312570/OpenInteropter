@@ -1,11 +1,11 @@
 import { app } from "electron";
-import path from "path";
+import path, { resolve } from "path";
 import { access, constants, readFile, writeFile } from "fs/promises";
 import assert from "assert";
 import _ from 'lodash';
 import '../ipc-bind/setting-ipc-bind'
 import EventEmitter from "events";
-import { ISetting, ISettingManager } from "@lib/main";
+import { ISetting, ISettingManager, SettingEventMap } from "@lib/main";
 import { accessSync, readFileSync } from "fs";
 import { showErrorDialog } from "@main/utils/dialog";
 
@@ -13,7 +13,7 @@ const userDataPath = app.getPath('userData');
 const configPath = path.join(userDataPath, 'settings.json')
 console.log("配置地址", configPath)
 
-const settins_menu: Array<ISetting> = [
+const settins_list: Array<ISetting> = [
     {
         name: "通用",
         key: "general",
@@ -38,24 +38,56 @@ const settins_menu: Array<ISetting> = [
         key: "plugins",
     }
 ];
-
-class SettingManager implements ISettingManager {
-    private eventer = new EventEmitter();
+class SettingManager extends EventEmitter<SettingEventMap> implements ISettingManager {
     private cache: any;
     private state: 'read' | 'write' | 'empty' = 'empty'
     private lock = 0;
-    constructor() { }
-    onSettingChange(path: string, callback: (value: any) => void) {
-        this.eventer.on("SettingChange", callback);
-    };
-    registeSetting(menus: ISetting | Array<ISetting>, path_?: string) {
+    constructor() {
+        super();
+    }
+    onValueChange(key: string, listener: (value: any) => void) {
+        this.on(`change.${key}`, listener)
+        return () => this.off(`change.${key}`, listener);
+    }
+    offAllValueChange(key: string) {
+        this.removeAllListeners(key)
+    }
+    removeSignale(target: string, menu_array = settins_list, path_: string = target) {
+        const index = target.indexOf(".");
+        const currentKey = index > 1 ? target.substring(0, index) : target;
+        const remainingPath = index > 1 ? target.substring(index + 1) : null;
+        for (let i = 0; i < menu_array.length; i++) {
+            const menu = menu_array[i];
+            if (menu.key === currentKey) {
+                if (remainingPath) {
+                    if (menu.subs) {
+                        this.removeSignale(remainingPath, menu.subs, path_);
+                    }
+                } else {
+                    menu_array.splice(i, 1);
+                    this.emit('remove', path_, menu);
+                    break;
+                }
+            }
+        }
+    }
+    remove(menus: ISetting | ISetting[]): void {
+        if (!Array.isArray(menus)) {
+            menus = [menus];
+        }
+        for (const menu of menus) {
+            assert.ok(menu.path, "菜单项必须有path")
+            this.removeSignale(menu.path)
+        }
+    }
+    async register(menus: ISetting | Array<ISetting>, path_?: string) {
         if (!menus || (Array.isArray(menus) && menus.length === 0)) {
             throw new Error("空菜单项")
         }
         if (!Array.isArray(menus)) {
             menus = [menus];
         }
-        let _target_menus = settins_menu;
+        let _target_menus = settins_list;
         let foundMenu: ISetting;
         if (path_) {
             foundMenu = foundSetting(path_);
@@ -74,14 +106,16 @@ class SettingManager implements ISettingManager {
             }
             generateMenuPath(menu, foundMenu?.path)
             _target_menus.push(menu);
+            this.emit('add', foundMenu ? foundMenu.path : '', menu);
         }
+        return menus;
     }
-    getSettingValue = (key: string) => {
+    get = (key: string) => {
         const config = this.getSettingConfig();
         const value = _.get(config, key)
         return value;
     }
-    saveSettingValue = (key: string | Record<string, any>, value?: any) => {
+    save = (key: string | Record<string, any>, value?: any) => {
         const config = this.getSettingConfig();
         if (typeof key === 'string') {
             const currentValue = _.get(config, key);
@@ -89,7 +123,8 @@ class SettingManager implements ISettingManager {
                 return Promise.resolve();
             }
             _.set(config, key, value);
-            this.eventer.emit("SettingChange", value);
+            this.emit('change', key, value);
+            this.emit(`change.${key}`, value)
         } else {
             let hasNews = false;
             for (const path in key) {
@@ -97,7 +132,8 @@ class SettingManager implements ISettingManager {
                 value = key[path];
                 if (!_.isEqual(currentValue, value)) { // 值相同时跳过写入
                     _.set(config, path, value);
-                    this.eventer.emit("SettingChange", value);
+                    this.emit('change', path, value);
+                    this.emit(`change.${key}`, value)
                     hasNews = true;
                 }
             }
@@ -147,7 +183,7 @@ class SettingManager implements ISettingManager {
         return this.cache;
     }
     getSettings = (path?: string) => {
-        return path ? foundSetting(path) : settins_menu;
+        return path ? foundSetting(path) : settins_list;
     }
 }
 
@@ -169,8 +205,8 @@ function generateMenuPath(menu: ISetting | ISetting[], parentPath?: string): voi
         }
     }
 }
-generateMenuPath(settins_menu);
-function foundSetting(target: string, _menus = settins_menu): ISetting | null {
+generateMenuPath(settins_list);
+function foundSetting(target: string, _menus = settins_list): ISetting | null {
     const index = target.indexOf(".");
     const current = target.substring(0, index > 1 ? index : target.length);
     const remain = index > 1 ? target.substring(index + 1, target.length) : null;

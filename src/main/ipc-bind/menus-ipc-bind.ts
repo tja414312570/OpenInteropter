@@ -1,7 +1,10 @@
+import { getIpcApi } from "@main/ipc/ipc-wrapper";
 import { getMenus, MenuDesc } from "@main/services/service-menu";
 import settingManager from "@main/services/service-setting";
-import { BrowserWindow, ipcMain, Menu, MenuItem } from "electron";
+import { BrowserWindow, Menu, MenuItem } from "electron";
 import _ from "lodash";
+
+const api = getIpcApi('ipc-core')
 const copy = (pluginList: undefined | null | MenuDesc | Array<MenuDesc>) => {
     if (!pluginList) {
         return null;
@@ -22,7 +25,7 @@ const copy = (pluginList: undefined | null | MenuDesc | Array<MenuDesc>) => {
 const _clone = (menu: MenuDesc) => {
     return _.omit(menu, ['click'])
 }
-ipcMain.handle('ipc-core.get-menus', (event, args) => {
+api.handle('get-menus', (event, args) => {
     const focusedWindow = BrowserWindow.fromWebContents(event.sender) as any;
     const showMenu = focusedWindow?.options?.showMenu
     if (!showMenu) {
@@ -31,7 +34,7 @@ ipcMain.handle('ipc-core.get-menus', (event, args) => {
     const menus = copy((getMenus() as MenuDesc[]).filter(Boolean).filter(item => item.submenu));
     return menus;
 });
-ipcMain.handle('ipc-core.click-menu', (event, id: string) => {
+api.handle('click-menu', (event, id: string) => {
     const menuItem = Menu.getApplicationMenu().getMenuItemById(id);
     const focusedWindow = BrowserWindow.fromWebContents(event.sender);
     menuItem.click(event, focusedWindow, event.sender)

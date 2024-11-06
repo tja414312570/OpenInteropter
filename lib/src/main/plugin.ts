@@ -8,6 +8,8 @@ import {
   WebFrameMain,
 } from "electron";
 import { Pluginlifecycle } from "./plugin-lifecycle";
+import EventEmitter from "events";
+import path from "path";
 
 // 定义插件的接口
 export interface PluginManifest {
@@ -34,8 +36,9 @@ export interface PluginInfo {
   version: string;
   main: string;
   dir: string;
+  context: ExtensionContext;
   description: string;
-  module: Pluginlifecycle & any; // 插件导出的钩子函数
+  module: Pluginlifecycle; // 插件导出的钩子函数
   type: PluginType; // 插件类型（根据 manifest 中的 type 字段）
   match?: string[]; // 匹配规则
   instruct?: string[]; //支持的指令
@@ -71,11 +74,24 @@ export interface IWindowManager {
   createWindow: (windowId: string, options?: IBrowserWindowOptions) => BrowserWindow;
   getWindow: (windowId: string) => BrowserWindow;
 }
-export interface ISettingManager {
-  onSettingChange(path: string, callback: (value: any) => void): void;
-  registeSetting(menus: ISetting | ISetting[], path_?: string): void;
-  getSettingValue(key: string): any;
-  saveSettingValue(
+export interface SettingEventMap {
+  add: [string, ISetting];
+  remove: [string, ISetting];
+  change: [string, any];
+  [event: string]: any[];
+}
+export interface ISettingManager extends EventEmitter<SettingEventMap> {
+  /**
+   * @param key 设置坐标
+   * @param listener 监听器
+   * @returns 移除监听器
+   */
+  onValueChange(key: string, listener: (value: any) => void): () => void;
+  offAllValueChange(key: string): void;
+  register(menus: ISetting | ISetting[], path_?: string): Promise<ISetting | ISetting[]>;
+  get(key: string): any;
+  remove(menus: ISetting | ISetting[]): void;
+  save(
     key: string | Record<string, any>,
     value?: any
   ): Promise<void>;
@@ -86,7 +102,7 @@ export type NotifyManager = {
   notifyError: (message: string) => void;
   showTask: (task: { content: string, progress?: number }) => void;
 };
-export interface PluginExtensionContext {
+export interface ExtensionContext {
   plugin: PluginInfo,
   settingManager: ISettingManager;
   envDir: string;
@@ -96,22 +112,11 @@ export interface PluginExtensionContext {
   windowManager: IWindowManager;
   getPath(path: 'home' | 'appData' | 'userData' | 'sessionData' | 'temp' | 'exe' | 'module' | 'desktop' | 'documents' | 'downloads' | 'music' | 'pictures' | 'videos' | 'recent' | 'logs' | 'crashDumps'): string;
   /**
-   *
-   * @param plugin 用于获取组件的id
-   */
-  register(plugin: Pluginlifecycle & any): void;
-  /**
-   * 用于当组件卸载时主动清理上线文中的钩子
-   * @param plugin
-   */
-  remove(plugin: Pluginlifecycle & any): void;
-  /**
    * 通知管理
    */
   notifyManager: NotifyManager
   ipcMain: IIpcMain;
   appPath: string;
-
   sendIpcRender: (event_: string, message: any) => void;
   showDialog: (message: DialogOpt) => Promise<DialogReturnValue>;
   reload: () => void;
