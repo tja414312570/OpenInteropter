@@ -8,6 +8,7 @@ import { rollup, OutputOptions, RollupOptions } from "rollup";
 import { DefaultRenderer, Listr } from "listr2";
 import rollupOptions from "./rollup.config";
 import { errorLog, doneLog } from "./log";
+import rimraf from 'rimraf'
 
 const mainOpt = rollupOptions(process.env.NODE_ENV, "main") as RollupOptions;
 const preloadOpt = rollupOptions(
@@ -22,8 +23,7 @@ else unionBuild();
 
 async function clean() {
   await deleteAsync([
-    "dist/electron/*",
-    "dist/web/*",
+    "dist/*",
     "build/*",
     "!build/icons",
     "!build/lib",
@@ -119,7 +119,6 @@ async function web() {
 function greeting() {
   const cols = process.stdout.columns;
   let text: boolean | string = "";
-
   if (cols > 85) text = `let's-build`;
   else if (cols > 60) text = `let's-|build`;
   else text = false;

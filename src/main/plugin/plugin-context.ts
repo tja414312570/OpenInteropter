@@ -1,4 +1,4 @@
-import { DialogOpt, DialogReturnValue, IIpcMain, ISetting, ISettingManager, NotifyManager, PluginExtensionContext, PluginInfo, Pluginlifecycle, ResourceManager } from '@lib/main'
+import { DialogOpt, DialogReturnValue, IIpcMain, ISetting, ISettingManager, IWindowManager, NotifyManager, PluginExtensionContext, PluginInfo, Pluginlifecycle, ResourceManager } from '@lib/main'
 import { send_ipc_render } from '@main/ipc/send_ipc';
 import settingManager from '@main/services/service-setting'
 import path from 'path';
@@ -6,7 +6,8 @@ import appContext from '@main/services/app-context';
 import resourceManager from './resource-manager';
 import { app } from 'electron';
 import windowManager from '@main/services/window-manager';
-
+import pluginManager from './plugin-manager';
+import { getPreloadFile, getUrl } from "@main/config/static-path";
 
 export class PluginContext implements PluginExtensionContext {
     plugin: PluginInfo;
@@ -19,11 +20,18 @@ export class PluginContext implements PluginExtensionContext {
     notifyManager: NotifyManager;
     ipcMain: IIpcMain;
     appPath: string;
+    windowManager: IWindowManager;
     getPath(path: 'home' | 'appData' | 'userData' | 'sessionData' | 'temp' | 'exe' | 'module' | 'desktop' | 'documents' | 'downloads' | 'music' | 'pictures' | 'videos' | 'recent' | 'logs' | 'crashDumps') {
         return app.getPath(path);
     }
     sendIpcRender: (event_: string, message: any) => void;
     showDialog: (message: DialogOpt) => Promise<DialogReturnValue>;
+    reload() {
+        pluginManager.reload(this.plugin);
+    }
+    unload() {
+        pluginManager.unload(this.plugin);
+    }
     constructor(plugin: PluginInfo) {
         this.plugin = plugin;
         const appid = plugin.appId.replaceAll('.', '-');
@@ -32,6 +40,7 @@ export class PluginContext implements PluginExtensionContext {
                 settingManager.onSettingChange(`plugin.${appid}.${path}`, callback);
             },
             registeSetting: (menus: ISetting | ISetting[], path_?: string) => {
+                // this.settings.add(menus.key)
                 settingManager.registeSetting(menus, `plugin.${appid}${path_ ? '.' + path_ : ''}`);
             },
             getSettingValue: (key: string) => {
@@ -44,7 +53,31 @@ export class PluginContext implements PluginExtensionContext {
                 return settingManager.getSettings(`plugin.${appid}.${path}`)
             }
         }
-        this.windowManager = windowManager;
+        this.windowManager = {
+            createWindow(windowId, options) {
+                options = {
+                    ...options, webPreferences: {
+                        devTools: true,
+                        webviewTag: true,
+                        preload: getPreloadFile('index')
+                    }
+                }
+                const window = windowManager.createWindow(windowId, options);
+                const loadUrl = window.loadURL;
+                window.loadURL = async (url, options) => {
+                    const pluginUrl = getUrl('plugin-window');
+                    const newUrl = `${pluginUrl}?path=${encodeURI(url)}`;
+                    loadUrl.bind(window)(newUrl, options);
+                }
+                window.webContents.openDevTools({
+                    mode: "undocked",
+                    activate: true,
+                });
+                return windowManager.createWindow(windowId, options)
+            },
+            getWindow: windowManager.getWindow
+        };
+
         this.workPath = path.join(appContext.pluginPath, plugin.appId);
         this.envDir = appContext.envPath;
         this.resourceManager = resourceManager;
@@ -76,6 +109,7 @@ export class PluginContext implements PluginExtensionContext {
             }
         }
     }
+
     register(plugin: Pluginlifecycle & any): void {
         console.log("组件开始注册")
     }

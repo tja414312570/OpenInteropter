@@ -29,6 +29,7 @@ class IpcApi {
         this.channel = channel;  // 初始化 channel
         if (!_win[channel]) {
             const message = `IPC-API错误，没有找到渠道:${channel} `
+            console.log(new Error(message))
             _win['ipc-core'].send('error-notify', message)
             showCustomAlert(message)
             throw new Error(message)

@@ -39,6 +39,8 @@ export default (env = "production", type = "main") => {
             file: path.join(__dirname, "..", "dist", "main.js"),
             format: "cjs",
             name: "MainProcess",
+            exports: "auto",
+            interop: "auto", 
             inlineDynamicImports: true,
             sourcemap: true,
           }
@@ -46,9 +48,51 @@ export default (env = "production", type = "main") => {
             // 如果是 preload，使用输出目录
             dir: path.join(__dirname, "..", "dist", type),
             format: "cjs",
+            exports: "auto",
+            interop: "auto", 
             sourcemap: true,
           },
     plugins: [
+      replace({
+        preventAssignment: true,
+        'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
+        'process.env.PORT':JSON.stringify(process.env.PORT || '9080'),
+        "process.env.userConfig": config ? JSON.stringify(config) : "{}",
+      }),
+      nodeResolve({
+        preferBuiltins: true,
+        browser: false,
+        extensions: [".mjs", ".ts", ".js", ".json", ".node"],
+      }),
+      commonjs({
+        sourceMap: true,
+      }),
+      json(),
+      esbuild({
+        include: /\.[jt]s?$/,
+        exclude: /node_modules/,
+        sourceMap: true,
+        // minify: env === "production",
+        target: "es2020",
+        define: {
+          __VERSION__: '"x.y.z"',
+        },
+        loaders: {
+          ".json": "json",
+          ".js": "jsx",
+        },
+      }),
+      alias({
+        entries: [
+          { find: "@main", replacement: path.join(__dirname, "../src/main") },
+          { find: "@lib", replacement: path.join(__dirname, "../lib/src") },
+          {
+            find: "@config",
+            replacement: path.join(__dirname, "..", "config"),
+          },
+        ],
+      }),
+      process.env.NODE_ENV == "production" && obfuscator({}),
       ...(type === "main"
         ? [
             copy({
@@ -87,45 +131,16 @@ export default (env = "production", type = "main") => {
             },
           ]
         : []),
-      replace({
-        preventAssignment: true,
-        "process.env.userConfig": config ? JSON.stringify(config) : "{}",
-      }),
-      nodeResolve({
-        preferBuiltins: true,
-        browser: false,
-        extensions: [".mjs", ".ts", ".js", ".json", ".node"],
-      }),
-      commonjs({
-        sourceMap: true,
-      }),
-      json(),
-      esbuild({
-        include: /\.[jt]s?$/,
-        exclude: /node_modules/,
-        sourceMap: true,
-        minify: env === "production",
-        target: "es2017",
-        define: {
-          __VERSION__: '"x.y.z"',
-        },
-        loaders: {
-          ".json": "json",
-          ".js": "jsx",
-        },
-      }),
-      alias({
-        entries: [
-          { find: "@main", replacement: path.join(__dirname, "../src/main") },
-          { find: "@lib", replacement: path.join(__dirname, "../lib/src") },
-          {
-            find: "@config",
-            replacement: path.join(__dirname, "..", "config"),
-          },
-        ],
-      }),
-      process.env.NODE_ENV == "production" && obfuscator({}),
     ],
+    onwarn(warning, warn) {
+      if (warning.code === "CIRCULAR_DEPENDENCY"){
+        return;
+      }
+      if (warning.code === 'UNRESOLVED_IMPORT') {
+        console.error('无法解析模块:', warn);
+      }
+      warn(warning);
+    },
     external: [
       ...builtinModules,
       "node-pty",

@@ -14,19 +14,19 @@ const special_key_props = new Set(["toString", "valueOf", "then", "toJSON", "onM
 class PluginManager {
     private pluginDirs: Set<string> = new Set();           // 插件目录
     private pluginSet: Set<PluginInfo> = new Set(); // 已加载的插件列表
-    private idMapping: { [key: string]: PluginInfo } = {}
+    private idMapping: Map<string, PluginInfo> = new Map();
     private typeMapping: MapSet<PluginInfo> = new MapSet();
     constructor() {
 
     }
     add(pluginInfo: PluginInfo) {
-        this.idMapping[pluginInfo.id] = pluginInfo;
+        this.idMapping.set(pluginInfo.appId, pluginInfo);
         this.pluginSet.add(pluginInfo);
         this.typeMapping.add(pluginInfo.type, pluginInfo)
     }
     remove(pluginInfo: PluginInfo) {
         this.pluginSet.delete(pluginInfo)
-        delete this.idMapping[pluginInfo.id];
+        this.idMapping.delete(pluginInfo.appId);
         this.typeMapping.remove(pluginInfo.type, pluginInfo)
     }
     public getPluginsFromType(type: PluginType): Array<PluginInfo> | undefined | null {
@@ -57,7 +57,7 @@ class PluginManager {
         return allPlugins;
     }
     public getPluginFromId(id: string): PluginInfo {
-        return this.idMapping[id];
+        return this.idMapping.get(id);
     }
 
     private wrapperModule(pluginInfo: PluginInfo) {
@@ -86,8 +86,8 @@ class PluginManager {
         return new Proxy(pluginInfo.module, proxyHandler);
     }
     resolvePluginModule<T>(type: PluginType, filter?: (pluginsOfType: Array<PluginInfo>) => PluginInfo | Array<PluginInfo> | undefined): Promise<T> {
-        return new Promise<T>((resolve, rejects) => {
-            let pluginsOfType: Array<PluginInfo> | PluginInfo | undefined = this.getPluginsFromType(type);
+        return new Promise<T>(async (resolve, rejects) => {
+            let pluginsOfType: Array<PluginInfo> | PluginInfo | undefined = await this.getPluginsFromType(type);
             if (!pluginsOfType || pluginsOfType.length === 0) {
                 rejects(`类型${type}没有相关注册插件!`)
                 return;
@@ -103,12 +103,12 @@ class PluginManager {
                 rejects(`类型${type}没有合适的注册插件!`)
             }
             if (!(pluginsOfType instanceof Set) && typeof pluginsOfType === 'object') {
-                resolve(this.getModule(pluginsOfType as PluginInfo & PluginProxy))
+                resolve(await this.getModule(pluginsOfType as PluginInfo & PluginProxy))
             }
             else if ((pluginsOfType instanceof Set)) {
                 if (pluginsOfType.size === 1) {
                     const pluginInfo = pluginsOfType.values().next().value;
-                    const module = this.getModule(pluginInfo as any);
+                    const module = await this.getModule(pluginInfo as any);
                     resolve(module)
                 } else {
                     //等待选择
@@ -117,13 +117,14 @@ class PluginManager {
             }
         })
     }
-    public load(pluginInfo: PluginInfo & PluginProxy) {
+    public async load(pluginInfo: PluginInfo & PluginProxy) {
         assert.ok(pluginInfo.status === PluginStatus.ready || pluginInfo.status === PluginStatus.unload, `插件${pluginInfo.manifest.name}状态不正常：${pluginInfo.status}，不允许加载`)
-        const orgin = require(pluginInfo.main) as any;
-        assert.ok(orgin.default, `插件${pluginInfo.manifest.name}的入口文件没有提供默认导出,文件位置:${pluginInfo.manifest.main}`)
-        assert.ok(typeof orgin.default === 'object' && orgin.default !== null, `插件${pluginInfo.manifest.name}的入口文件导出非对象,文件位置:${pluginInfo.manifest.main}`)
-        pluginInfo.module = orgin.default; // 或使用 import(pluginEntryPath) 来加载模块
-        pluginInfo.proxy = this.wrapperModule(pluginInfo);
+        const orgin = pluginInfo.main.endsWith('mjs') ? await import('file://' + pluginInfo.main) : require(pluginInfo.main)
+        const instance = orgin.default || orgin;
+        assert.ok(instance, `插件${pluginInfo.manifest.name}的入口文件没有提供默认导出,文件位置:${pluginInfo.manifest.main}`)
+        assert.ok(typeof instance === 'object' && instance !== null, `插件${pluginInfo.manifest.name}的入口文件导出非对象,文件位置:${pluginInfo.manifest.main}`)
+        pluginInfo.module = instance; // 或使用 import(pluginEntryPath) 来加载模块
+        pluginInfo.proxy = await this.wrapperModule(pluginInfo);
         const pluginContext = new PluginContext(pluginInfo);
         pluginContext.register(pluginInfo);
         if (!fs.existsSync(pluginContext.workPath)) {
@@ -152,23 +153,35 @@ class PluginManager {
         // pluginInfo.onUnloadCallback.forEach(callbackfn => callbackfn())
         console.log(`插件 ${pluginInfo.manifest.name} 已卸载`);
     }
-    public reload(pluginInfo: PluginInfo) {
+    public async reload(pluginInfo: PluginInfo) {
         pluginInfo.module.onUnmounted();
         pluginInfo.status = PluginStatus.unload;
         delete require.cache[require.resolve(pluginInfo.main)];
         pluginInfo.status = PluginStatus.ready;
-        this.load(pluginInfo as any)
+        await this.load(pluginInfo as any)
         // pluginInfo.onUnloadCallback.forEach(callbackfn => callbackfn())
         return pluginInfo;
     }
-    public getModule(pluginInfo: PluginInfo & PluginProxy): any {
+    public async getModule(pluginInfo: PluginInfo & PluginProxy) {
         if (!pluginInfo.module) {
-            this.load(pluginInfo)
+            await this.load(pluginInfo)
         }
         return pluginInfo.proxy;
     }
-    public loadPlugin(plugin_path: string, strict = true) {
+    public getPluginFromDir(plugin_path: string) {
+        for (const value of this.idMapping.values()) {
+            if (value.dir === plugin_path) {
+                return value;
+            }
+        }
+        return;
+    }
+    public async loadPlugin(plugin_path: string, strict = true) {
         assert.ok(fs.existsSync(plugin_path), `插件目录不存在:${plugin_path}`)
+        const exist = this.getPluginFromDir(plugin_path);
+        if (exist) {
+            return exist;
+        }
         const manifestPath = path.join(plugin_path, 'manifest.json');
         if (!strict) {
             if (!fs.existsSync(manifestPath)) {
@@ -178,13 +191,20 @@ class PluginManager {
         } else {
             assert.ok(fs.existsSync(manifestPath), `插件清单文件不存在，请检查此目录是否为插件目录:${plugin_path}`)
         }
-        const manifest = this.loadManifest(manifestPath);
+        const manifest = await this.loadManifest(manifestPath);
+        const fromAppid = this.getPluginFromId(manifest.appId)
+        if (fromAppid) {
+            if (fromAppid.dir !== plugin_path) {
+                throw new Error(`组件id[${manifest.appId}]已经存在且不属于同一个插件,已加载位置${fromAppid.dir},加载位置${plugin_path}`)
+            }
+            return fromAppid;
+        }
         const pluginMain = path.join(plugin_path, manifest.main);
         assert.ok(fs.existsSync(plugin_path), `插件入口文件不存在: ${pluginMain}`)
         // 动态加载插件入口文件
         const pluginInfo: PluginInfo & PluginProxy = {
             appId: manifest.appId,
-            id: uuidv4(),
+            id: manifest.appId,
             manifest: manifest,
             name: manifest.name,
             main: pluginMain,
@@ -203,22 +223,26 @@ class PluginManager {
         };
         this.add(pluginInfo)
         if (pluginInfo.type === PluginType.executor) {
-            this.load(pluginInfo)
+            await this.load(pluginInfo)
         }
         console.log(`已加载插件信息,名称：${pluginInfo.name}，类型：${pluginInfo.type},位置:${pluginInfo.dir},主程序文件：${manifest.main}`)
         return pluginInfo;
     }
 
     // 加载所有插件
-    public loadPluginFromDir(pluginsDir: string) {
+    public async loadPluginFromDir(pluginsDir: string): Promise<void> {
         this.pluginDirs.add(pluginsDir);
         const pluginDirs = fs.readdirSync(pluginsDir);
-        for (const childDir of pluginDirs) {
+        // 创建Promise数组来收集所有异步的this.loadPlugin调用
+        const loadPromises = pluginDirs.map(childDir =>
             this.loadPlugin(path.join(pluginsDir, childDir), false)
-        }
+        );
+        // 使用Promise.all等待所有的插件加载完成
+        await Promise.all(loadPromises);
     }
+
     // 加载插件清单文件
-    private loadManifest(manifestPath: string): PluginManifest | null {
+    private async loadManifest(manifestPath: string) {
         const content = fs.readFileSync(manifestPath, 'utf-8');
         const manifestInfo = JSON.parse(content) as PluginManifest;
         // 检查 manifestInfo 中是否包含所有必需的键

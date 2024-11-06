@@ -2,7 +2,7 @@ process.env.NODE_ENV = "development";
 
 import electron from "electron";
 import chalk from "chalk";
-import { join } from "path";
+import path, { join } from "path";
 import { watch } from "rollup";
 import Portfinder from "portfinder";
 import config from "../config";
@@ -10,6 +10,9 @@ import { say } from "cfonts";
 import { spawn } from "child_process";
 import type { ChildProcess } from "child_process";
 import rollupOptions from "./rollup.config";
+import rimraf from 'rimraf'
+import { deleteAsync } from "del";
+import { doneLog } from "./log";
 
 const mainOpt = rollupOptions(process.env.NODE_ENV, "main");
 const preloadOpt = rollupOptions(process.env.NODE_ENV, "preload");
@@ -47,15 +50,10 @@ function logStats(proc: string, data: any) {
 }
 function startPreload(): Promise<void> {
   console.log(
-    "\n\n" +
+    "\n" +
       chalk.blue(
-        `${
-          config.dev.chineseLog
-            ? "  正在准备预加载脚本，请等待..."
-            : "  Preparing preLoad File, please wait..."
-        }`
-      ) +
-      "\n\n"
+        `${ "准备渲染进程..."  }`
+      ) 
   );
   return new Promise((resolve, reject) => {
     const PreloadWatcher = watch(preloadOpt);
@@ -101,6 +99,11 @@ function removeJunk(chunk: string) {
 }
 
 function startRenderer(): Promise<void> {
+  console.log(
+      chalk.blue(
+        `${ "准备预加载脚本..."  }`
+      ) 
+  );
   return new Promise((resolve, reject) => {
     Portfinder.basePort = config.dev.port || 9080;
     Portfinder.getPort(async (err, port) => {
@@ -113,7 +116,7 @@ function startRenderer(): Promise<void> {
         });
         process.env.PORT = String(port);
         await server.listen(port);
-        console.log("\n\n" + chalk.blue(`Vite启动完成:${port}`) + "\n\n");
+        console.log(chalk.blue(`Vite启动完成:${port}`));
         resolve();
       }
     });
@@ -121,6 +124,11 @@ function startRenderer(): Promise<void> {
 }
 
 function startMain(): Promise<void> {
+  console.log(
+      chalk.blue(
+        `${ "准备主进程脚本..."  }`
+      )
+  );
   return new Promise((resolve, reject) => {
     const MainWatcher = watch(mainOpt);
     MainWatcher.on("change", (filename) => {
@@ -142,11 +150,16 @@ function startMain(): Promise<void> {
     });
   });
 }
-
+async function clean() {
+  await deleteAsync([
+    "dist/*",
+  ]);
+  doneLog(`clear done`);
+  if (process.env.BUILD_TARGET === "onlyClean") process.exit();
+}
 function greeting() {
   const cols = process.stdout.columns;
   let text: string | boolean = "";
-
   if (cols > 104) text = "open-interpreter";
   else if (cols > 76) text = "electron-|vite";
   else text = false;
@@ -161,16 +174,18 @@ function greeting() {
   console.log(
     chalk.blue(
       `${config.dev.chineseLog ? "  准备启动..." : "  getting ready..."}`
-    ) + "\n"
+    )
   );
 }
 
 async function init() {
   greeting();
+  await clean();
   try {
-    await startMain();
     await startPreload();
-    startRenderer();
+    await startRenderer();
+    await startMain();
+    console.log( chalk.blue( `${ "所有脚本已就绪"  }` ))
   } catch (error) {
     console.error(error);
     process.exit(1);

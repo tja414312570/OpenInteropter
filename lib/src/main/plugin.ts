@@ -68,7 +68,7 @@ export type IBrowserWindowOptions = BrowserWindowConstructorOptions & {
 }
 
 export interface IWindowManager {
-  createWindow: (windowId: string, options?: IBrowserWindowOptions) => void;
+  createWindow: (windowId: string, options?: IBrowserWindowOptions) => BrowserWindow;
   getWindow: (windowId: string) => BrowserWindow;
 }
 export interface ISettingManager {
@@ -93,6 +93,7 @@ export interface PluginExtensionContext {
   resourceManager: ResourceManager;
   _pluginPath: string;
   workPath: string;
+  windowManager: IWindowManager;
   getPath(path: 'home' | 'appData' | 'userData' | 'sessionData' | 'temp' | 'exe' | 'module' | 'desktop' | 'documents' | 'downloads' | 'music' | 'pictures' | 'videos' | 'recent' | 'logs' | 'crashDumps'): string;
   /**
    *
@@ -113,6 +114,8 @@ export interface PluginExtensionContext {
 
   sendIpcRender: (event_: string, message: any) => void;
   showDialog: (message: DialogOpt) => Promise<DialogReturnValue>;
+  reload: () => void;
+  unload: () => void;
 }
 export type DialogOpt = MessageBoxOptions;
 export type DialogReturnValue = MessageBoxReturnValue;

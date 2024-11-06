@@ -13,11 +13,11 @@
       <MenuBar :options="menuData" />
     </div>
     <div class="window-controls">
-      <i id="minimize" class="mdi mdi-window-minimize" @click="api.invoke('minimize')"></i>
-      <i id="maximize" class="mdi mdi-window-maximize" v-show="!isMax"
-        @click="api.invoke('maximize') && (isMax = true)"></i>
-      <i id="restore" class="mdi mdi-window-restore" v-show="isMax"
-        @click="api.invoke('restore') && (isMax = false)"></i>
+      <i id="minimize" class="mdi mdi-window-minimize" v-show="status.btn[0]" @click="api.invoke('minimize')"></i>
+      <i id="maximize" class="mdi mdi-window-maximize" v-show="status.btn[1] && status.status !== 2"
+        @click="api.invoke('maximize') && (status.status = 2)"></i>
+      <i id="restore" class="mdi mdi-window-restore" v-show="status.btn[1] && status.status === 2"
+        @click="api.invoke('restore') && (status.status = 1)"></i>
       <i id="close" class="mdi mdi-close" @click="api.invoke('close')"></i>
     </div>
   </div>
@@ -33,17 +33,25 @@ import { MenuDesc } from "@main/services/service-menu";
 import { reactive, ref } from "vue";
 import { MenuItem } from "./menu/ContextMenuDefine";
 import { MenuBarOptions } from "./menu";
-const isMax = ref(false)
+const status = reactive<{
+  status: 0 | 1 | 2,
+  btn: [boolean, boolean, boolean]
+}>({
+  status: 1,
+  btn: [true, true, true]
+})
 
 
 const api = getIpcApi('ipc-core.window');
 const coreApi: any = getIpcApi('ipc-core');
-api.invoke('isMaximized').then(result => {
-  isMax.value = result;
+api.invoke('status').then(result => {
+  status.status = result.status;
+  status.btn = result.btn;
 })
 window.onresize = () => {
-  api.invoke('isMaximized').then(result => {
-    isMax.value = result;
+  api.invoke('status').then(result => {
+    status.status = result.status;
+    status.btn = result.btn;
   })
 }
 const mix = ref(false);

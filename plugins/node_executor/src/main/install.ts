@@ -1,6 +1,6 @@
 import os from "os";
 import { execFile } from "child_process";
-import sudo from "sudo-prompt";
+// import sudo from "sudo-prompt";
 import path from "path";
 import DownloadNode from "./download";
 import { startNodeChildProcess } from "./node-executor";

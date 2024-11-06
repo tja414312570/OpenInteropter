@@ -1,6 +1,6 @@
 import { createApp } from "vue";
 import { createPinia } from "pinia";
-
+import "./styles/index.scss";
 import App from "./App.vue";
 // Vuetify 配置
 import "vuetify/styles"; // 引入 Vuetify 的全局样式

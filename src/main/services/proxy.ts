@@ -15,7 +15,7 @@ function isUrlMatched(url, patterns) {
 }
 const map = new Map<String, Bridge>()
 // 使用函数检查
-export const getAgent = (domain: string) => {
+export const getAgent = async (domain: string) => {
   let module: Bridge = map.get(domain)
   if (!module) {
     const pluginsOfType = pluginManager.getPluginsFromType(PluginType.agent);
@@ -30,7 +30,7 @@ export const getAgent = (domain: string) => {
         if (plugin.status !== PluginStatus.load) {
           pluginManager.load(plugin as any);
         }
-        module = pluginManager.getModule(plugin as any);
+        module = await pluginManager.getModule(plugin as any);
         map.set(domain, module as any);
         break;
       }
@@ -51,7 +51,7 @@ export const getAgentFromUrl = (url: string) => {
 export async function startProxyServer() {
   const proxy = new Proxy(); // 使用 http-mitm-proxy 创建代理实例
   // 拦截 HTTP 请求
-  proxy.onRequest((ctx, callback) => {
+  proxy.onRequest(async (ctx, callback) => {
     let domain: string;
     const origin = ctx.proxyToServerRequestOptions.headers['origin'];
     if (origin) {
@@ -62,7 +62,7 @@ export async function startProxyServer() {
       domain = `${protocol}://${host}/`;
     }
     ctx['_domain_'] = domain
-    const module = getAgent(domain);
+    const module = await getAgent(domain);
     if (module) {
       ctx['agent'] = module
       // 根据请求的协议构建完整的 URL
@@ -72,8 +72,8 @@ export async function startProxyServer() {
   });
 
   // 拦截 HTTP 响应
-  proxy.onResponse((ctx, callback) => {
-    const module = getAgent(ctx['_domain_']);
+  proxy.onResponse(async (ctx, callback) => {
+    const module = await getAgent(ctx['_domain_']);
     if (module) {
       module.onResponse(ctx).then((body: string) => {
         if (body) {

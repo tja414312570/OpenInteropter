@@ -47,6 +47,9 @@ class WindowManager implements IWindowManager {
     window.focus(); // 使窗口获取焦点
     return window;
   }
+  getWindowOptions(windowId: string): IBrowserWindowOptions {
+    return this.windowMap.get(windowId)?.['options'] || {};
+  }
   getWindow(windowId: string) {
     return this.windowMap.get(windowId);
   }

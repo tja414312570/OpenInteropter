@@ -1,3 +1,4 @@
+import { IBrowserWindowOptions } from "@lib/main";
 import { BrowserWindow, ipcMain } from "electron";
 
 // 最大化窗口
@@ -36,11 +37,13 @@ ipcMain.handle('ipc-core.window.close', (event, opts: Electron.MessageBoxOptions
     }
 });
 // 判断窗口是否最大化
-ipcMain.handle('ipc-core.window.isMaximized', (event) => {
+ipcMain.handle('ipc-core.window.status', (event) => {
     const window = BrowserWindow.fromWebContents(event.sender);
-    return window ? window.isMaximized() : false;
+    return {
+        status: window.isMinimized() ? '0' : window.isMaximized() ? '2' : '1',
+        btn: [window.isMinimizable(), window.isResizable(), window.isClosable()]
+    };
 });
-
 // 判断窗口是否最小化
 ipcMain.handle('ipc-core.window.isMinimized', (event) => {
     const window = BrowserWindow.fromWebContents(event.sender);

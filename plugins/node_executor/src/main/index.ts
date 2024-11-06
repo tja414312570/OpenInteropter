@@ -23,6 +23,9 @@ import DownloadNode from "./download";
 import { extractNode } from "./extract";
 import { startNodeChildProcess } from "./node-executor";
 import { platform } from "os";
+import { getUrl } from "./static-path";
+import { watcher } from "mylib/dev";
+watcher()
 class ExecuteContext {
   private _data: ((data: string) => void) | undefined;
   private _write: ((data: string) => void) | undefined;
@@ -257,6 +260,16 @@ class NodeExecutor
       content: "正在检查环境",
       progress: -1,
     });
+    const url  = getUrl();
+    console.log('ui渲染地址:'+url)
+    const window = pluginContext.windowManager.createWindow(pluginContext.plugin.appId,{
+      width:720,
+      height:360,
+      minimizable:false,
+      resizable: false, // 禁用调整窗口大小
+    })
+    window.loadURL(url);
+    if(true)return;
     const plugHome = pluginContext.workPath;
     if (fs.existsSync(plugHome)) {
       fs.mkdirSync(plugHome, { recursive: true });
@@ -454,3 +467,4 @@ class NodeExecutor
 }
 
 export default new NodeExecutor();
+

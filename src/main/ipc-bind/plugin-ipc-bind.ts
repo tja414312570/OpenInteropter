@@ -50,20 +50,20 @@ ipcMain.handle('plugin-view-api.get-plugin-list', (event, args) => {
     return cloneObj;
 })
 
-ipcMain.handle('plugin-view-api.get-plugin-tasks', (event, args) => {
+ipcMain.handle('plugin-view-api.get-plugin-tasks', async (event, args) => {
     const plugin = pluginManager.filtePlugins(args);
-    const instance = pluginManager.getModule(plugin[0] as any) as InstructExecutor;
+    const instance = await pluginManager.getModule(plugin[0] as any) as InstructExecutor;
     return instance.currentTask();
 })
 
-ipcMain.handle('plugin-view-api.plugin-reload', (event, id: string) => {
-    return copy(pluginManager.reload(pluginManager.getPluginFromId(id)));
+ipcMain.handle('plugin-view-api.plugin-reload', async (event, id: string) => {
+    return copy(await pluginManager.reload(pluginManager.getPluginFromId(id)));
 })
 
 ipcMain.handle('load-script', (event, url) => {
-    return new Promise<string>((resolve, reject) => {
+    return new Promise<string>(async (resolve, reject) => {
         try {
-            const agent = getAgentFromUrl(url);
+            const agent = await getAgentFromUrl(url);
             if (agent) {
                 resolve(agent.requireJs() as any)
             }
