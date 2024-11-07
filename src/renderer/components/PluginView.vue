@@ -118,13 +118,13 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref, vShow } from 'vue';
+import { onMounted, onUnmounted, ref, vShow } from 'vue';
 import { PluginManifest } from '@lib/main';
 
 
 import { getIpcApi } from '@lib/preload';
 
-const pluginViewApi: any = getIpcApi('plugin-view-api');
+const pluginViewApi: any = getIpcApi('plugin-view-api', onUnmounted);
 const loading = ref(true);
 
 interface PluginInfo {

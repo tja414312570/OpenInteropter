@@ -1,5 +1,5 @@
 <template>
-    <div class="action-bar">
+    <div class="action-bar" ref="bindApi">
         <v-tooltip location="bottom">
             <!-- 自动执行图标（Auto Run / Disable Auto Run）带提示 -->
             <template v-slot:activator="{ props }">
@@ -55,17 +55,17 @@ import { InstructResultType, PluginStatus } from '@lib/main';
 import { PluginInfo } from '@lib/main';
 import { IpcEventHandler } from '@renderer/ts/default-ipc';
 import { getIpcApi } from '@lib/preload';
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
 import * as monaco from 'monaco-editor';
 
 const executors = ref<PluginInfo[]>([])
 
 const selected = ref<string>(null)
 const isAutoSend = ref(true)
-
+const bindApi = ref()
 const isExecuting = ref(false);
-const pluginViewApi: any = getIpcApi('plugin-view-api');
-const codeApi = getIpcApi<IpcEventHandler>('code-view-api');
+const pluginViewApi: any = getIpcApi('plugin-view-api', onUnmounted);
+const codeApi = getIpcApi<IpcEventHandler>('code-view-api', onUnmounted);
 const loading = ref(true);
 const found = (id: string) => {
     for (const [pos, plugin] of executors.value.entries()) {

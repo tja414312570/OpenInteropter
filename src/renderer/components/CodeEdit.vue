@@ -11,12 +11,12 @@
 </template>
 
 <script lang="ts" setup>
-import { createVNode, h, nextTick, onMounted, Ref, ref, render, shallowRef } from 'vue'
+import { createVNode, h, nextTick, onMounted, onUnmounted, Ref, ref, render, shallowRef } from 'vue'
 import CodeTools from './CodeTools.vue';
 import * as monaco from 'monaco-editor';
 import { InstructContent } from '@main/ipc/code-manager';
 import CodeDiff from './CodeDiff.vue';
-import { getIpcApi } from '@lib/preload/ipc-api';
+import { getIpcApi } from '@lib/preload';
 import { IpcEventHandler } from '@renderer/ts/default-ipc';
 import context from '@renderer/context';
 import { InstructResultType } from '@lib/main';
@@ -33,7 +33,9 @@ const instrunctId = ref('1')
 const orange_language = ref(language.value)
 const decorationsCollection = ref<monaco.editor.IEditorDecorationsCollection>(null);
 
-const codeApi = getIpcApi<IpcEventHandler>('code-view-api');
+const terminalWrapper = ref()
+
+const codeApi = getIpcApi<IpcEventHandler>('code-view-api', onUnmounted);
 
 // const onLoad = ref(null)
 // 配置编辑器选项

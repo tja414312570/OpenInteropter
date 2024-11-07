@@ -1,5 +1,5 @@
 <template>
-    <v-container>
+    <v-container ref="bindApi">
         <!-- 代理类型选择 -->
         <v-radio-group v-model="props.value.proxyType" row>
             <v-radio label="无代理" value="none" />
@@ -61,11 +61,11 @@
 </template>
 
 <script lang="ts" setup>
+import { ISetting } from '@lib/main';
 import { getIpcApi } from '@lib/preload';
-import { Menu } from '@main/services/service-setting';
-import { reactive, ref, toRaw, watch } from 'vue'
+import { onUnmounted, reactive, ref, toRaw, watch } from 'vue'
 const props = defineProps<{
-    menu: Menu;
+    menu: ISetting;
     value: any;
 }>();
 
@@ -81,7 +81,7 @@ interface ProxySettings {
     password: string
     remember: boolean
 }
-
+const bindApi = ref()
 const checking = ref(false)
 const initial = () => {
     if (!props.value || Object.keys(props.value).length === 0) {
@@ -126,7 +126,7 @@ function showDialog() {
 
 const errorMessages = ref('')
 // 检查连接逻辑
-const settingApi = getIpcApi('ipc-settings');
+const settingApi = getIpcApi('ipc-settings', onUnmounted);
 function checkConnection() {
     if (!testUrl.value) {
         console.error("请输入测试地址");

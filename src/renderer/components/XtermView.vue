@@ -9,7 +9,7 @@
 </template>
 
 <script lang='ts' setup>
-import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { ref, onMounted, onBeforeUnmount, nextTick, onUnmounted } from 'vue';
 import { Terminal } from 'xterm';
 import { debounce } from 'lodash';
 import { FitAddon } from 'xterm-addon-fit';
@@ -26,8 +26,7 @@ let resizeObserver = null;
 //   // terminal.write(data);
 //   terminalApi.send('terminal-input', data + ' ; echo ' + end_tag + '\n');
 // };
-
-const terminalApi: any = getIpcApi("pty")
+const terminalApi: any = getIpcApi("pty", onUnmounted)
 onMounted(async () => {
   // 等待 DOM 更新完成
   console.log("初始化终端:", terminalWrapper)
@@ -83,6 +82,7 @@ onMounted(async () => {
   });
 
   // 监听终端输入并发送到主进程
+
   terminal.onData((data) => {
     console.log('Data send from terminal:', data);  // 调试终
     terminalApi.send('terminal-input', data);
@@ -100,12 +100,10 @@ onMounted(async () => {
   terminal.clear()
   terminal.writeln('Welcome to chat interpter');
   // ipcRenderer.send("terminal-into", "ls -ila\r");
-
   terminal.focus();
   terminal.onResize((size) => {
     const { cols, rows } = size;
     // 检查 cols 和 rows 是否为正数
-    // debouncedResize(cols, rows);
     console.log('重置终端:', cols, rows)
     if (cols > 0 && rows > 0) {
       terminalApi.send('terminal-resize', cols, rows);
@@ -113,15 +111,13 @@ onMounted(async () => {
   });
   window.addEventListener('resize', () => fitAddon.fit());
 });
-
+console.log("")
 onBeforeUnmount(() => {
-  // 销毁终端
   console.log("销毁终端")
   if (terminal) {
     terminal.dispose();
     window.removeEventListener('resize', fitAddon.fit);
   }
-  terminalApi.offAll()
   if (resizeObserver) {
     resizeObserver.disconnect();
   }

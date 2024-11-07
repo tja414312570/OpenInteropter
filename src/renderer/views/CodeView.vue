@@ -1,4 +1,5 @@
 <template>
+  <div ref="bindApi" style="display:none;"></div>
   <CodeLayout ref="codeLayout" :layout-config="config">
     <template v-if="isCoreReady" #panelRender="{ panel }">
       <!--
@@ -22,7 +23,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, onMounted, nextTick, h, watch } from 'vue';
+import { ref, reactive, onMounted, nextTick, h, watch, onUnmounted } from 'vue';
 import { type CodeLayoutConfig, type CodeLayoutInstance, defaultCodeLayoutConfig } from 'vue-code-layout';
 import IconFile from '../examples/assets/icons/IconFile.vue';
 import IconSearch from '../examples/assets/icons/IconSearch.vue';
@@ -71,7 +72,8 @@ const config = reactive<CodeLayoutConfig>({
 });
 const isCoreReady = ref(false);
 const codeLayout = ref<CodeLayoutInstance>();
-const api = getIpcApi('ipc-core');
+const bindApi = ref()
+const api = getIpcApi('ipc-core', onUnmounted);
 const onStatusBarLoaded = () => {
   console.log("状态栏加载完成")
   if (!isCoreReady.value) {

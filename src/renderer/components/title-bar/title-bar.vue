@@ -1,7 +1,6 @@
 <template>
   <div class="window-title" v-if="isNotMac">
     <!-- 软件logo预留位置 -->
-
     <div class="region-area window-title">
       <!-- 中间标题位置 -->
       <div class="title region-area">{{ title }}</div>
@@ -30,7 +29,7 @@
 import MenuBar from "./menu/MenuBar.vue";
 import { getIpcApi } from "@lib/preload";
 import { MenuDesc } from "@main/services/service-menu";
-import { reactive, ref } from "vue";
+import { onMounted, onUnmounted, reactive, ref } from "vue";
 import { MenuItem } from "./menu/ContextMenuDefine";
 import { MenuBarOptions } from "./menu";
 const status = reactive<{
@@ -41,9 +40,8 @@ const status = reactive<{
   btn: [true, true, true]
 })
 
-
-const api = getIpcApi('ipc-core.window');
-const coreApi: any = getIpcApi('ipc-core');
+const api = getIpcApi('ipc-core.window', onUnmounted);
+const coreApi: any = getIpcApi('ipc-core', onUnmounted);
 api.invoke('status').then(result => {
   status.status = result.status;
   status.btn = result.btn;

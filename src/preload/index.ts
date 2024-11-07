@@ -23,7 +23,6 @@ exposeInMainWorld('ipc-notify', ipcRenderer => ({
 function getIpcRenderer() {
   const IpcRenderer = {};
   Object.keys(new IpcChannelMainClass()).forEach((channel) => {
-    console.log(`channel ${channel}`)
     IpcRenderer[channel] = {
       invoke: async (args: any) => ipcRenderer.invoke(channel, args),
     };

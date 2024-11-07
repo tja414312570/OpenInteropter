@@ -7,7 +7,6 @@ const showErrorDialog = (errorMessage) => {
         detail: errorMessage,
         buttons: ['确定'],
         defaultId: 0,
-        icon: null  // 可以在这里放置自定义图标
     }).then(result => {
         console.log('错误弹窗已关闭');
     }).catch(err => {

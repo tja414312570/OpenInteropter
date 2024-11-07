@@ -25,7 +25,7 @@ import { VueMonacoEditor } from '@guolao/vue-monaco-editor'
 
 import '@imengyu/vue3-context-menu/lib/vue3-context-menu.css'
 import ContextMenu from '@imengyu/vue3-context-menu'
-
+import './observer-adapter';
 // 创建 Vuetify 实例
 const vuetify = createVuetify({
   icons: {
@@ -62,6 +62,7 @@ import 'dockview-core/dist/styles/dockview.css';
 import CodeLayout from 'vue-code-layout'
 import context from "./context";
 import { Router } from "vue-router";
+import { registerObserverElementAdapter } from "@lib/preload/observer-manager";
 app.use(CodeLayout)
 
 context.setApp(app);

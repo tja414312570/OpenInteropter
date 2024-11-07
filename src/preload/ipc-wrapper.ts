@@ -23,7 +23,6 @@ const onReady = (): Promise<number> => {
       return;
     }
     ipcRenderer.invoke('ipc-core.get-current-webcontents-id').then(webContentId => {
-      console.log(`获取当前的进程信息：${webContentId}`)
       resolve(webContentId)
     }).catch(err => {
       console.error("获取进程失败：", err)
@@ -55,7 +54,6 @@ class IpcReanderMapper implements IpcRendererExtended {
   }
   _bind(channel: string, target: Function, listener: (event: IpcRendererEvent, ...args: any[]) => void) {
     channel = `${this._channel_}.${channel}`;
-    console.log("绑定监听器：", channel)
     const wrappedListener = (event: IpcRendererEvent, ...args: any[]) => {
       try {
         listener(event, ...args);
@@ -84,7 +82,6 @@ class IpcReanderMapper implements IpcRendererExtended {
       console.error(new Error("注销监听器失败，请使用代理，并传递参数"))
       return;
     }
-    console.log("注销监听:", this._id_)
     const temp: Map<string, (event: any, data: any) => void> = invokers.get(this._id_);
     if (temp) {
       for (const [channel] of temp) { // 使用 for...of 遍历 Map 的键值对
@@ -93,7 +90,6 @@ class IpcReanderMapper implements IpcRendererExtended {
     }
   }
   _off(channel: string) {
-    console.log("注销监听:", channel, this._id_)
     const listener = invokers.get(this._id_)?.get(channel);
     if (!listener) {
       alert("没有找到监听器")
@@ -104,7 +100,6 @@ class IpcReanderMapper implements IpcRendererExtended {
     ipcRenderer.off(channel, listener);
     removeListener(this._id_, channel)
     ipcRenderer.send('ipc-core.remove-channel-listener', { webContentId: _web_content_id_, channel })
-    console.log(`Listener for ${channel} on ${channel} removed`);
     return this;
   }
   off(channel: string) {
@@ -123,7 +118,6 @@ class IpcReanderMapper implements IpcRendererExtended {
   }
   invoke(channel: string, ...args: any[]): Promise<any> {
     channel = `${this._channel_}.${channel}`;
-    console.log('调用:', channel)
     return ipcRenderer.invoke(channel, ...args)
 
   }
@@ -197,7 +191,6 @@ export const exposeInMainWorld = (apiKey: string, api?: (ipcRenderer: IpcReander
   }
   return new Promise<void>((resolve, rejects) => {
     onReady().then((webContentId: number) => {
-      console.log("准备暴露进程", webContentId)
       _web_content_id_ = webContentId;
       const ipcRenderMapper = new IpcReanderMapper(apiKey);
       const newApi = api ? api(ipcRenderMapper) : {};

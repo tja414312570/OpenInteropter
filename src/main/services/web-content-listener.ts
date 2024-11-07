@@ -1,4 +1,5 @@
 import { MapSet } from "@main/utils/MapSet";
+import { webContents } from "electron";
 const channels: MapSet<number> = new MapSet()
 export type callback = (webId: number) => void;
 const channelBindListeners: MapSet<(webId: number) => void> = new MapSet()
@@ -48,10 +49,33 @@ export const getWebContentIds = (channel: string): Set<number> => {
 export const getAllChannel = (): MapSet<number> => {
     return channels;
 }
+const listeners = new MapSet<Function>();
+const listenr = (channel: string, webContentId: number) => {
+    let list = listeners.get(webContentId)
+    if (!list) {
+        const webContent = webContents.fromId(webContentId);
+        if (!webContent) {
+            return false;
+        }
+        webContent.on('destroyed', () => {
+            const remoes = listeners.get(webContentId);
+            if (remoes) {
+                for (const fun of remoes) {
+                    fun()
+                }
+            }
+            listeners.removeKey(webContentId);
+        })
+    }
+    listeners.add(webContentId, () => removeListenerChannel(channel, webContentId))
+    return true;
+}
 
 export const bindListenerChannel = (channel: string, webContentId: number) => {
-    channels.add(channel, webContentId)
-    _triggerHandleChannel(channel, webContentId, 'bind');
+    if (listenr(channel, webContentId)) {
+        channels.add(channel, webContentId)
+        _triggerHandleChannel(channel, webContentId, 'bind');
+    }
 }
 export const removeListenerChannel = (channel: string, webContentId: number) => {
     channels.remove(channel, webContentId)

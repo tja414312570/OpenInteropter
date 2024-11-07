@@ -59,11 +59,11 @@
 import { Splitpanes, Pane } from 'splitpanes'
 import 'splitpanes/dist/splitpanes.css'
 import proxyView from '../components/settings-proxy.vue';
-import { onMounted, reactive, ref, shallowRef, toRaw, watch, WatchHandle } from 'vue';
+import { onMounted, onUnmounted, reactive, ref, shallowRef, toRaw, watch, WatchHandle } from 'vue';
 import { getIpcApi } from '@lib/preload';
 import { Setting } from '@main/services/service-setting';
 import { settingCompents } from '@renderer/ts/setting-compents';
-const coreApi = getIpcApi('ipc-core.window');
+const coreApi = getIpcApi('ipc-core.window', onUnmounted);
 const selected = ref([
 ])
 const loading = ref(false)
@@ -106,7 +106,7 @@ const findPath = (targetKey, path = [], nodes = settingMenus.value) => {
     return [];
 }
 const settingMenus = ref<Array<Setting>>([])
-const settingApi = getIpcApi('ipc-settings');
+const settingApi = getIpcApi('ipc-settings', onUnmounted);
 loading.value = true;
 const filterItems = (items: Setting[]): Setting[] => {
     return items

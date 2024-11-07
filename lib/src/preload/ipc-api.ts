@@ -1,6 +1,7 @@
 import { IpcRendererEvent } from 'electron';
 import { IpcRenderer } from 'electron/renderer';
 import { v4 as uuidv4 } from 'uuid';
+import { observe } from './observer-manager';
 function showCustomAlert(message: string) {
     const alertDiv = document.createElement('div');
     alertDiv.innerText = message;
@@ -63,12 +64,22 @@ const notifyError = (message: string) => {
 }
 
 // getIpcApi 函数，用于创建带有代理的 IpcApi 对象
-export function getIpcApi<T>(channel: string): IpcApi & DefaultApi & T {
+/**
+ * 获取ipc api
+ * @param channel api渠道
+ * @param binder 绑定对象 支持Dom，钩子（Function），以及其他类型（Ref等需要自己注册适配器:registerObserverElementAdapter)
+ * @returns 
+ */
+export function getIpcApi<T>(channel: string, binder: Element | Function | any): IpcApi & DefaultApi & T {
+    if (!binder) {
+        throw new Error("请绑定api所在渠道")
+    }
+
     const ipcApiInstance = new IpcApi(channel);
     const { _getIpcApi__, _getId__ } = ipcApiInstance;
 
     // 使用 Proxy 创建代理
-    return new Proxy(ipcApiInstance, {
+    const proxy = new Proxy(ipcApiInstance, {
         get(target, prop) {
             if (prop in target) {
                 // 如果方法存在，则调用原始对象的方法
@@ -98,6 +109,15 @@ export function getIpcApi<T>(channel: string): IpcApi & DefaultApi & T {
             }
         }
     }) as IpcApi & T & DefaultApi;
+    if (binder !== window) {
+        //钩子
+        if (typeof binder === 'function') {
+            binder(proxy.offAll)
+        } else {
+            observe(binder, proxy.offAll)
+        }
+    }
+    return proxy;
 }
 function isListener(args: any[]) {
     return args.some(arg => typeof arg === 'function');;

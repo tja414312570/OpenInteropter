@@ -1,5 +1,5 @@
 import { getIpcApi } from "./ipc-api";
-const coreApi = getIpcApi('ipc-core');
+const coreApi = getIpcApi('ipc-core', window);
 const showDialog = (opts: Electron.MessageBoxOptions): Electron.MessageBoxReturnValue => {
     return coreApi.invoke('ipc-core.show-dialog', opts) as any
 }
