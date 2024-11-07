@@ -7,7 +7,7 @@ import { getIpcApi } from "@main/ipc/ipc-wrapper";
 const api = getIpcApi('plugin-view-api')
 const bind = (event: keyof PluginEventMap) => {
     pluginManager.on(event, (plugin: PluginInfo) => {
-        api.send(event, copy(plugin))
+        api.trySend(event, copy(plugin))
     })
 }
 export const initBind = () => {

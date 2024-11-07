@@ -1,5 +1,5 @@
 import { ipcMain, IpcMainEvent, IpcMainInvokeEvent, WebContents, webContents } from "electron";
-import { getWebContentIds, removeListenerChannel } from "@main/services/web-content-listener";
+import { getWebContentIds, handleChannelBind, handleChannelUnbind, removeListenerChannel } from "@main/services/web-content-listener";
 import { showErrorDialog } from "@main/utils/dialog";
 import { } from "electron";
 
@@ -68,6 +68,14 @@ class IpcApi {
             console.log(`发送事件到webview进程${webContent},${JSON.stringify({ channel, ...args })}`)
             webContent.send(channel, ...args)
         }, false)
+    }
+    onRenderBind(channel: string, listener: (webId: number) => void) {
+        channel = `${this.api}.${channel}`;
+        return handleChannelBind(channel, listener)
+    }
+    onRenderRemove(channel: string, listener: (webId: number) => void) {
+        channel = `${this.api}.${channel}`;
+        return handleChannelUnbind(channel, listener)
     }
 }
 

@@ -34,7 +34,7 @@
 
 <script lang="ts" setup>
 import { getIpcApi } from '@lib/preload';
-import { ref, onMounted, onUnmounted, reactive } from 'vue';
+import { ref, onMounted, reactive } from 'vue';
 
 type TaskType = {
     name: string,
@@ -66,6 +66,9 @@ const task = reactive<TaskType>({
 const notification = ref<{ message: string; is_error: boolean } | null>(null);
 const api = getIpcApi('ipc-notify') as any;
 // 监听来自预加载脚本的通知
+const emit = defineEmits<{
+    (event: 'loaded'): void
+}>()
 onMounted(() => {
     // 监听通知事件
     api.onReady();
@@ -88,6 +91,7 @@ onMounted(() => {
     api.onClearNotification(() => {
         notification.value = null;
     });
+    emit('loaded')
 });
 
 

@@ -51,7 +51,7 @@
 
 <script lang="ts" setup>
 import { InstructContent } from '@main/ipc/code-manager';
-import { InstructResultType } from '@lib/main';
+import { InstructResultType, PluginStatus } from '@lib/main';
 import { PluginInfo } from '@lib/main';
 import { IpcEventHandler } from '@renderer/ts/default-ipc';
 import { getIpcApi } from '@lib/preload';
@@ -67,10 +67,55 @@ const isExecuting = ref(false);
 const pluginViewApi: any = getIpcApi('plugin-view-api');
 const codeApi = getIpcApi<IpcEventHandler>('code-view-api');
 const loading = ref(true);
-
+const found = (id: string) => {
+    for (const [pos, plugin] of executors.value.entries()) {
+        if (plugin.id === id) {
+            return { plugin, pos };
+        }
+    }
+    return {};
+}
+const sync = (event: string, plugin_: PluginInfo) => {
+    plugin_['event'] = event;
+    console.log("正在处理:", event, plugin_)
+    const { plugin } = found(plugin_.id);
+    if (plugin) {
+        Object.assign(plugin, plugin_);
+    } else {
+        executors.value.push(plugin_)
+    }
+}
 onMounted(() => {
-    pluginViewApi.invoke('get-plugin-list', { type: 'executor' }).then((pluginList: Array<PluginInfo>) => {
+    pluginViewApi.on('load', (event, plugin: PluginInfo) => {
+        sync('load', plugin)
+    })
+    pluginViewApi.on('loaded', (event, plugin: PluginInfo) => {
+        sync('loaded', plugin)
+    })
+    pluginViewApi.on('reload', (event, plugin: PluginInfo) => {
+        sync('reload', plugin)
+    })
+    pluginViewApi.on('reloaded', (event, plugin: PluginInfo) => {
+        sync('reloaded', plugin)
+    })
+    pluginViewApi.on('unload', (event, plugin: PluginInfo) => {
+        sync('unload', plugin)
+    })
+    pluginViewApi.on('unloaded', (event, plugin: PluginInfo) => {
+        sync('unloaded', plugin)
+    })
+    pluginViewApi.on('remove', (event, plugin_: PluginInfo) => {
+        const { pos } = found(plugin_.id);
+        if (pos) {
+            executors.value.splice(pos, 1);
+        }
+    })
+    pluginViewApi.invoke('get-plugin-list', { type: 'executor', status: PluginStatus.load }).then((pluginList: Array<PluginInfo>) => {
         console.log("获取到插件列表", pluginList)
+        if (pluginList.length === 0) {
+            selected.value = null
+            return;
+        }
         executors.value = pluginList.sort((a, b) => {
             const aMatchesLanguage = a.instruct?.includes(props.language) ? 1 : 0;
             const bMatchesLanguage = b.instruct?.includes(props.language) ? 1 : 0;
@@ -98,9 +143,11 @@ watch(
 );
 const runing = ref(0);
 const refreshPluginStatus = (id: string) => {
-    pluginViewApi.invoke('get-plugin-tasks', { id }).then(tasks => {
-        runing.value = tasks.length
-    })
+    if (id) {
+        pluginViewApi.invoke('get-plugin-tasks', { id }).then(tasks => {
+            runing.value = tasks.length
+        })
+    }
 }
 refreshPluginStatus(selected.value);
 watch(selected, (newValue) => {

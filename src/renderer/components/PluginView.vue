@@ -157,14 +157,6 @@ const sync = (event: string, plugin_: PluginInfo) => {
     }
 }
 onMounted(() => {
-    pluginViewApi.invoke('get-plugin-list').then(pluginList => {
-        console.log("获取到插件列表", pluginList)
-        plugins.value = pluginList
-        loading.value = false
-    }).catch(err => {
-        console.error("获取到插件失败", err)
-    })
-
     pluginViewApi.on('load', (event, plugin: PluginInfo) => {
         sync('load', plugin)
     })
@@ -188,6 +180,13 @@ onMounted(() => {
         if (pos) {
             plugins.value.splice(pos, 1);
         }
+    })
+    pluginViewApi.invoke('get-plugin-list').then(pluginList => {
+        console.log("获取到插件列表", pluginList)
+        plugins.value = pluginList
+        loading.value = false
+    }).catch(err => {
+        console.error("获取到插件失败", err)
     })
 })
 

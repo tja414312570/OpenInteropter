@@ -1,26 +1,16 @@
 import { MapSet } from "@main/utils/MapSet";
 const channels: MapSet<number> = new MapSet()
-const channelBindListeners: MapSet<HandleChannel> = new MapSet()
-export type HandleChannel = {
-    onBind?: (webId: number) => void;
-    unBind?: (webId: number) => void
-};
-const _triggerHandleChannel = (channel: string, webId: number, type: 'bind' | 'remove', callback?: HandleChannel) => {
+export type callback = (webId: number) => void;
+const channelBindListeners: MapSet<(webId: number) => void> = new MapSet()
+const channelUnBindListeners: MapSet<(webId: number) => void> = new MapSet()
+const _triggerHandleChannel = (channel: string, webId: number, type: 'bind' | 'remove', callback?: callback) => {
     if (callback) {
-        if (type === 'bind') {
-            callback.onBind?.(webId);
-        } else {
-            callback.unBind?.(webId);
-        }
+        callback(webId);
     } else {
-        const listeners = channelBindListeners.get(channel)
+        const listeners = type === 'bind' ? channelBindListeners.get(channel) : channelUnBindListeners.get(channel);
         if (listeners) {
             for (const listener of listeners) {
-                if (type === 'bind') {
-                    listener.onBind?.(webId)
-                } else {
-                    listener.unBind?.(webId)
-                }
+                listener(webId)
             }
         }
     }
@@ -31,7 +21,7 @@ const _triggerHandleChannel = (channel: string, webId: number, type: 'bind' | 'r
  * @param callback
  * @returns disposeable 调用此函数解除绑定
  */
-export const handleChannelEvent = (channel: string, callback: HandleChannel) => {
+export const handleChannelBind = (channel: string, callback: callback) => {
     channelBindListeners.add(channel, callback);
     let webIds = channels.get(channel);
     if (webIds) {
@@ -41,7 +31,16 @@ export const handleChannelEvent = (channel: string, callback: HandleChannel) => 
     }
     return () => channelBindListeners.remove(channel, callback);
 }
-
+export const handleChannelUnbind = (channel: string, callback: callback) => {
+    channelUnBindListeners.add(channel, callback);
+    let webIds = channels.get(channel);
+    if (webIds) {
+        for (const webId of webIds) {
+            _triggerHandleChannel(channel, webId, 'bind', callback);
+        }
+    }
+    return () => channelUnBindListeners.remove(channel, callback);
+}
 export const getWebContentIds = (channel: string): Set<number> => {
     return channels.get(channel);
 }

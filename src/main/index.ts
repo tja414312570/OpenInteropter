@@ -26,8 +26,8 @@ import './services/global-agents'
 import './services/service-setting'
 import './services/service-menu'
 import "./services/window-settings";
-import { handleChannelEvent } from "./services/web-content-listener";
-import { onAppReady } from "./ipc-bind/core-ipc-bind";
+// import { onAppReady } from "./ipc-bind/core-ipc-bind";
+import { getIpcApi } from "./ipc/ipc-wrapper";
 function startWindow(proxy: string) {
   // const { disableF12 } = useDisableButton();
   // const { renderProcessGone } = useProcessException();
@@ -59,31 +59,28 @@ app.on('certificate-error', (event, webContents, url, error, certificate, callba
   callback(true);  // 忽略证书错误
 });
 //当终端ui就绪时
-handleChannelEvent('pty.terminal-output', {
-  onBind: function (webId: number): void {
-    // ptyInit()
-  }
+const pty = getIpcApi('pty')
+pty.onRenderBind('terminal-output', (webId: number) => {
+  // ptyInit()
 })
 //当通知ui就绪时
-handleChannelEvent('ipc-notify.show-task', {
-  onBind: (webId: number): void => {
-    notify("gpt拦截器已初始化完成！")
-    pluginManager.on('error', (event_, plugin_path, err) => {
-      if (event_ === 'scan') {
-        showErrorDialog(`加载扩展异常${plugin_path},错误:${String(err)}`)
-      }
-
-    })
-
-  }
+const coreApi = getIpcApi('ipc-notify')
+const disposeable = coreApi.onRenderBind('show-task', (webId: number): void => {
+  notify("核心界面已初始化完成！")
+  disposeable();
 })
 //当通知ui就绪时
-handleChannelEvent('plugin-view-api.load', {
-  onBind: (webId: number): void => {
-    pluginManager.loadPluginFromDir(innerPluginPath).catch(err => {
-      notify("插件加载异常:" + err)
-    })
-  }
+const pluginApi = getIpcApi('plugin-view-api')
+const pluginDisposeable = pluginApi.onRenderBind('remove', (webId: number): void => {
+  pluginDisposeable()
+  pluginManager.on('error', (event_, plugin_path, err) => {
+    if (event_ === 'scan') {
+      showErrorDialog(`加载扩展异常${plugin_path},错误:${String(err)}`)
+    }
+  })
+  pluginManager.loadPluginFromDir(innerPluginPath).catch(err => {
+    notify("插件加载异常:" + err)
+  })
 })
 
 app.whenReady().then(() => {
