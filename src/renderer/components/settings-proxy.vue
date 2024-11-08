@@ -62,7 +62,7 @@
 
 <script lang="ts" setup>
 import { ISetting } from '@lib/main';
-import { getIpcApi } from '@lib/preload';
+import { getIpcApi } from '@preload/lib/ipc-api';
 import { onUnmounted, reactive, ref, toRaw, watch } from 'vue'
 const props = defineProps<{
     menu: ISetting;

@@ -9,7 +9,7 @@
 </template>
 
 <script lang="ts" setup>
-import { getIpcApi } from '@lib/preload';
+import { getIpcApi } from '@preload/lib/ipc-api';
 import { IpcEventHandler } from '@renderer/ts/default-ipc';
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 // 源代码

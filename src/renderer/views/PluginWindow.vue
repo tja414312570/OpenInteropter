@@ -1,6 +1,6 @@
 <template>
     <v-progress-linear v-show="loading" color="teal" indeterminate stream></v-progress-linear>
-    <webview ref="webviews" :src="url" partition="persist:your-partition2"
+    <webview v-show="loaded" ref="webviews" :src="url" partition="persist:plugin-webview"
         useragent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36"
         class="webview" @did-start-loading="onStartLoading" @did-finish-load="onLoad"></webview>
 </template>
@@ -9,6 +9,7 @@
 import { ref } from 'vue';
 import { useRoute } from 'vue-router';
 const route = useRoute();
+const loaded = ref(true)
 
 // 获取 URL 中的查询参数
 const queryParams = route.query;

@@ -1,7 +1,7 @@
 import { contextBridge, ipcRenderer, shell } from "electron";
 import { onUnmounted } from "vue";
 import { IpcChannelMainClass, IpcChannelRendererClass } from "../ipc/index";
-import { exposeInMainWorld } from "./ipc-wrapper";
+import { exposeInMainWorld } from "./lib/ipc-wrapper";
 import './index-plugin-view'
 import './index-instruct-view'
 import './core-api-pre'

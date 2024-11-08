@@ -11,7 +11,6 @@ import { spawn } from "child_process";
 import type { ChildProcess } from "child_process";
 import rollupOptions from "./rollup.config";
 
-const mainOpt = rollupOptions(process.env.NODE_ENV, "main");
 const preloadOpt = rollupOptions(process.env.NODE_ENV, "preload");
 const pluginsOpt = rollupOptions(process.env.NODE_ENV, "executor");
 
@@ -86,7 +85,7 @@ function startRenderer(): Promise<void> {
           "\n\n" +
           chalk.blue(
             `${config.dev.chineseLog
-              ? "  正在准备主进程，请等待..."
+              ? "  正在准备渲染进程，请等待..."
               : "  Preparing main process, please wait..."
             }`
           ) +
@@ -130,7 +129,7 @@ function startPlugin(): Promise<void> {
 }
 function startMain(): Promise<void> {
   return new Promise((resolve, reject) => {
-    const MainWatcher = watch(mainOpt);
+    const MainWatcher = watch(rollupOptions(process.env.NODE_ENV, "main"));
     MainWatcher.on("change", (filename) => {
       // 主进程日志部分
       logStats(

@@ -1,6 +1,6 @@
 import { ipcRenderer } from "electron";
 
-import { exposeInMainWorld } from "./ipc-wrapper";
+import { exposeInMainWorld } from "./lib/ipc-wrapper";
 
 import './core-api-pre'
 

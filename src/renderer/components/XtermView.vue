@@ -11,9 +11,8 @@
 <script lang='ts' setup>
 import { ref, onMounted, onBeforeUnmount, nextTick, onUnmounted } from 'vue';
 import { Terminal } from 'xterm';
-import { debounce } from 'lodash';
 import { FitAddon } from 'xterm-addon-fit';
-import { getIpcApi } from '@lib/preload'
+import { getIpcApi } from '@preload/lib/ipc-api'
 import { WebLinksAddon } from 'xterm-addon-web-links';
 const fitAddon = new FitAddon();
 const terminalRef = ref(null);

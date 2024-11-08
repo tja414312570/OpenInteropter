@@ -60,9 +60,9 @@ import { Splitpanes, Pane } from 'splitpanes'
 import 'splitpanes/dist/splitpanes.css'
 import proxyView from '../components/settings-proxy.vue';
 import { onMounted, onUnmounted, reactive, ref, shallowRef, toRaw, watch, WatchHandle } from 'vue';
-import { getIpcApi } from '@lib/preload';
-import { Setting } from '@main/services/service-setting';
+import { getIpcApi } from '@preload/lib/ipc-api';
 import { settingCompents } from '@renderer/ts/setting-compents';
+import { ISetting } from '@lib/main';
 const coreApi = getIpcApi('ipc-core.window', onUnmounted);
 const selected = ref([
 ])
@@ -72,7 +72,7 @@ const temp = ref([]);
 const activatedPath = ref<Array<any>>([]);
 const currentComponent = shallowRef();
 const currentProps = ref();
-function foundSetting(target: string, path = [], _menus = settingMenus.value): Setting[] | null {
+function foundSetting(target: string, path = [], _menus = settingMenus.value): ISetting[] | null {
     const index = target.indexOf(".");
     const current = target.substring(0, index > 1 ? index : target.length);
     const remain = index > 1 ? target.substring(index + 1, target.length) : null;
@@ -105,10 +105,10 @@ const findPath = (targetKey, path = [], nodes = settingMenus.value) => {
     }
     return [];
 }
-const settingMenus = ref<Array<Setting>>([])
+const settingMenus = ref<Array<ISetting>>([])
 const settingApi = getIpcApi('ipc-settings', onUnmounted);
 loading.value = true;
-const filterItems = (items: Setting[]): Setting[] => {
+const filterItems = (items: ISetting[]): ISetting[] => {
     return items
         .map(item => {
             // 只保留匹配的节点0
@@ -119,10 +119,10 @@ const filterItems = (items: Setting[]): Setting[] => {
                 return item;
             }
         })
-        .filter(Boolean) as Setting[]; // 过滤掉 undefined
+        .filter(Boolean) as ISetting[]; // 过滤掉 undefined
 };
 
-settingApi.invoke('get-settings').then((data: Array<Setting>) => {
+settingApi.invoke('get-settings').then((data: Array<ISetting>) => {
     settingMenus.value = filterItems(data);
     loading.value = false;
 })
@@ -139,7 +139,7 @@ const close = () => {
 const newSettingsValue = reactive(new Map<string, any>());
 let unwatch: WatchHandle;
 const watchValue = new Map<string, any>();
-const onActivated = (item: Array<Setting>) => {
+const onActivated = (item: Array<ISetting>) => {
     if (item.length === 0) {
         selected.value = temp.value;
     } else {

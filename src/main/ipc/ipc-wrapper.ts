@@ -1,7 +1,6 @@
 import { ipcMain, IpcMainEvent, IpcMainInvokeEvent, WebContents, webContents } from "electron";
 import { getWebContentIds, handleChannelBind, handleChannelUnbind, removeListenerChannel } from "@main/services/web-content-listener";
 import { showErrorDialog } from "@main/utils/dialog";
-import { } from "electron";
 
 class IpcApi {
     private api: string;
@@ -33,18 +32,28 @@ class IpcApi {
         ipcMain.removeListener(`${this.api}.${channel}`, listener);
         return this;
     };
-    _dispatcher(event: string, callback: (webContent: WebContents) => void, strict = true) {
+    _dispatcher(event: string, callback: (webContent: WebContents) => void, strict = true, webContentId_?: number) {
         const webContentIds: Set<number> | undefined = getWebContentIds(event)
         if (webContentIds && webContentIds.size > 0) {
-            webContentIds.forEach(webContentId => {
-                const webContent = webContents.fromId(webContentId)
+            if (webContentId_) {
+                const webContent = webContents.fromId(webContentId_)
                 if (webContent) {
                     callback(webContent)
                 } else {
-                    removeListenerChannel(event, webContentId);
-                    console.warn(`webcontent已被移除:${webContentId},${event}`)
+                    removeListenerChannel(event, webContentId_);
+                    console.warn(`webcontent已被移除:${webContentId_},${event}`)
                 }
-            })
+            } else {
+                webContentIds.forEach(webContentId => {
+                    const webContent = webContents.fromId(webContentId)
+                    if (webContent) {
+                        callback(webContent)
+                    } else {
+                        removeListenerChannel(event, webContentId);
+                        console.warn(`webcontent已被移除:${webContentId},${event}`)
+                    }
+                })
+            }
         } else {
             if (strict) {
                 console.error(new Error(`渠道尚未正确注册:${event}`))
@@ -58,16 +67,30 @@ class IpcApi {
     send(channel: string, ...args: any[]) {
         channel = `${this.api}.${channel}`;
         this._dispatcher(channel, webContent => {
-            console.log(`发送事件到webview进程${webContent},${JSON.stringify({ channel, ...args })}`)
+            console.log(`发送事件到webview进程${webContent.id},${JSON.stringify({ channel, ...args })}`)
             webContent.send(channel, ...args)
         })
     }
     trySend(channel: string, ...args: any[]) {
         channel = `${this.api}.${channel}`;
         this._dispatcher(channel, webContent => {
-            console.log(`发送事件到webview进程${webContent},${JSON.stringify({ channel, ...args })}`)
+            console.log(`发送事件到webview进程${webContent.id},${JSON.stringify({ channel, ...args })}`)
             webContent.send(channel, ...args)
         }, false)
+    }
+    sendWeb(channel: string, webContentId: number, ...args: any[]) {
+        channel = `${this.api}.${channel}`;
+        this._dispatcher(channel, webContent => {
+            console.log(`发送事件到webview进程${webContentId},${JSON.stringify({ channel, ...args })}`)
+            webContent.send(channel, ...args)
+        }, true, webContentId)
+    }
+    trySendWeb(channel: string, webContentId: number, ...args: any[]) {
+        channel = `${this.api}.${channel}`;
+        this._dispatcher(channel, webContent => {
+            console.log(`发送事件到webview进程${webContentId},${JSON.stringify({ channel, ...args })}`)
+            webContent.send(channel, ...args)
+        }, false, webContentId)
     }
     onRenderBind(channel: string, listener: (webId: number) => void) {
         channel = `${this.api}.${channel}`;

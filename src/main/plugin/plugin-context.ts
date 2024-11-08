@@ -88,14 +88,19 @@ export class PluginContext implements ExtensionContext {
         } as any;
         this.windowManager = {
             createWindow: (windowId, options) => {
+                windowId = plugin.appId + (windowId || '')
+                const preload = options.webPreferences.preload;
                 options = {
                     ...options, webPreferences: {
                         devTools: true,
                         webviewTag: true,
-                        preload: getPreloadFile('index')
+                        preload: getPreloadFile('ext-plugin-main')
                     }
                 }
                 const window = windowManager.createWindow(windowId, options);
+                window.webContents.on('will-attach-webview', (e, webPreferences) => {
+                    webPreferences.preload = preload;
+                })
                 const loadUrl = window.loadURL;
                 window.loadURL = async (url, options) => {
                     const pluginUrl = getUrl('plugin-window');
@@ -106,7 +111,12 @@ export class PluginContext implements ExtensionContext {
                     mode: "undocked",
                     activate: true,
                 });
-                this.closeCleanResource.add(window.close.bind(window))
+                const closeClear = window.close.bind(window);
+                window.on('close', () => {
+                    this.closeCleanResource.delete(closeClear)
+                })
+                this.closeCleanResource.add(closeClear)
+                window['plugin'] = this.plugin;
                 return windowManager.createWindow(windowId, options)
             },
             getWindow: windowManager.getWindow

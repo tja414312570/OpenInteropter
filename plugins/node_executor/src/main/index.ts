@@ -271,7 +271,7 @@ class NodeExecutor
       }
     );
     window.loadURL(url);
-    throw new Error("未捕获异常");
+    // throw new Error("未捕获异常");
     if (true) return;
     const plugHome = pluginContext.workPath;
     if (fs.existsSync(plugHome)) {

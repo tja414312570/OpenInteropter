@@ -17,6 +17,7 @@
     "paths": {
       "@config/*": ["config/*"],
       "@renderer/*": ["src/renderer/*"],
+      "@preload/*": ["src/preload/*"],
       "@main/*": ["src/main/*"],
       "@store/*": ["src/renderer/store/modules/*"],
       "@lib/*": ["lib/src/*"]

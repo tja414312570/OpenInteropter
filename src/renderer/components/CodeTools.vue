@@ -54,7 +54,7 @@ import { InstructContent } from '@main/ipc/code-manager';
 import { InstructResultType, PluginStatus } from '@lib/main';
 import { PluginInfo } from '@lib/main';
 import { IpcEventHandler } from '@renderer/ts/default-ipc';
-import { getIpcApi } from '@lib/preload';
+import { getIpcApi } from '@preload/lib/ipc-api';
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 import * as monaco from 'monaco-editor';
 

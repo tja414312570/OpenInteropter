@@ -9,14 +9,13 @@ const api = getIpcApi('ipc-core')
 api.handle('get-current-webcontents-id', (event, input) => {
     return event.sender.id;
 });
-api.on('bind-channel-listener', (event, channel_info) => {
-    const { webContentId, channel } = channel_info;
-    console.log(`注册渠道:${webContentId},${channel}`)
-    bindListenerChannel(channel, webContentId)
+api.on('bind-channel-listener', (event, channel) => {
+    console.log(`注册渠道:${channel} 在 ${event.sender.id}`)
+    bindListenerChannel(channel, event.sender.id)
 });
-api.on('remove-channel-listener', (event, channel_info) => {
-    const { webContentId, channel } = channel_info;
-    removeListenerChannel(channel, webContentId)
+api.on('remove-channel-listener', (event, channel) => {
+    console.log(`注册移除:${channel} 在 ${event.sender.id}`)
+    removeListenerChannel(channel, event.sender.id)
 });
 api.on('error-notify', (event, message) => {
     showErrorDialog(message)

@@ -37,7 +37,7 @@ import XtermView from '../components/XtermView.vue';
 import StatusBar from '../components/StatusBar.vue';
 import CodeOutput from '../components/CodeOutput.vue';
 import PluginView from '../components/PluginView.vue';
-import { getIpcApi } from '@lib/preload';
+import { getIpcApi } from '@preload/lib/ipc-api';
 
 const MONACO_EDITOR_OPTIONS = {
   automaticLayout: true,

@@ -14,7 +14,6 @@ import rimraf from 'rimraf'
 import { deleteAsync } from "del";
 import { doneLog } from "./log";
 
-const mainOpt = rollupOptions(process.env.NODE_ENV, "main");
 const preloadOpt = rollupOptions(process.env.NODE_ENV, "preload");
 const pluginsOpt = rollupOptions(process.env.NODE_ENV, "executor");
 
@@ -130,7 +129,7 @@ function startMain(): Promise<void> {
       )
   );
   return new Promise((resolve, reject) => {
-    const MainWatcher = watch(mainOpt);
+    const MainWatcher = watch(rollupOptions(process.env.NODE_ENV, "main"));
     MainWatcher.on("change", (filename) => {
       // 主进程日志部分
       logStats(

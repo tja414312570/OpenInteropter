@@ -122,7 +122,7 @@ import { onMounted, onUnmounted, ref, vShow } from 'vue';
 import { PluginManifest } from '@lib/main';
 
 
-import { getIpcApi } from '@lib/preload';
+import { getIpcApi } from '@preload/lib/ipc-api';
 
 const pluginViewApi: any = getIpcApi('plugin-view-api', onUnmounted);
 const loading = ref(true);

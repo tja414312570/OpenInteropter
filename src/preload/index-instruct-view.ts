@@ -1,5 +1,5 @@
 import { InstructContent } from "@main/ipc/code-manager";
-import { exposeInMainWorld } from "./ipc-wrapper";
+import { exposeInMainWorld } from "./lib/ipc-wrapper";
 
 exposeInMainWorld('code-view-api', ipcRenderer => ({
     onCode: (callback: Function) => ipcRenderer.on('code', (_, notifyData) => callback(notifyData)),

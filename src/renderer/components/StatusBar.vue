@@ -33,7 +33,7 @@
 </template>
 
 <script lang="ts" setup>
-import { getIpcApi } from '@lib/preload';
+import { getIpcApi } from '@preload/lib/ipc-api';
 import { ref, onMounted, reactive, onUnmounted } from 'vue';
 
 const statusBar = ref()

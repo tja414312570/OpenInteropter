@@ -1,4 +1,4 @@
-import { exposeInMainWorld } from "./ipc-wrapper";
+import { exposeInMainWorld } from "./lib/ipc-wrapper";
 import { } from "electron";
 exposeInMainWorld('ipc-core', () => ({
     crash: () => process.crash(),

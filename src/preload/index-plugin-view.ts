@@ -1,4 +1,4 @@
-import { exposeInMainWorld } from "./ipc-wrapper";
+import { exposeInMainWorld } from "./lib/ipc-wrapper";
 const api = 'plugin-view-api'
 
 

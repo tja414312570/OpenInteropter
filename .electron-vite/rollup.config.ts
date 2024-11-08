@@ -47,6 +47,8 @@ export default (env = "production", type = "main") => {
       replace({
         preventAssignment: true,
         "process.env.userConfig": config ? JSON.stringify(config) : "{}",
+        'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
+        'process.env.PORT': JSON.stringify(process.env.PORT || '9080'),
       }),
       nodeResolve({
         preferBuiltins: true,
