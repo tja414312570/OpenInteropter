@@ -7,7 +7,6 @@ import { getIpcApi } from "extlib/render";
 const test = ref("");
 const ipc = getIpcApi("node", onUnmounted);
 ipc.on("test", (event, data) => {
-  console.log("傻逼");
   test.value = data;
 });
 </script>

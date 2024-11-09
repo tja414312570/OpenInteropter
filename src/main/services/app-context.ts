@@ -58,7 +58,7 @@ const appContext = new Proxy(context, {
             }
             return value;
         } else {
-            throw new Error(`属性[${String(prop)}]在上下文中未初始化`)
+            throw new Error(`属性[${String(prop)}]在上下文中未初始化.`)
         }
     }
 })

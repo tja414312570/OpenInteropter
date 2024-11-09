@@ -7,28 +7,28 @@ class IpcApi {
     constructor(api: string) {
         this.api = api;
     }
-    // wrapper(listener: (...args: any[]) => (Promise<any>) | (any)) {
-    //     return async (...args: any[]) => {
-    //         try {
-    //             return await listener(...args);
-    //         } catch (err) {
-    //             console.error(`Error in listener: ${err.message}`, err);
-    //             throw err;
-    //         }
-    //     };
-    // }
+    wrapper(listener: (...args: any[]) => (Promise<any>) | (any)) {
+        return async (...args: any[]) => {
+            try {
+                return await listener(...args);
+            } catch (err) {
+                // console.error(`Error in listener: ${err.message}`, err);
+                throw err;
+            }
+        };
+    }
     handle(channel: string, listener: (event: IpcMainInvokeEvent, ...args: any[]) => (Promise<any>) | (any)) {
-        return ipcMain.handle(`${this.api}.${channel}`, listener);
+        return ipcMain.handle(`${this.api}.${channel}`, this.wrapper(listener));
     }
     handleOnce(channel: string, listener: (event: IpcMainInvokeEvent, ...args: any[]) => (Promise<any>) | (any)) {
-        return ipcMain.handleOnce(`${this.api}.${channel}`, listener);
+        return ipcMain.handleOnce(`${this.api}.${channel}`, this.wrapper(listener));
     }
     on(channel: string, listener: (event: IpcMainInvokeEvent, ...args: any[]) => (Promise<any>) | (any)) {
-        ipcMain.on(`${this.api}.${channel}`, listener);
+        ipcMain.on(`${this.api}.${channel}`, this.wrapper(listener));
         return this;
     }
     once(channel: string, listener: (event: IpcMainEvent, ...args: any[]) => void) {
-        ipcMain.once(`${this.api}.${channel}`, listener);
+        ipcMain.once(`${this.api}.${channel}`, this.wrapper(listener));
         return this;
     }
     removeAllListeners(channel: string) {
@@ -39,7 +39,7 @@ class IpcApi {
         ipcMain.removeHandler(`${this.api}.${channel}`);
     };
     removeListener(channel: string, listener: (...args: any[]) => void) {
-        ipcMain.removeListener(`${this.api}.${channel}`, listener);
+        ipcMain.removeListener(`${this.api}.${channel}`, this.wrapper(listener));
         return this;
     };
     _dispatcher(event: string, callback: (webContent: WebContents) => void, strict = true, webContentId_?: number) {

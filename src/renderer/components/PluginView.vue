@@ -3,6 +3,7 @@
         <v-progress-linear v-show="loading" color="teal" indeterminate stream></v-progress-linear>
         <v-list>
             <v-list-item v-for="plugin in plugins" :key="plugin.id" class="plugin-item">
+                <v-progress-linear color="lime" v-if="plugin.loading" indeterminate reverse></v-progress-linear>
                 <v-list-item-content>
                     <v-list-item-title>{{ plugin.manifest.name }}</v-list-item-title>
                     <v-list-item-subtitle>版本: {{ plugin.manifest.version }} | 作者: {{ plugin.manifest.author
@@ -15,14 +16,6 @@
                     <v-chip class="plugin-type" small>{{ plugin.status }}</v-chip>
                     <div style="flex:1" class="action-group">
                         <!-- 查看详情按钮 -->
-                        <v-tooltip bottom>
-                            <template v-slot:activator="{ props }">
-                                <v-icon v-bind="props" color="yellow" small @click="showDetails(plugin)">
-                                    mdi-information-outline
-                                </v-icon>
-                            </template>
-                            <span>{{ plugin.event }}</span>
-                        </v-tooltip>
                         <v-tooltip bottom>
                             <template v-slot:activator="{ props }">
                                 <v-icon v-bind="props" color="yellow" small @click="showDetails(plugin)">
@@ -133,6 +126,7 @@ interface PluginInfo {
     status: string;
     enable: boolean;
     event: string;
+    loading: boolean;
 }
 
 const dialog = ref(false);
@@ -197,8 +191,9 @@ const togglePlugin = (plugin: PluginInfo) => {
     console.log(`${plugin.manifest.name} 已切换到 ${plugin.enable ? '启用' : '禁用'}`);
 };
 const reload = (plugin: PluginInfo) => {
-    pluginViewApi.invoke('plugin-reload', plugin.id).then(plugin => {
-        alert(`插件加载成功${plugin.manifest.name}`)
+    plugin.loading = true;
+    pluginViewApi.invoke('plugin-reload', plugin.id).then(x => {
+        plugin.loading = false;
     }).catch(err => {
         console.error(err)
         alert("插件加载失败")

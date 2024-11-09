@@ -82,8 +82,17 @@ const pluginDisposeable = pluginApi.onRenderBind('remove', (webId: number): void
     notify("插件加载异常:" + err)
   })
 })
-
+const gpuDisableds = ['disabled_off', 'unavailable', 'disabled', 'off']
+const gpuStatus = app.getGPUFeatureStatus();
+if (gpuDisableds.indexOf(gpuStatus.webgl) > -1 || gpuDisableds.indexOf(gpuStatus.gpu_compositing) > -1) {
+  console.warn('GPU 加速不可用，禁用硬件加速');
+  app.disableHardwareAcceleration();
+}
 app.whenReady().then(() => {
+
+  // 检查关键的 GPU 状态，例如加速是否被禁用
+
+
   startProxyServer().then(proxy => {
     startWindow(`http://${proxy.httpHost}:${proxy.httpPort}`);
 
