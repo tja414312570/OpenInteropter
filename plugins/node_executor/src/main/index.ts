@@ -137,11 +137,13 @@ class NodeExecutor
         });
         const virtualWindow = new VirtualWindow();
         const line = code.split(/\r?\n/).length;
+        const codeViewApi = pluginContext.getCrossIpcApi("code-view-api");
         const render = (data: string, type: InstructResultType) => {
           console.log(data);
           virtualWindow.write(data);
           const output = virtualWindow.render();
-          pluginContext.sendIpcRender("code-view-api.insertLine", {
+
+          codeViewApi.send("insertLine", {
             id,
             code: output,
             execId,

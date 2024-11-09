@@ -46,8 +46,11 @@ class IpcReanderMapper implements IpcRendererExtended {
         throw error;
       }
     };
+    if (channel.indexOf('insertLine') > -1) {
+      console.error(`监听器 '${channel}' 注册:`, this._id_);
+    }
     bindListener(this._id_, channel, wrappedListener)
-    ipcRenderer.send('ipc-core.bind-channel-listener', channel)
+    ipcRenderer.send('ipc-core.bind-channel-listener', { channel, id: this._id_ })
     try {
       target.bind(ipcRenderer)(channel, wrappedListener);
     } catch (error) {
@@ -80,9 +83,12 @@ class IpcReanderMapper implements IpcRendererExtended {
       console.error(error)
       throw error;
     }
+    if (channel.indexOf('insertLine') > -1) {
+      console.error(`监听器 '${channel}' 移除:`, this._id_);
+    }
     ipcRenderer.off(channel, listener);
     removeListener(this._id_, channel)
-    ipcRenderer.send('ipc-core.remove-channel-listener', channel)
+    ipcRenderer.send('ipc-core.remove-channel-listener', { channel, id: this._id_ })
     return this;
   }
   off(channel: string) {

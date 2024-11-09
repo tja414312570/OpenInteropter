@@ -55,7 +55,7 @@ class IpcReanderMapper implements IpcRendererExtended {
       }
     };
     bindListener(this._id_, channel, wrappedListener)
-    ipcRenderer.send('ipc-core.bind-channel-listener', channel)
+    ipcRenderer.send('ipc-core.bind-channel-listener', { channel, id: this._id_ })
     try {
       target.bind(ipcRenderer)(channel, wrappedListener);
     } catch (error) {
@@ -86,7 +86,7 @@ class IpcReanderMapper implements IpcRendererExtended {
     }
     removeListener(this._id_, channel)
     ipcRenderer.off(channel, listener);
-    ipcRenderer.send('ipc-core.remove-channel-listener', channel)
+    ipcRenderer.send('ipc-core.remove-channel-listener', { channel, id: this._id_ })
     return this;
   }
   off(channel: string) {

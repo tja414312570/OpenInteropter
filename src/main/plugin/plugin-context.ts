@@ -34,21 +34,19 @@ const notifyApi = getIpcApi('ipc-notify')
 export class PluginContext implements ExtensionContext {
     plugin: PluginInfo;
     settingManager: ISettingManager;
-    private settings: Set<string> = new Set;
     private closeCleanResource: Set<() => void> = new Set;
     envDir: string;
     resourceManager: ResourceManager;
     _pluginPath: string;
     workPath: string;
     notifyManager: NotifyManager;
-    ipcMain: IIpcMain;
+    getCrossIpcApi: GetIpcApi;
     appPath: string;
     windowManager: IWindowManager;
     getIpcApi: GetIpcApi;
     getPath(path: 'home' | 'appData' | 'userData' | 'sessionData' | 'temp' | 'exe' | 'module' | 'desktop' | 'documents' | 'downloads' | 'music' | 'pictures' | 'videos' | 'recent' | 'logs' | 'crashDumps') {
         return app.getPath(path);
     }
-    sendIpcRender: (event_: string, message: any) => void;
     showDialog: (message: DialogOpt) => Promise<DialogReturnValue>;
     reload() {
         pluginManager.reload(this.plugin);
@@ -58,6 +56,7 @@ export class PluginContext implements ExtensionContext {
     }
     constructor(plugin: PluginInfo) {
         this.plugin = plugin;
+        this.resourceManager = resourceManager;
         const appid = plugin.appId.replaceAll('.', '-');
         this.settingManager = {
             on(_evnent: string, listener: (...args: any) => void) {
@@ -89,6 +88,13 @@ export class PluginContext implements ExtensionContext {
                 return settingManager.getSettings(`plugin.${appid}.${path}`)
             }
         } as any;
+        const codeApi = getIpcApi("code-view-api")
+        this.resourceManager.put('code', {
+            render: (message: any) => {
+                codeApi.send("execute-render", message);
+            }
+        })
+
         this.windowManager = {
             createWindow: (windowId, options) => {
                 windowId = plugin.appId + (windowId || '')
@@ -127,9 +133,10 @@ export class PluginContext implements ExtensionContext {
             getWindow: windowManager.getWindow
         };
         this.getIpcApi = (namespace: string) => getIpcApi(`${plugin.appId}.${namespace}`) as unknown as IpcApi;
+        this.getCrossIpcApi = (namespace: string) => getIpcApi(`${namespace}`) as unknown as IpcApi;
         this.workPath = path.join(appContext.pluginPath, plugin.appId);
         this.envDir = appContext.envPath;
-        this.resourceManager = resourceManager;
+
         this.notifyManager = {
             notify: (message: string) => {
                 notifyApi.send('show-notification', {

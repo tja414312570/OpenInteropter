@@ -115,10 +115,9 @@ export interface ExtensionContext {
    * 通知管理
    */
   notifyManager: NotifyManager
-  ipcMain: IIpcMain;
+  getCrossIpcApi: GetIpcApi;
   appPath: string;
   getIpcApi: GetIpcApi;
-  sendIpcRender: (event_: string, message: any) => void;
   showDialog: (message: DialogOpt) => Promise<DialogReturnValue>;
   reload: () => void;
   unload: () => void;

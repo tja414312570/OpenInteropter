@@ -89,10 +89,6 @@ if (gpuDisableds.indexOf(gpuStatus.webgl) > -1 || gpuDisableds.indexOf(gpuStatus
   app.disableHardwareAcceleration();
 }
 app.whenReady().then(() => {
-
-  // 检查关键的 GPU 状态，例如加速是否被禁用
-
-
   startProxyServer().then(proxy => {
     startWindow(`http://${proxy.httpHost}:${proxy.httpPort}`);
 
