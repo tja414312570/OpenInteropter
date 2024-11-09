@@ -1,7 +1,7 @@
 import { IpcRendererEvent } from 'electron';
 import { IpcRenderer } from 'electron/renderer';
 import { v4 as uuidv4 } from 'uuid';
-import { observe } from '../../../lib/src/preload/observer-manager';
+import { observe } from '@lib/render';
 function showCustomAlert(message: string) {
     const alertDiv = document.createElement('div');
     alertDiv.innerText = message;

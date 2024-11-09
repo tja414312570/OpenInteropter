@@ -1,7 +1,7 @@
 import { IpcRendererEvent } from 'electron';
 import { IpcRenderer } from 'electron/renderer';
 import { v4 as uuidv4 } from 'uuid';
-import { observe } from '../../../lib/src/preload/observer-manager';
+import { observe } from './observer-manager';
 function showCustomAlert(message: string) {
     const alertDiv = document.createElement('div');
     alertDiv.innerText = message;
@@ -53,7 +53,7 @@ class IpcApi {
 export interface DefaultApi {
     off: (channel: string) => void,
     offAll: () => void,
-    on: (channel: string, listener: (event: IpcRendererEvent, ...args: any[]) => void) => IpcRenderer;
+    on: (channel: string, listener: (event: any, ...args: any[]) => void) => any;
     send: (channel: string, ...args: any[]) => void;
     invoke: (channel: string, ...args: any[]) => Promise<any>;
 }
@@ -74,10 +74,9 @@ export function getIpcApi<T>(channel: string, binder: Element | Function | any):
     if (!binder) {
         throw new Error("请绑定api所在渠道")
     }
-
     const ipcApiInstance = new IpcApi(channel);
-    const { _getIpcApi__, _getId__ } = ipcApiInstance;
 
+    const { _getIpcApi__, _getId__ } = ipcApiInstance;
     // 使用 Proxy 创建代理
     const proxy = new Proxy(ipcApiInstance, {
         get(target, prop) {

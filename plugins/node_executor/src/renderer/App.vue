@@ -1,6 +1,16 @@
-<template>hello wolrd</template>
+<template>hello {{ test }}</template>
 
-<script lang="ts" setup></script>
+<script lang="ts" setup>
+import { onUnmounted, ref } from "vue";
+import { getIpcApi } from "extlib/render";
+
+const test = ref("");
+const ipc = getIpcApi("node", onUnmounted);
+ipc.on("test", (event, data) => {
+  console.log("傻逼");
+  test.value = data;
+});
+</script>
 <style scoped>
 .vscode-layout {
   width: 100%;

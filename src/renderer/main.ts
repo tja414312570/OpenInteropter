@@ -61,8 +61,6 @@ import 'vue-code-layout/lib/vue-code-layout.css'
 import 'dockview-core/dist/styles/dockview.css';
 import CodeLayout from 'vue-code-layout'
 import context from "./context";
-import { Router } from "vue-router";
-import { registerObserverElementAdapter } from "@lib/preload/observer-manager";
 app.use(CodeLayout)
 
 context.setApp(app);

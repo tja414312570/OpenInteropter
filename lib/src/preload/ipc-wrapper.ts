@@ -1,4 +1,4 @@
-import { app, contextBridge, IpcRenderer, ipcRenderer, IpcRendererEvent } from "electron";
+import { contextBridge, IpcRenderer, ipcRenderer, IpcRendererEvent } from "electron";
 
 const invokers: Map<string, Map<string, (event: any, data: any) => void>> = new Map;
 const bindListener = (_id_: string | undefined, channel: string, listener: any) => {
@@ -22,7 +22,6 @@ const removeListener = (_id_: string | undefined, channel: string) => {
     }
   }
 }
-
 
 interface IpcRendererExtended extends IpcRenderer {
   _id_?: string | undefined;
@@ -51,6 +50,7 @@ class IpcReanderMapper implements IpcRendererExtended {
       try {
         listener(event, ...args);
       } catch (error) {
+        console.log(error)
         throw error;
       }
     };
@@ -78,19 +78,22 @@ class IpcReanderMapper implements IpcRendererExtended {
     }
   }
   _off(channel: string) {
-    removeListener(this._id_, channel)
     const listener = invokers.get(this._id_ as string)?.get(channel);
     if (!listener) {
       const error = new Error(`没有找到监听器${this._id_}::${channel}`);
+      console.log(error)
       throw error;
     }
+    removeListener(this._id_, channel)
     ipcRenderer.off(channel, listener);
     ipcRenderer.send('ipc-core.remove-channel-listener', channel)
     return this;
   }
   off(channel: string) {
     if (!channel) {
-      throw new Error("注销监听器失败，请使用代理，并传递渠道参数")
+      const error = new Error("注销监听器失败，请使用代理，并传递渠道参数")
+      console.log(error)
+      throw error;
     }
     channel = `${this.namespace}.${channel}`;
     this._off(channel)
@@ -180,16 +183,19 @@ const getAppid = async () => {
   return appId;
 }
 
+const core_namespaces = ['ipc-core']
 export const exposeInMainWorld = async (namespace: string, api?: (ipcRenderer: IpcReanderMapper) => { [key: string]: any }) => {
   if (!namespace) {
     throw new Error(`暴漏api必须指定namespace！`)
+  }
+  if (core_namespaces.indexOf(namespace) > -1) {
+    throw new Error(`系统命名空间${core_namespaces.join(',')}不允许被注册！`)
   }
   if (api && typeof api !== 'function') {
     throw new Error(`暴漏api必须通过函数的方式！`)
   }
   const appId = await getAppid();
-  namespace = `${appId}.${namespace}`
-  const ipcRenderMapper = new IpcReanderMapper(namespace);
+  const ipcRenderMapper = new IpcReanderMapper(`${appId}.${namespace}`);
   const newApi = api ? api(ipcRenderMapper) : {};
   const wrrpperApi = {
     _setId_: ipcRenderMapper._setId_.bind(ipcRenderMapper),
@@ -202,3 +208,17 @@ export const exposeInMainWorld = async (namespace: string, api?: (ipcRenderer: I
   }
   contextBridge.exposeInMainWorld(namespace, wrrpperApi);
 }
+
+(() => {
+  const namespace = `ipc-core`
+  const ipcRenderMapper = new IpcReanderMapper(namespace);
+  const wrrpperApi = {
+    _setId_: ipcRenderMapper._setId_.bind(ipcRenderMapper),
+    off: ipcRenderMapper.off.bind(ipcRenderMapper),
+    offAll: ipcRenderMapper.offAll.bind(ipcRenderMapper),
+    on: ipcRenderMapper.on.bind(ipcRenderMapper),
+    send: ipcRenderMapper.send.bind(ipcRenderMapper),
+    invoke: ipcRenderMapper.invoke.bind(ipcRenderMapper),
+  }
+  contextBridge.exposeInMainWorld(namespace, wrrpperApi);
+})();

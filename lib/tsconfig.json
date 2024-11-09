@@ -1,17 +1,18 @@
 {
   "compilerOptions": {
     "declaration": true,
-    "target": "ES2022",           // 指定 ECMAScript 的目标版本
-    "module": "commonjs",          // 指定模块系统
-    "strict": true,                // 开启所有严格类型检查选项
-    "esModuleInterop": true,       // 兼容 ES6 模块
-    "skipLibCheck": true,          // 跳过库文件检查
+    "target": "ES2022", // 指定 ECMAScript 的目标版本
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext", // 指定模块系统
+    "strict": true, // 开启所有严格类型检查选项
+    "esModuleInterop": true, // 兼容 ES6 模块
+    "skipLibCheck": true, // 跳过库文件检查
     "forceConsistentCasingInFileNames": true,
-    "noEmitOnError": true,         // 防止在有错误时生成输出文件
-    "outDir": "./dist",              // 输出目录（包括 .js 和 .d.ts 文件）
-    "rootDir": "./src",              // 源代码根目录
+    "noEmitOnError": true, // 防止在有错误时生成输出文件
+    "outDir": "./dist", // 输出目录（包括 .js 和 .d.ts 文件）
+    "rootDir": "./src", // 源代码根目录
     "typeRoots": ["./types", "./node_modules/@types"]
   },
-  "include": ["src/**/*.ts", "types/global.d.ts" ],       // 包含的源文件路径
-  "exclude": ["node_modules","dist"]       // 排除的文件夹
+  "include": ["src/**/*.ts", "types/global.d.ts"], // 包含的源文件路径
+  "exclude": ["node_modules", "dist"] // 排除的文件夹
 }

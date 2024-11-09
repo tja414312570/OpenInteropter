@@ -7,6 +7,16 @@ class IpcApi {
     constructor(api: string) {
         this.api = api;
     }
+    // wrapper(listener: (...args: any[]) => (Promise<any>) | (any)) {
+    //     return async (...args: any[]) => {
+    //         try {
+    //             return await listener(...args);
+    //         } catch (err) {
+    //             console.error(`Error in listener: ${err.message}`, err);
+    //             throw err;
+    //         }
+    //     };
+    // }
     handle(channel: string, listener: (event: IpcMainInvokeEvent, ...args: any[]) => (Promise<any>) | (any)) {
         return ipcMain.handle(`${this.api}.${channel}`, listener);
     }

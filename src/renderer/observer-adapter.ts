@@ -1,4 +1,4 @@
-import { registerObserverElementAdapter } from "@lib/preload/observer-manager";
+import { registerObserverElementAdapter } from "@lib/render/observer-manager";
 import { Ref, watch } from "vue";
 
 registerObserverElementAdapter((target: Ref<Element>) => {

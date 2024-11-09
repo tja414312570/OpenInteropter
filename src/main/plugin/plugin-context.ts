@@ -1,6 +1,8 @@
 import {
     DialogOpt, DialogReturnValue, ExtensionContext as ExtExtensionContext, IIpcMain, ISetting, ISettingManager, IWindowManager, NotifyManager, PluginInfo as ExtPluginInfo,
-    ResourceManager
+    ResourceManager,
+    GetIpcApi,
+    IpcApi
 } from '@lib/main'
 import settingManager from '@main/services/service-setting'
 import path from 'path';
@@ -42,6 +44,7 @@ export class PluginContext implements ExtensionContext {
     ipcMain: IIpcMain;
     appPath: string;
     windowManager: IWindowManager;
+    getIpcApi: GetIpcApi;
     getPath(path: 'home' | 'appData' | 'userData' | 'sessionData' | 'temp' | 'exe' | 'module' | 'desktop' | 'documents' | 'downloads' | 'music' | 'pictures' | 'videos' | 'recent' | 'logs' | 'crashDumps') {
         return app.getPath(path);
     }
@@ -89,7 +92,7 @@ export class PluginContext implements ExtensionContext {
         this.windowManager = {
             createWindow: (windowId, options) => {
                 windowId = plugin.appId + (windowId || '')
-                const preload = options.webPreferences.preload;
+                const preload = options?.webPreferences?.preload;
                 options = {
                     ...options, webPreferences: {
                         devTools: true,
@@ -98,9 +101,11 @@ export class PluginContext implements ExtensionContext {
                     }
                 }
                 const window = windowManager.createWindow(windowId, options);
-                window.webContents.on('will-attach-webview', (e, webPreferences) => {
-                    webPreferences.preload = preload;
-                })
+                if (preload) {
+                    window.webContents.on('will-attach-webview', (e, webPreferences) => {
+                        webPreferences.preload = preload;
+                    })
+                }
                 const loadUrl = window.loadURL;
                 window.loadURL = async (url, options) => {
                     const pluginUrl = getUrl('plugin-window');
@@ -121,7 +126,7 @@ export class PluginContext implements ExtensionContext {
             },
             getWindow: windowManager.getWindow
         };
-
+        this.getIpcApi = (namespace: string) => getIpcApi(`${plugin.appId}.${namespace}`) as unknown as IpcApi;
         this.workPath = path.join(appContext.pluginPath, plugin.appId);
         this.envDir = appContext.envPath;
         this.resourceManager = resourceManager;

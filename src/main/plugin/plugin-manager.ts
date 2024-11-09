@@ -9,6 +9,7 @@ import '../ipc-bind/plugin-ipc-bind'
 import { showErrorDialog } from '@main/utils/dialog';
 import EventEmitter from 'events';
 import { initBind } from '../ipc-bind/plugin-ipc-bind';
+import '../ipc-bind/plugin-window-core-ipc'
 
 const manifest_keys: Array<string> = ['name', 'main', 'version', 'description', 'author', 'appId']
 // 定义常见的特殊属性集合
@@ -215,7 +216,9 @@ class PluginManager extends EventEmitter<PluginEventMap> {
     public async reload(pluginInfo: PluginInfo) {
         try {
             this.emit('reload', pluginInfo)
-            await this.unload(pluginInfo)
+            if (pluginInfo.status === PluginStatus.load) {
+                await this.unload(pluginInfo)
+            }
             await this.load(pluginInfo as any)
             this.emit('reloaded', pluginInfo)
             return pluginInfo;

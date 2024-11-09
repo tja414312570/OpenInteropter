@@ -27,11 +27,11 @@
 
 <script setup lang="ts">
 import MenuBar from "./menu/MenuBar.vue";
-import { getIpcApi } from "@lib/preload";
 import { MenuDesc } from "@main/services/service-menu";
 import { onMounted, onUnmounted, reactive, ref } from "vue";
 import { MenuItem } from "./menu/ContextMenuDefine";
 import { MenuBarOptions } from "./menu";
+import { getIpcApi } from "@preload/lib/ipc-api";
 const status = reactive<{
   status: 0 | 1 | 2,
   btn: [boolean, boolean, boolean]

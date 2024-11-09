@@ -5,9 +5,9 @@ import {
   InstructResult,
   InstructResultType,
   pluginContext,
-} from "mylib/main";
-import { Pluginlifecycle } from "mylib/main";
-import { ExtensionContext } from "mylib/main";
+} from "extlib/main";
+import { Pluginlifecycle } from "extlib/main";
+import { ExtensionContext } from "extlib/main";
 import { createContext, runInContext } from "vm";
 import { stringify } from "circular-json";
 import { rejects } from "assert";
@@ -23,8 +23,8 @@ import DownloadNode from "./download";
 import { extractNode } from "./extract";
 import { startNodeChildProcess } from "./node-executor";
 import { platform } from "os";
-import { getUrl } from "./static-path";
-import { watcher } from "mylib/dev";
+import { getPreloadFile, getUrl } from "./static-path";
+import { watcher } from "extlib/dev";
 watcher();
 class ExecuteContext {
   private _data: ((data: string) => void) | undefined;
@@ -91,7 +91,8 @@ class ExecuteContext {
 
 class NodeExecutor
   extends AbstractPlugin
-  implements Pluginlifecycle, InstructExecutor {
+  implements Pluginlifecycle, InstructExecutor
+{
   private executeContext: null | ExecuteContext = null;
   env = {} as any;
   currentTask(): string[] {
@@ -264,6 +265,9 @@ class NodeExecutor
     const window = pluginContext.windowManager.createWindow(
       pluginContext.plugin.appId,
       {
+        webPreferences: {
+          preload: getPreloadFile("index"),
+        },
         width: 720,
         height: 360,
         minimizable: false,
@@ -271,6 +275,11 @@ class NodeExecutor
       }
     );
     window.loadURL(url);
+    const api = pluginContext.getIpcApi("node");
+    api.onRenderBind("test", () => {
+      api.send("test", "这是测试插件,来自插件进程"!);
+    });
+    console.log("哈哈哈");
     // throw new Error("未捕获异常");
     if (true) return;
     const plugHome = pluginContext.workPath;

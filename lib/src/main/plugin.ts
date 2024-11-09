@@ -8,8 +8,8 @@ import {
   WebFrameMain,
 } from "electron";
 import { Pluginlifecycle } from "./plugin-lifecycle";
-import EventEmitter from "events";
-import path from "path";
+import { GetIpcApi } from "./ipc-api-type";
+import { EventEmitter } from "events";
 
 // 定义插件的接口
 export interface PluginManifest {
@@ -117,6 +117,7 @@ export interface ExtensionContext {
   notifyManager: NotifyManager
   ipcMain: IIpcMain;
   appPath: string;
+  getIpcApi: GetIpcApi;
   sendIpcRender: (event_: string, message: any) => void;
   showDialog: (message: DialogOpt) => Promise<DialogReturnValue>;
   reload: () => void;
