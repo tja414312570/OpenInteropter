@@ -25,10 +25,12 @@ export const getAgent = async (domain: string) => {
         for (const [key] of map) {
           const value = map.get(key);
           map.delete(key);
-          pluginManager.unload(value['_plugin'])
+          if (value) {
+            pluginManager.unload(value['_plugin'])
+          }
         }
         if (plugin.status !== PluginStatus.load) {
-          pluginManager.load(plugin as any);
+          await pluginManager.load(plugin as any);
         }
         module = await pluginManager.getModule(plugin as any);
         map.set(domain, module as any);
@@ -46,6 +48,10 @@ export const getAgentFromUrl = (url: string) => {
     domain = url.substring(0, pathIndex + 1)
   }
   return getAgent(domain);
+}
+
+export const getCurrentAgent = () => {
+  return Array.from(map.values());
 }
 
 export async function startProxyServer() {

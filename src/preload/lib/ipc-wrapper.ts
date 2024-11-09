@@ -46,9 +46,6 @@ class IpcReanderMapper implements IpcRendererExtended {
         throw error;
       }
     };
-    if (channel.indexOf('insertLine') > -1) {
-      console.error(`监听器 '${channel}' 注册:`, this._id_);
-    }
     bindListener(this._id_, channel, wrappedListener)
     ipcRenderer.send('ipc-core.bind-channel-listener', { channel, id: this._id_ })
     try {
@@ -82,9 +79,6 @@ class IpcReanderMapper implements IpcRendererExtended {
       const error = new Error(`没有找到监听器${this._id_}::${channel}`);
       console.error(error)
       throw error;
-    }
-    if (channel.indexOf('insertLine') > -1) {
-      console.error(`监听器 '${channel}' 移除:`, this._id_);
     }
     ipcRenderer.off(channel, listener);
     removeListener(this._id_, channel)

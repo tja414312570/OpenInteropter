@@ -60,6 +60,35 @@ const renderConfig = {
   }
 };
 
+// Webpack 配置：Web 环境，用于打包 `render` 目录
+const preloadConfig = {
+  entry: glob.sync("./src/preload/**/*.ts").reduce((entries, file) => {
+    const entry = path.basename(file, path.extname(file));
+    entries[`preload/${entry}`] = file;
+    return entries;
+  }, {}), // render 目录下所有 TypeScript 文件为入口文件
+  target: "electron-renderer", // 浏览器环境
+  module: {
+    rules: [
+      {
+        test: /\.ts$/,
+        use: "ts-loader",
+        exclude: /node_modules/,
+      },
+    ],
+  },
+  resolve: {
+    extensions: [".ts", ".js"],
+  },
+  output: {
+    filename: "[name].js", // 输出文件名保持 render 目录结构
+    path: path.resolve(__dirname, "dist"), // 输出到 dist 根目录，render 文件夹不再重复嵌套
+  },
+  mode: "production",
+  optimization: {
+    minimize: false, // 禁用压缩
+  },
+};
 const copy = {
   entry: {},  // 无需入口文件
   mode: 'production',
@@ -73,4 +102,4 @@ const copy = {
   ],
 };
 
-module.exports = [mainConfig, renderConfig,copy];  // 导出多个配置
+module.exports = [mainConfig, preloadConfig, renderConfig, copy]; // 导出多个配置

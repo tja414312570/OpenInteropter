@@ -11,10 +11,7 @@ class ResourceManagerImpl implements ResourceManager {
             if (resource) {
                 resolve(resource)
             } else {
-                reject({
-                    code: ResourceStatus.RESOURCE_NOT_FOUND,
-                    message: "资源未就绪！"
-                })
+                reject(new Error(`请求的资源[${id}]仍未就绪！`, { cause: ResourceStatus.RESOURCE_NOT_FOUND }))
             }
         })
     }

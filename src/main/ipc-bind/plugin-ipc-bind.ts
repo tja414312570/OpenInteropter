@@ -75,12 +75,27 @@ api.handle('plugin-reload', async (event, id: string) => {
     return copy(await pluginManager.reload(pluginManager.getPluginFromId(id)));
 })
 
-api.handle('load-script', (event, url) => {
+api.handle('load-render-script', (event, url) => {
     return new Promise<string>(async (resolve, reject) => {
         try {
             const agent = await getAgentFromUrl(url);
             if (agent) {
-                resolve(agent.requireJs() as any)
+                resolve(agent.renderScript() as any)
+            }
+            resolve('')
+        } catch (err) {
+            reject(err)
+        }
+    })
+});
+
+api.handle('load-preload-script', (event, url) => {
+    return new Promise<any>(async (resolve, reject) => {
+        try {
+            const agent = await getAgentFromUrl(url);
+            if (agent) {
+                const result = { appId: pluginManager.getPluginInfoFromInstance(agent).appId, script: await agent.preloadScript() as any };
+                resolve(result)
             }
             resolve('')
         } catch (err) {

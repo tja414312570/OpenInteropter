@@ -106,7 +106,7 @@ class PluginManager extends EventEmitter<PluginEventMap> {
             _plugin: pluginInfo,
             get(target: any, prop: string) {
                 if (prop === '_plugin') {
-                    return this._plugin;
+                    return pluginInfo;
                 }
                 // // 1. 直接处理特殊属性和 Symbol
                 if (special_key_props.has(prop) || typeof prop === "symbol") {
@@ -125,6 +125,9 @@ class PluginManager extends EventEmitter<PluginEventMap> {
             }
         }
         return new Proxy(pluginInfo.module, proxyHandler);
+    }
+    getPluginInfoFromInstance(instance: any): PluginInfo {
+        return instance?.['_plugin']
     }
     resolvePluginModule<T>(type: PluginType, filter?: (pluginsOfType: Array<PluginInfo>) => PluginInfo | Array<PluginInfo> | undefined): Promise<T> {
         return new Promise<T>(async (resolve, rejects) => {

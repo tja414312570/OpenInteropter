@@ -130,7 +130,8 @@ class PythonExecutor
           console.log(data);
           virtualWindow.write(data);
           const output = virtualWindow.render();
-          pluginContext.sendIpcRender("code-view-api.insertLine", {
+          const api = pluginContext.getCrossIpcApi("code-view-api");
+          api.send("insertLine", {
             id,
             code: output,
             execId,

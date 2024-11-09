@@ -1,10 +1,11 @@
 import {
   AbstractPlugin,
   Bridge,
-  pluginContext,
   ExtensionContext,
+  IpcApi,
+  pluginContext,
+  Pluginlifecycle,
 } from "mylib/main";
-import { Pluginlifecycle } from "mylib/main";
 import { IContext } from "http-mitm-proxy";
 import { decompressedBody } from "./decode";
 import { processResponse } from "./dispatcher";
@@ -15,11 +16,27 @@ import { SseHandler } from "./doubao";
 import fs from "fs/promises";
 
 class ChatGptBridge extends AbstractPlugin implements Bridge, Pluginlifecycle {
-  requireJs(): Promise<string | void> {
+  ipcApi: IpcApi | undefined;
+  renderScript(): Promise<string | void> {
     return new Promise((resolve, reject) => {
       const path_ = path.join(
         // "file://",
         path.join(__dirname, "render", "js_bridge.js")
+      );
+      fs.readFile(path_, "utf-8")
+        .then((script) => {
+          resolve(script);
+        })
+        .catch((err) => {
+          reject(err);
+        });
+    });
+  }
+  preloadScript(): Promise<string | void> {
+    return new Promise((resolve, reject) => {
+      const path_ = path.join(
+        // "file://",
+        path.join(__dirname, "preload", "index.js")
       );
       fs.readFile(path_, "utf-8")
         .then((script) => {
@@ -118,28 +135,28 @@ class ChatGptBridge extends AbstractPlugin implements Bridge, Pluginlifecycle {
   }
   async onMounted(ctx: ExtensionContext) {
     console.log("doubao代理已挂载");
-    pluginContext.ipcMain.handle(
-      "webview-api.webview.agent.ready",
-      (event, urlString) => {
-        console.log("请求地址:", urlString);
-        const path = this.getPathFromUrl(urlString);
-        if (path?.trim() === "/") {
-          this.send2webview(props);
-        }
-        console.log(`插件已就绪:[${path}]`);
-        // pluginContext.showDialog({
-        //   message: '插件已就绪！'
-        // }).then(result=>{
-        //   console.log("对话框点击")
-        // })
+    this.ipcApi = pluginContext.getIpcApi("agent");
+    this.ipcApi.on("ready", (event, urlString) => {
+      console.log("请求地址:", urlString);
+      const path = this.getPathFromUrl(urlString);
+      if (path?.trim() === "/") {
+        this.send(props);
       }
-    );
+      console.log(`插件已就绪:[${path}]`);
+    });
+    // await (async () => {
+    //   return new Promise((resolve) => {
+    //     this.ipcApi?.onRenderBind("message", (webId) => {
+    //       resolve(async)
+    //     });
+    //   });
+    // })();
   }
-  send2webview(props: string) {
-    pluginContext.sendIpcRender("webview-api.send-content", props);
+  async send(props: string) {
+    this.ipcApi?.send("send-content", props);
   }
   onUnmounted(): void {
-    pluginContext.ipcMain.removeHandler("webview-api.webview.agent.ready");
+    this.ipcApi?.removeHandler("ready");
   }
 }
 export default new ChatGptBridge();

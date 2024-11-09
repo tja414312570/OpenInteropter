@@ -1,12 +1,54 @@
-import { ipcRenderer } from "electron";
+import { contextBridge, crashReporter, ipcRenderer, nativeImage, webFrame, webUtils } from "electron";
 
 import { exposeInMainWorld } from "./lib/ipc-wrapper";
 
 import './core-api-pre'
 
-const api = 'webview-api'
+// const api = 'webview-api'
 
-exposeInMainWorld(api)
+// exposeInMainWorld(api)
+ipcRenderer.invoke("plugin-view-api.load-preload-script", location.href).then(async result => {
+  const { script, appId } = result;
+  // 调用示例，加载模块化的 JavaScript 文件
+  if (script.length > 0) {
+    if (script.startsWith('http') || script.startsWith('file:')) {
+      await import(script)  // 设置模块的路径
+    } else {
+      const fun = new Function('require', 'contextBridge',
+        'crashReporter',
+        'ipcRenderer',
+        'nativeImage',
+        'webFrame',
+        'webUtils',
+        'Buffer',
+        'process',
+        'clearImmediate',
+        'setImmediate',
+        'appId',
+        script);
+      fun(
+        require,
+        contextBridge,
+        crashReporter,
+        ipcRenderer,
+        nativeImage,
+        webFrame,
+        webUtils,
+        Buffer,
+        process,
+        clearImmediate,
+        setImmediate,
+        appId
+      )
+    }
+  } else {
+    console.log("当前界面不支持任何组件")
+  }
+}).catch(error => {
+  console.error("加载脚本异常", error)
+  alert("加载脚本异常:" + error)
+})
+
 
 window.addEventListener('DOMContentLoaded', () => {
   function loadModule(url: string) {
@@ -25,7 +67,7 @@ window.addEventListener('DOMContentLoaded', () => {
     };
     document.head.appendChild(script);  // 将 script 标签插入到页面
   }
-  ipcRenderer.invoke("plugin-view-api.load-script", location.href).then(file_addr => {
+  ipcRenderer.invoke("plugin-view-api.load-render-script", location.href).then(file_addr => {
     // 调用示例，加载模块化的 JavaScript 文件
     if (file_addr.length > 0) {
       loadModule(file_addr);

@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from "uuid";
 import VirtualWindow from "./virtual-window";
 import fs from "fs";
 import path from "path";
+import util from "util";
 import { IDisposable, IPty } from "node-pty";
 
 const removeInvisibleChars = (str: string) => {
@@ -148,7 +149,8 @@ class SshExecutor
       const render = (data: string, type: InstructResultType) => {
         virtualWindow.write(data);
         const output = virtualWindow.render();
-        pluginContext.sendIpcRender("code-view-api.insertLine", {
+        const codeApi = pluginContext.getCrossIpcApi("code-view-api");
+        codeApi.send("insertLine", {
           id,
           code: output,
           execId,
@@ -169,7 +171,7 @@ class SshExecutor
           // ret: output,
           std: output,
           execId,
-          type: InstructResultType.completed,
+          type: InstructResultType.failed,
         });
       });
       try {
@@ -245,6 +247,7 @@ class SshExecutor
         })();
       } catch (error: any) {
         executeContext.error(error);
+        reject(error);
       }
     });
   }

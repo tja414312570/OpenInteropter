@@ -74,7 +74,7 @@ export function getIpcApi<T>(channel: string, binder: Element | Function | any):
     if (!binder) {
         throw new Error("请绑定api所在渠道")
     }
-    const ipcApiInstance = new IpcApi(channel);
+    const ipcApiInstance = new IpcApi(`${channel}`);
 
     const { _getIpcApi__, _getId__ } = ipcApiInstance;
     // 使用 Proxy 创建代理

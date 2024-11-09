@@ -146,6 +146,7 @@ const refreshPluginStatus = (id: string) => {
     if (id) {
         pluginViewApi.invoke('get-plugin-tasks', { id }).then(tasks => {
             runing.value = tasks.length
+            isExecuting.value = tasks.length > 0
         })
     }
 }
@@ -240,8 +241,10 @@ const executeCode = () => {
     }
     isExecuting.value = true;
     codeApi.executeCode({ code: props.code, id: props.id, language: props.language, executor: selected.value } as InstructContent).then(result => {
-        console.log('代码已执行:', props.code)
+        console.log('代码已执行:', result)
+        isExecuting.value = false;
     }).catch(err => {
+        isExecuting.value = false;
         console.log('代码执行错误:', err)
     })
         ;

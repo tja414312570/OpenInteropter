@@ -18,7 +18,6 @@ let observer: MutationObserver | null = null;
 function initObserver() {
     if (!observer) {
         observer = new MutationObserver((mutationsList: MutationRecord[]) => {
-            console.log('元素变化:', mutationsList)
             for (const mutation of mutationsList) {
                 mutation.removedNodes.forEach((node) => {
                     if (node instanceof Element && observerList.has(node)) {

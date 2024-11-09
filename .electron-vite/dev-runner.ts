@@ -203,6 +203,7 @@ function startPreload(): Promise<void> {
 function startElectron() {
   var args = [
     "--inspect=5858",
+    "--trace-warnings ...",
     join(__dirname, "../dist/electron/main/main.js"),
   ];
 

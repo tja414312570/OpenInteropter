@@ -6,11 +6,22 @@ import { InstructExecutor, InstructResult } from '@lib/main';
 import { showErrorDialog } from "@main/utils/dialog";
 import { PluginInfo } from "@main/plugin/plugin-context";
 import { getIpcApi } from "@main/ipc/ipc-wrapper";
+import { getCurrentAgent } from "./proxy";
 
 const api = getIpcApi('code-view-api')
-api.on('send_execute-result', (event, input) => {
+
+
+api.on('send_execute-result', async (event, input) => {
     console.log("发送消息到webview", input)
-    sendMessage(input)
+    const agentList = getCurrentAgent();
+    if (agentList && agentList.length > 0) {
+        for (const agent of agentList) {
+            await agent.send(input)
+        }
+    } else {
+        showErrorDialog('没有注册的代理')
+        throw new Error('没有注册的代理')
+    }
 });
 
 api.handle('execute', (event, code: InstructContent) => {
@@ -44,20 +55,12 @@ export const stopExecute = async (code_body: InstructContent) => {
         console.error(err)
         showErrorDialog(`执行器异常:${String(err)}`)
     })
-    // const result = await executor.execute(code);
-
-    // send_ipc_render('terminal-input', code)
-    // console.log(`执行结果:\n${result}`);
-    // notify(`执行 ${language} 结果:\n${result}`);
-    // executeCodeCompleted({ code, language, result })
-    // return result;
-    // await dispatcherResult(result);
 }
 export const executeCode = async (code_body: InstructContent) => {
     console.log(`执行代码:\n${JSON.stringify(code_body)}`);
     const { code, language, executor } = code_body;
 
-    pluginManager.resolvePluginModule(PluginType.executor, (pluginInfoList: Array<PluginInfo>) => {
+    const module = await pluginManager.resolvePluginModule<InstructExecutor>(PluginType.executor, (pluginInfoList: Array<PluginInfo>) => {
         if (executor) {
             return pluginManager.getPluginFromId(executor);
         }
@@ -67,18 +70,9 @@ export const executeCode = async (code_body: InstructContent) => {
             }
         }
         return null;
-    }).then((module: InstructExecutor) => {
-        module.execute(code_body).then((result: InstructResult) => {
-            console.log("执行结果", result)
-            // sendMessage(result)
-        }).catch(err => {
-            console.error(err)
-            showErrorDialog(`执行指令异常:${String(err)}`)
-        })
-    }).catch(err => {
-        console.error(err)
-        showErrorDialog(`执行器异常:${String(err)}`)
     })
+    const result = await module.execute(code_body);
+    console.log("代码执行完成:", result)
     // const result = await executor.execute(code);
 
     // send_ipc_render('terminal-input', code)

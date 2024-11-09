@@ -18,7 +18,7 @@
       </v-btn>
       <v-progress-circular v-if="loading" color="amber" indeterminate size="24"
         class="loading-indicator"></v-progress-circular>
-      <button @click="webviews.openDevTools()">打开开发者工具</button>
+      <button @click="toggleDevTools">打开开发者工具</button>
     </div>
 
     <!-- 主内容区域，加载 webview -->
@@ -47,6 +47,14 @@ function onStartLoading() {
   loading.value = true;
 }
 
+const toggleDevTools = () => {
+  const isOpen = webviews.value.isDevToolsOpened();
+  if (isOpen) {
+    webviews.value.closeDevTools();
+  } else {
+    webviews.value.openDevTools();
+  }
+}
 // 页面加载完成时更新按钮状态，并停止 loading 状态
 function onLoad() {
   webviews.value.openDevTools()

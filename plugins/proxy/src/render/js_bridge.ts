@@ -1,77 +1,85 @@
-import { DefaultApi, getIpcApi, showDialog } from 'mylib/render'
+import { DefaultApi, getIpcApi, showDialog } from "mylib/render";
 //@ts-ignore
-import Vue from 'vue/dist/vue.esm.js';
-import './overwrite-matches'
+import Vue from "vue/dist/vue.esm.js";
+import "./overwrite-matches";
 const _doc = document as any;
 
-const webviewApi: DefaultApi = getIpcApi('webview-api')
-webviewApi.on("send-content", (event: any, message: any) => {
-  console.log("搜到webview消息：", event, message)
-  _doc.myApp.send(message)
+const agentApi: DefaultApi = getIpcApi("agent", window);
+agentApi.on("message", (event: any, message: any) => {
+  console.log("搜到webview消息：", event, message);
+  _doc.myApp.send(message);
 });
 
-
-
-const observerList = new Map<string, ((mutations: MutationRecord[]) => void)>();
+const observerList = new Map<string, (mutations: MutationRecord[]) => void>();
 const _observer = new MutationObserver(function (mutationsList, observer) {
   for (const values of observerList.values()) {
     values(mutationsList);
   }
 });
-_observer.observe(document.body, { childList: true, subtree: true })
+_observer.observe(document.body, { childList: true, subtree: true });
 // 开始观察整个 body 元素，检测子节点变化
 
 const js_bridge = () => {
   if (_doc.myApp) {
-    console.log("桥接程序已初始化", _doc.myApp)
+    console.log("桥接程序已初始化", _doc.myApp);
     return;
   }
-  let myApp = _doc.myApp = {//:{[key:string]:any} 
+  let myApp = (_doc.myApp = {
+    //:{[key:string]:any}
     ready: false,
     vueInstance: null,
     currentLocation: null,
     form: null,
     continuer: null,
     desotory: () => {
-      webviewApi.offAll();
+      agentApi.offAll();
       _doc.myApp = null;
     },
     send: function (message: string) {
       if (!myApp.ready) {
-        showDialog({ message: '("桥接未就绪"' })
+        showDialog({ message: '("桥接未就绪"' });
         return;
       }
       // 清空 textarea 的内容并填写新内容
-      if (message === null || message === undefined || message.trim().length === 0) {
-        myApp.notify("收到无效输入")
+      if (
+        message === null ||
+        message === undefined ||
+        message.trim().length === 0
+      ) {
+        myApp.notify("收到无效输入");
         return;
       }
-      const textarea = document.querySelector('#prompt-textarea') as any;
+      const textarea = document.querySelector("#prompt-textarea") as any;
       if (!textarea) {
-        alert("界面异常，没有找到表单组件")
+        alert("界面异常，没有找到表单组件");
         return;
       }
-      if (textarea.tagName.toLowerCase() === 'textarea') {
-        textarea.value = message;  // 对 textarea 赋值
+      if (textarea.tagName.toLowerCase() === "textarea") {
+        textarea.value = message; // 对 textarea 赋值
       }
       // 判断是否为 contenteditable 的 div
-      else if (textarea.getAttribute('contenteditable') === 'true') {
-        textarea.textContent = message;  // 对 contenteditable 的 div 赋值
+      else if (textarea.getAttribute("contenteditable") === "true") {
+        textarea.textContent = message; // 对 contenteditable 的 div 赋值
       } else {
-        console.error("元素既不是 textarea 也不是 contenteditable 的 div", textarea);
-        alert("输入框不支持")
+        console.error(
+          "元素既不是 textarea 也不是 contenteditable 的 div",
+          textarea
+        );
+        alert("输入框不支持");
         return;
       }
       // 触发 input 事件，确保 React 或 Vue 等框架监听的事件能够捕捉到变化
-      let inputEvent = new Event('input', { bubbles: true });
+      let inputEvent = new Event("input", { bubbles: true });
       textarea.dispatchEvent(inputEvent);
-      console.log("输入值完成", message)
+      console.log("输入值完成", message);
       // 立即点击按钮
       let times = 0;
       var loopBtn = () => {
-        const sendBtn = document.querySelector('button[data-testid]') as HTMLElement;
+        const sendBtn = document.querySelector(
+          "button[data-testid]"
+        ) as HTMLElement;
         if (sendBtn) {
-          if (!sendBtn.hasAttribute('disabled')) {
+          if (!sendBtn.hasAttribute("disabled")) {
             sendBtn.click();
             return;
           }
@@ -82,19 +90,20 @@ const js_bridge = () => {
           return;
         }
         setTimeout(loopBtn, 500);
-      }
+      };
       loopBtn();
-    }, createApp: function () {
+    },
+    createApp: function () {
       // Vue 加载成功的逻辑
-      const appDiv = _doc.createElement('div');
-      appDiv.id = 'vue-app';
+      const appDiv = _doc.createElement("div");
+      appDiv.id = "vue-app";
       _doc.body.appendChild(appDiv);
-      console.log("加载vue脚本", appDiv)
+      console.log("加载vue脚本", appDiv);
       // 定义 Vue 应用
       const App = {
         data() {
           return {
-            message: '解释器未就绪'
+            message: "解释器未就绪",
           };
         },
         template: `
@@ -108,22 +117,22 @@ const js_bridge = () => {
                                 <div>{{ message }}</div>
                             </div>
                         </div>
-                    `
+                    `,
       };
       // 挂载 Vue 应用到动态插入的 div 上
       _doc.myApp.vueInstance = new Vue({
         data: App.data,
-        template: App.template
+        template: App.template,
       });
       _doc.myApp.vueInstance.$mount(appDiv, true);
       myApp.continuer = appDiv;
-      observerList.set('vue_ui_ovserver', (arg) => {
-        const mutaForm = document.querySelector('#vue-app') as HTMLElement;
+      observerList.set("vue_ui_ovserver", (arg) => {
+        const mutaForm = document.querySelector("#vue-app") as HTMLElement;
         if (!mutaForm) {
-          console.log("vueui被销毁")
+          console.log("vueui被销毁");
           _doc.body.appendChild(appDiv);
         }
-      })
+      });
       myApp.foundForm();
     },
     notify: (newMessage: string) => {
@@ -131,40 +140,41 @@ const js_bridge = () => {
         // 更新 Vue 实例中的 message
         (myApp.vueInstance as any).message = newMessage;
       } else {
-        console.error('Vue 实例尚未初始化，请确保调用了 createApp 方法。');
+        console.error("Vue 实例尚未初始化，请确保调用了 createApp 方法。");
       }
     },
     // 错误通知的方法
     error: (message: string, options: { [key: string]: any } = {} as any) => {
-      let errorDiv = _doc.querySelector('#error-notification');
+      let errorDiv = _doc.querySelector("#error-notification");
       if (!errorDiv) {
         // 如果不存在错误提示框，则创建
-        errorDiv = _doc.createElement('div');
-        errorDiv.id = 'error-notification';
-        errorDiv.style.position = 'fixed';
-        errorDiv.style.bottom = options.bottom || '10px';
-        errorDiv.style.right = options.right || '10px';
-        errorDiv.style.backgroundColor = options.backgroundColor || 'red';
-        errorDiv.style.color = options.color || 'white';
-        errorDiv.style.padding = options.padding || '10px';
-        errorDiv.style.borderRadius = options.borderRadius || '5px';
-        errorDiv.style.boxShadow = options.boxShadow || '0 0 10px rgba(0, 0, 0, 0.1)';
+        errorDiv = _doc.createElement("div");
+        errorDiv.id = "error-notification";
+        errorDiv.style.position = "fixed";
+        errorDiv.style.bottom = options.bottom || "10px";
+        errorDiv.style.right = options.right || "10px";
+        errorDiv.style.backgroundColor = options.backgroundColor || "red";
+        errorDiv.style.color = options.color || "white";
+        errorDiv.style.padding = options.padding || "10px";
+        errorDiv.style.borderRadius = options.borderRadius || "5px";
+        errorDiv.style.boxShadow =
+          options.boxShadow || "0 0 10px rgba(0, 0, 0, 0.1)";
         errorDiv.style.zIndex = options.zIndex || 1000;
-        errorDiv.style.display = 'flex';
-        errorDiv.style.alignItems = 'center';
+        errorDiv.style.display = "flex";
+        errorDiv.style.alignItems = "center";
 
         // 创建关闭按钮
-        const closeButton = document.createElement('span');
-        closeButton.innerHTML = '&times;'; // 使用乘号表示关闭
-        closeButton.style.marginLeft = '10px';
-        closeButton.style.cursor = 'pointer';
-        closeButton.style.fontSize = '20px';
-        closeButton.style.fontWeight = 'bold';
-        closeButton.style.padding = '0 5px';
-        closeButton.style.color = options.closeButtonColor || 'white';
+        const closeButton = document.createElement("span");
+        closeButton.innerHTML = "&times;"; // 使用乘号表示关闭
+        closeButton.style.marginLeft = "10px";
+        closeButton.style.cursor = "pointer";
+        closeButton.style.fontSize = "20px";
+        closeButton.style.fontWeight = "bold";
+        closeButton.style.padding = "0 5px";
+        closeButton.style.color = options.closeButtonColor || "white";
 
         // 点击关闭按钮时移除错误提示框
-        closeButton.addEventListener('click', () => {
+        closeButton.addEventListener("click", () => {
           if (errorDiv && errorDiv.parentNode) {
             document.body.removeChild(errorDiv);
           }
@@ -179,16 +189,16 @@ const js_bridge = () => {
       errorDiv.innerHTML = `${message}`;
 
       // 重新添加关闭按钮（覆盖内容时保持按钮存在）
-      const closeButton = document.createElement('span');
-      closeButton.innerHTML = '&times;';
-      closeButton.style.marginLeft = '10px';
-      closeButton.style.cursor = 'pointer';
-      closeButton.style.fontSize = '20px';
-      closeButton.style.fontWeight = 'bold';
-      closeButton.style.padding = '0 5px';
-      closeButton.style.color = options.closeButtonColor || 'white';
+      const closeButton = document.createElement("span");
+      closeButton.innerHTML = "&times;";
+      closeButton.style.marginLeft = "10px";
+      closeButton.style.cursor = "pointer";
+      closeButton.style.fontSize = "20px";
+      closeButton.style.fontWeight = "bold";
+      closeButton.style.padding = "0 5px";
+      closeButton.style.color = options.closeButtonColor || "white";
 
-      closeButton.addEventListener('click', () => {
+      closeButton.addEventListener("click", () => {
         if (errorDiv && errorDiv.parentNode) {
           document.body.removeChild(errorDiv);
         }
@@ -206,61 +216,67 @@ const js_bridge = () => {
       }
     },
     foundBtn: () => {
-      myApp.notify("初始化中:" + (myApp.times++) + "s")
+      myApp.notify("初始化中:" + myApp.times++ + "s");
       if (myApp.times > 60) {
-        myApp.notify("初始化中失败，请刷新网页或进入正确的页面")
+        myApp.notify("初始化中失败，请刷新网页或进入正确的页面");
         return;
       }
-      const sendBtn = document.querySelector('button[data-testid]') as HTMLElement;
-      const textarea = document.querySelector('#prompt-textarea') as any;
-      textarea && (textarea['matches'] = () => false)
+      const sendBtn = document.querySelector(
+        "button[data-testid]"
+      ) as HTMLElement;
+      const textarea = document.querySelector("#prompt-textarea") as any;
+      textarea && (textarea["matches"] = () => false);
       if (sendBtn && textarea) {
         myApp.ready = true;
-        myApp.notify("桥接程序已就绪！")
-        console.log("桥接程序已就绪！")
-        webviewApi.invoke('webview.agent.ready', location.href)
+        myApp.notify("桥接程序已就绪！");
+        console.log("桥接程序已就绪！");
+        agentApi.on("send-content", (event: any, message: any) => {
+          console.log("发送消息到doubao：", event, message);
+          _doc.myApp.send(message);
+        });
+        agentApi.send("ready", location.href);
         return;
       }
-      setTimeout(myApp.foundBtn, 1000)
+      setTimeout(myApp.foundBtn, 1000);
     },
     times: 0,
     foundForm: () => {
-      myApp.notify("正在查找表单组件：" + (myApp.times++) + "s")
+      myApp.notify("正在查找表单组件：" + myApp.times++ + "s");
       if (myApp.times > 60) {
-        myApp.notify("没有找到表单组件，请刷新网页或进入正确的页面")
+        myApp.notify("没有找到表单组件，请刷新网页或进入正确的页面");
         return;
       }
-      const mainTag = 'div[role="presentation"]'
+      const mainTag = 'div[role="presentation"]';
       let from = document.querySelector(mainTag) as HTMLElement;
       if (from) {
-        from.dataset.info = 'test';
-        console.log('aria-controls:', from.getAttribute('aria-controls'))
-        console.log('dataset', from.dataset.info)
-        observerList.set('main_ovserver', (arg) => {
+        from.dataset.info = "test";
+        console.log("aria-controls:", from.getAttribute("aria-controls"));
+        console.log("dataset", from.dataset.info);
+        observerList.set("main_ovserver", (arg) => {
           const mutaForm = document.querySelector(mainTag) as HTMLElement;
           if (!mutaForm) {
-            myApp.notify("没有找到表单组件！")
-            myApp.foundForm()
+            myApp.notify("没有找到表单组件！");
+            myApp.foundForm();
             return;
           }
           if (!mutaForm.dataset.info) {
-            myApp.notify("表单组件已更新！")
-            from.dataset.info = 'test';
-            myApp.foundForm()
+            myApp.notify("表单组件已更新！");
+            from.dataset.info = "test";
+            myApp.foundForm();
             return;
           }
-        })
-        myApp.notify("已找到表单组件")
+        });
+        myApp.notify("已找到表单组件");
         myApp.foundBtn();
         return;
       }
-      console.log("查找表单组件", from, document)
-      setTimeout(myApp.foundForm, 1000)
-    }
-  }
+      console.log("查找表单组件", from, document);
+      setTimeout(myApp.foundForm, 1000);
+    },
+  });
 
   myApp.createApp();
   return "ok";
-}
+};
 
-js_bridge()
+js_bridge();

@@ -1,5 +1,5 @@
 import { contextBridge, IpcRenderer, ipcRenderer, IpcRendererEvent } from "electron";
-
+declare var appId: string;
 const invokers: Map<string, Map<string, (event: any, data: any) => void>> = new Map;
 const bindListener = (_id_: string | undefined, channel: string, listener: any) => {
   if (!_id_) {
@@ -210,6 +210,10 @@ export const exposeInMainWorld = async (namespace: string, api?: (ipcRenderer: I
 }
 
 (() => {
+  if (appId) {
+    _app_id_ = appId;
+    return;
+  }
   const namespace = `ipc-core`
   const ipcRenderMapper = new IpcReanderMapper(namespace);
   const wrrpperApi = {

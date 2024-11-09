@@ -1,8 +1,10 @@
 import { IContext } from 'http-mitm-proxy'; // 导入 CommonJS 模块
 export interface Bridge {
+    send(input: any): Promise<void> | void;
     onRequest(ctx: IContext): Promise<string | void>
     onResponse(ctx: IContext): Promise<string | void>
-    requireJs(): Promise<string | void>
+    renderScript(): Promise<string | void>
+    preloadScript(): Promise<string | void>
 }
 
 export const  enum InstructResultType {

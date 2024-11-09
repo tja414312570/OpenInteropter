@@ -4,12 +4,11 @@ import Vue from "vue/dist/vue.esm.js";
 import "./overwrite-matches";
 const _doc = document as any;
 
-const webviewApi: DefaultApi = getIpcApi("webview-api");
-webviewApi.on("send-content", (event: any, message: any) => {
+const agentApi: DefaultApi = getIpcApi("agent", window);
+agentApi.on("message", (event: any, message: any) => {
   console.log("搜到webview消息：", event, message);
   _doc.myApp.send(message);
 });
-
 const observerList = new Map<string, (mutations: MutationRecord[]) => void>();
 const _observer = new MutationObserver(function (mutationsList, observer) {
   for (const values of observerList.values()) {
@@ -50,7 +49,7 @@ const js_bridge = () => {
     form: null,
     continuer: null,
     desotory: () => {
-      webviewApi.offAll();
+      agentApi.offAll();
       _doc.myApp = null;
     },
     send: function (message: string) {
@@ -255,7 +254,11 @@ const js_bridge = () => {
         myApp.ready = true;
         myApp.notify("桥接程序已就绪！");
         console.log("桥接程序已就绪！");
-        webviewApi.invoke("webview.agent.ready", location.href);
+        agentApi.on("send-content", (event: any, message: any) => {
+          console.log("发送消息到doubao：", event, message);
+          _doc.myApp.send(message);
+        });
+        agentApi.send("ready", location.href);
         return;
       }
       setTimeout(myApp.foundBtn, 1000);

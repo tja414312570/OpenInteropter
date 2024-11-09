@@ -102,6 +102,7 @@ class MainInit {
     this.mainWindow.loadURL(this.winURL);
     this.mainWindow.webContents.on('will-attach-webview', (e, webPreferences) => {
       webPreferences.preload = getPreloadFile('webview')
+      console.log(this.mainWindow)
     })
     const ses = session.fromPartition('persist:your-partition');
     registeMenu({
