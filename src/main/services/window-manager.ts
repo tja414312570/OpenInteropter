@@ -1,5 +1,5 @@
 import config from "@config/index";
-import { BrowserWindow, BrowserWindowConstructorOptions, dialog, session } from "electron";
+import { app, BrowserWindow, BrowserWindowConstructorOptions, dialog, Menu, MenuItemConstructorOptions, session } from "electron";
 import { winURL, loadingURL, getPreloadFile } from "../config/static-path";
 import { useProcessException } from "@main/hooks/exception-hook";
 import "./executor";
@@ -7,6 +7,7 @@ import _ from "lodash";
 import { registeMenu } from "./service-menu";
 import { showErrorDialog } from "@main/utils/dialog";
 import { IBrowserWindowOptions, IWindowManager } from "@lib/main";
+import { updateDockMenu } from "@main/utils/dock";
 
 export const DefaultWindowId = {
   LOADING: 'DEFAULT_WINDOW',
@@ -37,9 +38,11 @@ class WindowManager implements IWindowManager {
       });
       window = new BrowserWindow(mergedOptions)
       window['options'] = mergedOptions;
+      updateDockMenu();
       this.windowMap.set(windowId, window)
       window.on('closed', () => {
         console.log('主窗口已被销毁');
+        updateDockMenu();
         this.windowMap.delete(windowId)
       });
     }
@@ -56,7 +59,6 @@ class WindowManager implements IWindowManager {
 }
 const windowManager = new WindowManager();
 export default windowManager;
-
 
 class MainInit {
   public winURL: string = "";

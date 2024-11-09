@@ -24,8 +24,8 @@ ipcRenderer.invoke("plugin-view-api.load-preload-script", location.href).then(as
         'process',
         'clearImmediate',
         'setImmediate',
-        'appId',
         script);
+      process['appId'] = appId;
       fun(
         require,
         contextBridge,
@@ -38,7 +38,6 @@ ipcRenderer.invoke("plugin-view-api.load-preload-script", location.href).then(as
         process,
         clearImmediate,
         setImmediate,
-        appId
       )
     }
   } else {

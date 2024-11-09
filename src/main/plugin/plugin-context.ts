@@ -106,6 +106,7 @@ export class PluginContext implements ExtensionContext {
                         preload: getPreloadFile('ext-plugin-main')
                     }
                 }
+                options.title = options.title || plugin.name
                 const window = windowManager.createWindow(windowId, options);
                 if (preload) {
                     window.webContents.on('will-attach-webview', (e, webPreferences) => {

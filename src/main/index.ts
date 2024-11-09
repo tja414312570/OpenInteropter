@@ -4,7 +4,7 @@
 //   process.exit(1); // 以非零状态码退出程序
 // });
 import { useMainDefaultIpc } from "./services/ipc-main";
-import { app, BrowserWindow, dialog, ipcMain, IpcMainEvent, session } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, IpcMainEvent, Menu, MenuItem, MenuItemConstructorOptions, session } from "electron";
 import { MainInit } from "./services/window-manager";
 import { useDisableButton } from "./hooks/disable-button-hook";
 import { useProcessException } from "@main/hooks/exception-hook";
@@ -21,7 +21,7 @@ import { showErrorDialog } from "./utils/dialog";
 import { createWindow } from "./services/window-settings";
 const innerPluginPath = path.join(__dirname, '../../../plugins');
 import './ipc-bind/core-ipc-bind'
-app.setName('myApp');
+app.setName('开放解释器');
 import './services/global-agents'
 import './services/service-setting'
 import './services/service-menu'
@@ -61,7 +61,7 @@ app.on('certificate-error', (event, webContents, url, error, certificate, callba
 //当终端ui就绪时
 const pty = getIpcApi('pty')
 pty.onRenderBind('terminal-output', (webId: number) => {
-  ptyInit()
+  // ptyInit()
 })
 //当通知ui就绪时
 const coreApi = getIpcApi('ipc-notify')
@@ -88,7 +88,9 @@ if (gpuDisableds.indexOf(gpuStatus.webgl) > -1 || gpuDisableds.indexOf(gpuStatus
   console.warn('GPU 加速不可用，禁用硬件加速');
   app.disableHardwareAcceleration();
 }
+
 app.whenReady().then(() => {
+
   startProxyServer().then(proxy => {
     startWindow(`http://${proxy.httpHost}:${proxy.httpPort}`);
 
