@@ -10,6 +10,8 @@ import * as directives from "vuetify/directives";
 import { VIcon } from "vuetify/components"; // 导入实际的 v-icon 组件
 import { mdiHome } from "@mdi/js"; // 或者你自定义的图标
 import "@mdi/font/css/materialdesignicons.css";
+import vSelect from "vue-select";
+import "vue-select/dist/vue-select.css";
 
 // 创建 Vuetify 实例
 const vuetify = createVuetify({
@@ -25,7 +27,7 @@ const vuetify = createVuetify({
 const app = createApp(App);
 const store = createPinia();
 app.use(store);
-
+app.component("v-select", vSelect);
 // app.use(VueMonacoEditorPlugin, {
 //   paths: {
 //     // The recommended CDN config

@@ -8,7 +8,7 @@ import settingManager from '@main/services/service-setting'
 import path from 'path';
 import appContext from '@main/services/app-context';
 import resourceManager from './resource-manager';
-import { app } from 'electron';
+import { app, IpcMainInvokeEvent } from 'electron';
 import windowManager from '@main/services/window-manager';
 import pluginManager from './plugin-manager';
 import { getPreloadFile, getUrl } from "@main/config/static-path";
@@ -133,7 +133,22 @@ export class PluginContext implements ExtensionContext {
             },
             getWindow: windowManager.getWindow
         };
-        this.getIpcApi = (namespace: string) => getIpcApi(`${plugin.appId}.${namespace}`) as unknown as IpcApi;
+        this.getIpcApi = (namespace: string) => {
+            const api = getIpcApi(`${plugin.appId}.${namespace}`) as unknown as IpcApi;
+            const api_on = api.on
+            api.on = (channel: string, listener: any) => {
+                this.closeCleanResource.add(() => api.removeListener.bind(api)(channel, listener))
+                api_on.bind(api)(channel, listener);
+                return api;
+            };
+            const api_handle = api.handle;
+            api.handle = (channel: string, listener: any) => {
+                this.closeCleanResource.add(() => api.removeHandler.bind(api)(channel, listener))
+                api_handle.bind(api)(channel, listener);
+                return api;
+            };
+            return api;
+        };
         this.getCrossIpcApi = (namespace: string) => getIpcApi(`${namespace}`) as unknown as IpcApi;
         this.workPath = path.join(appContext.pluginPath, plugin.appId);
         this.envDir = appContext.envPath;

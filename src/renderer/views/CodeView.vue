@@ -14,7 +14,7 @@
     </template>
     <!-- https://github.com/imengyu/vue-code-layout/blob/master/examples/views/BasicUseage.vue -->
     <template v-if="isCoreReady" #centerArea>
-      <MainWebView />
+      <!-- <MainWebView /> -->
     </template>
     <template #statusBar>
       <StatusBar @loaded="onStatusBarLoaded" />

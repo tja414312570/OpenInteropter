@@ -40,7 +40,7 @@ export default (env = "production", type = "main") => {
             format: "cjs",
             name: "MainProcess",
             exports: "auto",
-            interop: "auto", 
+            interop: "auto",
             inlineDynamicImports: true,
             sourcemap: true,
           }
@@ -49,17 +49,20 @@ export default (env = "production", type = "main") => {
             dir: path.join(__dirname, "..", "dist", type),
             format: "cjs",
             exports: "auto",
-            interop: "auto", 
+            interop: "auto",
             sourcemap: true,
           },
     plugins: [
       replace({
         preventAssignment: true,
-        'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
-        'process.env.PORT':JSON.stringify(process.env.PORT || '9080'),
+        "process.env.NODE_ENV": JSON.stringify(
+          process.env.NODE_ENV || "development"
+        ),
+        "process.env.PORT": JSON.stringify(process.env.PORT || "9080"),
         "process.env.userConfig": config ? JSON.stringify(config) : "{}",
       }),
       nodeResolve({
+        exportConditions: ["node"], // 强制选择 node 环境的导出
         preferBuiltins: true,
         browser: false,
         extensions: [".mjs", ".ts", ".js", ".json", ".node"],
@@ -133,11 +136,11 @@ export default (env = "production", type = "main") => {
         : []),
     ],
     onwarn(warning, warn) {
-      if (warning.code === "CIRCULAR_DEPENDENCY"){
+      if (warning.code === "CIRCULAR_DEPENDENCY") {
         return;
       }
-      if (warning.code === 'UNRESOLVED_IMPORT') {
-        console.error('无法解析模块:', warn);
+      if (warning.code === "UNRESOLVED_IMPORT") {
+        console.error("无法解析模块:", warn);
       }
       warn(warning);
     },

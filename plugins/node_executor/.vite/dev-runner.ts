@@ -10,7 +10,7 @@ import { say } from "cfonts";
 import { spawn } from "child_process";
 import type { ChildProcess } from "child_process";
 import rollupOptions from "./rollup.config";
-import rimraf from 'rimraf'
+import rimraf from "rimraf";
 import { deleteAsync } from "del";
 import { doneLog } from "./log";
 
@@ -48,12 +48,7 @@ function logStats(proc: string, data: any) {
   console.log(log);
 }
 function startPreload(): Promise<void> {
-  console.log(
-    "\n" +
-      chalk.blue(
-        `${ "准备渲染进程..."  }`
-      ) 
-  );
+  console.log("\n" + chalk.blue(`${"准备渲染进程..."}`));
   return new Promise((resolve, reject) => {
     const PreloadWatcher = watch(preloadOpt);
     PreloadWatcher.on("change", (filename) => {
@@ -98,11 +93,7 @@ function removeJunk(chunk: string) {
 }
 
 function startRenderer(): Promise<void> {
-  console.log(
-      chalk.blue(
-        `${ "准备预加载脚本..."  }`
-      ) 
-  );
+  console.log(chalk.blue(`${"准备预加载脚本..."}`));
   return new Promise((resolve, reject) => {
     Portfinder.basePort = config.dev.port || 9080;
     Portfinder.getPort(async (err, port) => {
@@ -123,11 +114,7 @@ function startRenderer(): Promise<void> {
 }
 
 function startMain(): Promise<void> {
-  console.log(
-      chalk.blue(
-        `${ "准备主进程脚本..."  }`
-      )
-  );
+  console.log(chalk.blue(`${"准备主进程脚本..."}`));
   return new Promise((resolve, reject) => {
     const MainWatcher = watch(rollupOptions(process.env.NODE_ENV, "main"));
     MainWatcher.on("change", (filename) => {
@@ -150,9 +137,7 @@ function startMain(): Promise<void> {
   });
 }
 async function clean() {
-  await deleteAsync([
-    "dist/*",
-  ]);
+  await deleteAsync(["dist/*"]);
   doneLog(`clear done`);
   if (process.env.BUILD_TARGET === "onlyClean") process.exit();
 }
@@ -184,7 +169,7 @@ async function init() {
     await startPreload();
     await startRenderer();
     await startMain();
-    console.log( chalk.blue( `${ "所有脚本已就绪"  }` ))
+    console.log(chalk.blue(`${"所有脚本已就绪"}`));
   } catch (error) {
     console.error(error);
     process.exit(1);

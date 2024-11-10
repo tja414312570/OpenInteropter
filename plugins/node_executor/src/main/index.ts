@@ -18,13 +18,14 @@ import { ChildProcess, exec, fork } from "child_process";
 import VirtualWindow from "./virtual-window";
 import path from "path";
 import util from "util";
-import { getFileName, getNodeSha, getNodeVersions } from "./install";
+import { getFileName, getNodeSha } from "./install";
 import DownloadNode from "./download";
 import { extractNode } from "./extract";
 import { startNodeChildProcess } from "./node-executor";
 import { platform } from "os";
 import { getPreloadFile, getUrl } from "./static-path";
 import { watcher } from "extlib/dev";
+import nodeInstaller from "./install-ui";
 watcher();
 class ExecuteContext {
   private _data: ((data: string) => void) | undefined;
@@ -262,28 +263,7 @@ class NodeExecutor
       content: "正在检查环境",
       progress: -1,
     });
-    const url = getUrl();
-    console.log("ui渲染地址:" + url);
-    const window = pluginContext.windowManager.createWindow(
-      pluginContext.plugin.appId,
-      {
-        webPreferences: {
-          preload: getPreloadFile("index"),
-        },
-        width: 720,
-        height: 360,
-        minimizable: false,
-        resizable: false, // 禁用调整窗口大小
-      }
-    );
-    window.loadURL(url);
-    const api = pluginContext.getIpcApi("node");
-    api.onRenderBind("test", () => {
-      api.send("test", "这是测试插件,来自插件进程"!);
-    });
-    console.log("哈哈哈");
-    // throw new Error("未捕获异常");
-    if (true) return;
+
     const plugHome = pluginContext.workPath;
     if (fs.existsSync(plugHome)) {
       fs.mkdirSync(plugHome, { recursive: true });
@@ -325,149 +305,11 @@ class NodeExecutor
         }
         console.error("STD Error:", stderr);
       } catch (err) {
-        console.error("Error:", err);
+        console.error("execute Error:", err);
       }
       pluginContext.notifyManager.showTask({ content: `Node环境已损坏` });
     }
-    // pluginContext.notifyManager.showTask({ content: "尝试从当前环境获取！", progress: -1 });
-    // try {
-    //   const env = { ...process.env };
-    //   const { stdout, stderr } = await execPromise('node -v', { env });
-    //   const getVersion = stdout.trim();
-    //   if (getVersion.length > 0) {
-    //     pluginContext.settingManager.save(`version`, getVersion);
-    //     pluginContext.settingManager.save(`path`, 'default');
-    //     pluginContext.notifyManager.showTask({ content: `已获取到Node，版本:${stdout}` });
-    //     return;
-    //   }
-    //   console.error('STD Error:', stderr)
-    // } catch (err) {
-    //   console.error('Error:', err);
-    // }
-    pluginContext.notifyManager.showTask({
-      content: "正在下载最新的nodejs版本",
-      progress: -1,
-    });
-    const versions = (await getNodeVersions()) as any;
-    const latestVersion = versions[0].version;
-    pluginContext.notifyManager.showTask({
-      content: `找到nodejs版本:${latestVersion}`,
-      progress: -1,
-    });
-    const fileName = `node-${latestVersion}-${getFileName()}`;
-    pluginContext.notifyManager.showTask({
-      content: `文件名:${fileName}`,
-      progress: -1,
-    });
-    const downloadUrl = `https://nodejs.org/dist/${latestVersion}/${fileName}`;
-    console.log(`下载地址:${downloadUrl}`);
-    const sha256 = await getNodeSha(latestVersion, fileName);
-    console.log("256:" + sha256);
-    const downpath = pluginContext.getPath("downloads");
-    const filePath = path.join(downpath, fileName);
-    console.log(filePath, "\n", path.basename(filePath));
-    await DownloadNode(
-      downloadUrl,
-      filePath,
-      (progress) => {
-        pluginContext.notifyManager.showTask({
-          content: `正在下载文件:${fileName}`,
-          progress: progress,
-        });
-      },
-      sha256
-    );
-    console.log("下载后的文件地址:" + filePath);
-    const extSaveNodePath = path.join(
-      pluginContext.workPath,
-      "node-" + latestVersion
-    );
-    if (fs.existsSync(extSaveNodePath)) {
-      fs.mkdirSync(extSaveNodePath, { recursive: true });
-    }
-    pluginContext.notifyManager.showTask({
-      content: `正在解压文件:${fileName}`,
-      progress: -1,
-    });
-    let extNodePath: string = await extractNode(
-      filePath,
-      (progress) => {
-        pluginContext.notifyManager.showTask({
-          content: `正在解压文件:${fileName}`,
-          progress: progress,
-        });
-      },
-      extSaveNodePath
-    );
-    pluginContext.notifyManager.showTask({
-      content: `文件解压完成:${fileName}`,
-      progress: -2,
-    });
-    console.log("解压后的文件路径:" + extNodePath);
-    if (platform() !== "win32") {
-      extNodePath = path.join(extNodePath, "bin");
-    }
-    const nodeCmd = path.join(extNodePath, "node");
-    try {
-      const env = {};
-      const { stdout, stderr } = await execPromise(`"${nodeCmd}" -v`, { env });
-      const getVersion = stdout.trim();
-      if (getVersion.length > 0) {
-        this.env = env;
-        pluginContext.settingManager.save(`version`, getVersion);
-        pluginContext.settingManager.save(`path`, extNodePath);
-        pluginContext.notifyManager.showTask({
-          content: `NodeJs，版本:${stdout}`,
-        });
-        if (platform() === "win32") {
-          await symlink(
-            path.join(extNodePath, "node.exe"),
-            path.join(pluginContext.envDir, "node.exe"),
-            "file"
-          );
-          await symlink(
-            path.join(extNodePath, "npm.cmd"),
-            path.join(pluginContext.envDir, "npm.cmd"),
-            "file"
-          );
-          await symlink(
-            path.join(extNodePath, "npx.cmd"),
-            path.join(pluginContext.envDir, "npx.cmd"),
-            "file"
-          );
-          await symlink(
-            path.join(extNodePath, "node_modules"),
-            path.join(pluginContext.envDir, "node_modules"),
-            "junction"
-          );
-        } else {
-          await symlink(
-            path.join(extNodePath, "node"),
-            path.join(pluginContext.envDir, "node"),
-            "file"
-          );
-          await symlink(
-            path.join(extNodePath, "npm"),
-            path.join(pluginContext.envDir, "npm"),
-            "file"
-          );
-          await symlink(
-            path.join(extNodePath, "npx"),
-            path.join(pluginContext.envDir, "npx"),
-            "file"
-          );
-          await symlink(
-            path.join(extNodePath, "node_modules"),
-            path.join(pluginContext.envDir, "node_modules"),
-            "dir"
-          );
-        }
-        return;
-      }
-      console.error("STD Error:", stderr);
-    } catch (err) {
-      console.error("Error:", err);
-    }
+    nodeInstaller.start();
   }
 
   onUnmounted(): void {
