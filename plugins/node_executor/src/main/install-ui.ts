@@ -94,6 +94,9 @@ class NodeInstaller {
       ani.failed("没有找到");
       return null; // 如果没有找到匹配的文件名
     } catch (error) {
+      ani.error(
+        `Error fetching SHA for ${fileName}: ${(error as Error).message}`
+      );
       throw new Error(
         `Error fetching SHA for ${fileName}: ${(error as Error).message}`
       );
