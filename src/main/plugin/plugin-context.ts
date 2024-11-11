@@ -188,7 +188,12 @@ export class PluginContext implements ExtensionContext {
     destory(): void {
         console.log("组件开始移除")
         for (const fun of this.closeCleanResource) {
-            fun();
+            try {
+                fun();
+            } catch (err) {
+                console.warn('释放资源时出现异常：', err)
+            }
+
         }
     }
 }

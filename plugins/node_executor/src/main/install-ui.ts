@@ -1,18 +1,30 @@
-import { pluginContext } from "extlib/main";
+import { IpcApi, pluginContext } from "extlib/main";
 //@ts-ignore
 import { execa } from "execa";
 import { getPreloadFile, getUrl } from "./static-path";
 import axios from "axios";
-import VirtualWindow from "./virtual-window";
+import VirtualWindow from "virtual-window";
 import pc from "picocolors";
+//@ts-ignore
 import ansiEscapes from "ansi-escapes";
+//@ts-ignore
 import ora from "ora";
+//@ts-ignore
 import cliSpinners from "cli-spinners";
 import { getFileName } from "./install";
 import { draw } from "./ansi-animail";
-
+import path from "path";
+import DownloadNode from './download'
+import fs from 'fs'
+import { extractNode } from "./extract";
+function debug(data: string) {
+  return data.replace(/[\x00-\x1F\x7F]/g, (char) => {
+    const hex = char.charCodeAt(0).toString(16).padStart(2, "0");
+    return `\\x${hex}`;
+  });
+}
 class NodeInstaller {
-  uiApi: import("/Volumes/mac_data/git/OpenInteropter/lib/dist/main").IpcApi;
+  uiApi: IpcApi;
   virtualWindow: VirtualWindow;
   render(content: string) {
     this.virtualWindow.write(content);
@@ -25,12 +37,14 @@ class NodeInstaller {
     });
     this.uiApi.handle("start-install", async (_event, version: any) => {
       this.render(ansiEscapes.eraseScreen);
-      const fileName = `node-${version.version}-${getFileName()}`;
+      if (typeof version === 'object') {
+        version = version.version;
+      }
+      const fileName = `node-${version}-${getFileName()}`;
       this.render(`开始下载文件:${pc.blue(fileName)}`);
-      this.startInstall(version.version, fileName);
+      this.startInstall(version, fileName);
     });
     const url = getUrl();
-    console.log("ui渲染地址:" + url);
     const window = pluginContext.windowManager.createWindow(
       pluginContext.plugin.appId,
       {
@@ -47,6 +61,7 @@ class NodeInstaller {
     window.loadURL(url);
     this.uiApi.onRenderBind("installer-output", () => {
       this.virtualWindow.onRender((content) => {
+        console.log(debug(content))
         this.uiApi.send("installer-output", content);
       });
     });
@@ -58,19 +73,70 @@ class NodeInstaller {
     });
     const sha256 = await this.getNodeSha(version, fileName);
     console.log("256:" + sha256);
-
-    const downloadUrl = `https://nodejs.org/dist/${latestVersion}/${fileName}`;
+    const downloadUrl = `https://nodejs.org/dist/${version}/${fileName}`;
+    this.render(`\n准备从服务器下载资源:${downloadUrl}`)
+    const downpath = pluginContext.getPath("downloads");
+    this.render('\x1b[0m')
+    const filePath = path.join(downpath, fileName);
+    const ani = draw(this.virtualWindow.getStream(), cliSpinners.dots, { prefix: '下载中  ' });
+    let cache = -1;
+    await DownloadNode(
+      downloadUrl,
+      filePath,
+      (progress: any) => {
+        progress = parseInt(progress);
+        if (progress !== cache) {
+          cache = progress;
+          ani.prefix(' ')
+          ani.suffix(` ${progress} %`)
+          pluginContext.notifyManager.showTask({
+            content: `正在下载文件:${fileName}`,
+            progress: progress,
+          });
+        }
+      },
+      sha256
+    );
+    ani.success(`${pc.green(`下载完成`)}\n` + pc.reset(''))
+    const extSaveNodePath = path.join(
+      pluginContext.workPath,
+      "node-" + version
+    );
+    this.render(`正在解压数据:${extSaveNodePath}`)
+    const extAni = draw(this.virtualWindow.getStream(), cliSpinners.dots,{prefix:'请稍后 '});
+    if (fs.existsSync(extSaveNodePath)) {
+      fs.mkdirSync(extSaveNodePath, { recursive: true });
+    }
+    pluginContext.notifyManager.showTask({
+      content: `正在解压文件:${fileName}`,
+      progress: -1,
+    });
+    let extNodePath: string = await extractNode(
+      filePath,
+      (progress:any) => {
+        progress = parseInt(progress);
+        if (progress !== cache) {
+          cache = progress;
+          extAni.prefix(' ')
+          extAni.suffix(` ${progress} %`)
+          pluginContext.notifyManager.showTask({
+            content: `正在解压文件:${fileName}`,
+            progress: progress,
+          });
+        }
+      },
+      extSaveNodePath
+    );
+    pluginContext.notifyManager.showTask({
+      content: `文件解压完成:${fileName}`,
+      progress: -2,
+    });
+    extAni.success(`${pc.green(`解压完成`)}\n` + pc.reset(''))
   }
   async getNodeSha(version: string, fileName: string) {
     const shaUrl = `https://nodejs.org/dist/${version}/SHASUMS256.txt`;
     this.virtualWindow.write("\n正在从服务器获取文件sha值 ");
     const ani = draw(this.virtualWindow.getStream(), cliSpinners.dots);
-    // const spinner = ora({
-    //   stream: this.virtualWindow.getStream(),
-    //   isEnabled: true,
-    //   text: "正在从服务器获取文件sha值...",
-    //   spinner: "dots", // 可选的动画样式
-    // }).start();
     try {
       // 发起请求并获取数据
       const response = await axios.get(shaUrl, {
@@ -104,7 +170,7 @@ class NodeInstaller {
   }
   async start() {
     this.startUi();
-    let version = await this.getFromCurrentEnv();
+    //let version = await this.getFromCurrentEnv();
   }
   async getNodeVersions() {
     try {
@@ -112,7 +178,7 @@ class NodeInstaller {
         "https://nodejs.org/dist/index.json",
         {}
       );
-      this.render(pc.bgBlack("hello world"));
+      this.render(pc.red("hello world"));
       return response.data; // 返回解析后的数据
     } catch (error) {
       throw new Error(
@@ -145,6 +211,7 @@ class NodeInstaller {
 }
 
 export default new NodeInstaller();
+
 // export const startInstall = async () => {
 //   pluginContext.notifyManager.showTask({
 //     content: "正在下载最新的nodejs版本",

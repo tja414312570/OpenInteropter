@@ -18,7 +18,7 @@
         <div>
           当前系统信息
           <div class="split" />
-          <b>平台 : </b>{{ platInfo.platform }},<b>芯片 : </b
+          <b>平台 : </b>{{ platInfo.platform }},<b>架构 : </b
           >{{ platInfo.arch }}
         </div>
         <div v-show="nodeList.list.length === 0">
@@ -31,7 +31,19 @@
             color="primary"
             indeterminate
           ></v-progress-circular>
-          <span class="error" v-show="nodeList.error">{{
+          <span class="error" v-show="nodeList.error">
+            <v-btn
+              class="ma-2"
+              color="orange-darken-2"
+              @click='refreshNodeList'
+            >
+              <v-icon
+                icon="mdi-refresh"
+                start
+              ></v-icon>
+              重试
+            </v-btn>
+            {{
             nodeList.error
           }}</span>
         </div>
@@ -69,9 +81,11 @@
 <script lang="ts" setup>
 import { onUnmounted, reactive, ref, toRaw } from "vue";
 import { getIpcApi } from "extlib/render";
+import { AnsiUp } from 'ansi-up';
 import Convert from "ansi-to-html";
 var convert = new Convert();
 const output = ref("");
+const ansiUp = new AnsiUp();
 // output.value = convert.toHtml("\x1b[30mblack\x1b[37mwhite");
 // console.log(output.value);
 const platApi = getIpcApi("process", onUnmounted) as any;
@@ -90,12 +104,14 @@ const selectedVersion = ref(null);
 
 const ipc = getIpcApi("node", onUnmounted);
 ipc.on("installer-output", (event, data) => {
-  output.value = convert.toHtml(data).replace(/\n/g, "<br>");
+  output.value = ansiUp.ansi_to_html(data).replace(/\n/g, "<br>");
 });
 ipc.on("test", (event, data) => {
   selectedVersion.value = data;
 });
-ipc
+const refreshNodeList = ()=>{
+   nodeList.error = ''
+  ipc
   .invoke("list-node-version")
   .then((result) => {
     nodeList.list = result;
@@ -104,6 +120,8 @@ ipc
   .catch((err) => {
     nodeList.error = err;
   });
+}
+refreshNodeList();
 const confirmSelection = () => {
   const version = toRaw(selectedVersion.value);
   console.log(version);
