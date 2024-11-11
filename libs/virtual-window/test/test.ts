@@ -1,6 +1,7 @@
-import { Writable } from "stream";
-import VirtualWindow from "./src/virtual-window";
+import VirtualWindow, { draw } from "../src/index";
 import ansiEscapes from "ansi-escapes";
+import cliSpinners, { Spinner } from 'cli-spinners'
+import pc from "picocolors";
 const virtualWindow = new VirtualWindow();
 virtualWindow.setDebug(false);
 function debug(data: string) {
@@ -9,67 +10,26 @@ function debug(data: string) {
     return `\\x${hex}`;
   });
 }
-
-virtualWindow.write("hello world\n");
-
+virtualWindow.write(pc.bgRedBright("hello world\n"));
 virtualWindow.onRender((content) => {
   console.clear();
   console.log(content);
+  console.log(debug(content));
 });
-// const spinner = ora({
-//   stream: virtualWindow.getStream(),
-//   isEnabled: true,
-//   text: "加载中...",
-//   spinner: "dots", // 可选的动画样式
-// }).start();
-// `\x1b[1D`
-import pc from "picocolors";
-
+setTimeout(() => {
+  // virtualWindow.write(ansiEscapes.clearScreen)
+}, 2000)
 const spinner = cliSpinners.dots; // 使用 "dots" 样式的动画
 const message = "加载中"; // 文本内容
-let frameIndex = 0;
-virtualWindow.write("\n" + message);
+virtualWindow.write("\n" + message + "\n");
+virtualWindow.write(pc.reset(''))
+const d = draw(virtualWindow.getStream(), spinner, { suffix: pc.bgRed('处理中 ') });
 let i = 0;
-// while (i++ < 10) {
-//   // 使用 ANSI 序列将光标左移一个字符的距离
-//   // 更新动画帧
-//   frameIndex = (frameIndex + 1) % spinner.frames.length;
-//   const content = pc.red(spinner.frames[frameIndex]);
-//   const frame = `\x1b[1D\x1b[0m` + content;
-//   //   console.log("====================");
-//   //   console.log(debug(frame));
-//   //   const frame = `\x1b[1D` + spinner.frames[frameIndex];
-//   virtualWindow.write(frame);
-// }
-// virtualWindow.write(ansiEscapes.clearScreen);
-
-const draw = (stream: Writable, dots: Spinner) => {
-  stream.write("\x1b[1C");
-  const interval = setInterval(() => {
-    // 使用 ANSI 序列将光标左移一个字符的距离
-    // 更新动画帧
-    frameIndex = (frameIndex + 1) % dots.frames.length;
-    const content = pc.red(dots.frames[frameIndex]);
-    const frame = `\x1b[1D` + content;
-    virtualWindow.write(frame);
-  }, dots.interval);
-
-  return {
-    success: (message?: string) => {
-      clearInterval(interval);
-      stream.write(`\x1b[1D${pc.green(`✔️ ${message || "完成"}`)}`);
-    },
-    failed: (message?: string) => {
-      clearInterval(interval);
-      stream.write(`\x1b[1DX ${message || "处理失败"}`);
-    },
-    error: (error: string) => {
-      clearInterval(interval);
-      stream.write(`\x1b[1DX 错误:${error}`);
-    },
-  };
-};
-const d = draw(virtualWindow.getStream(), spinner);
+const int = setInterval(() => {
+  d.suffix(' ' + (i++) + '%')
+}, 1000);
 setTimeout(() => {
-  d.success();
+  virtualWindow.write(pc.reset(''))
+  clearInterval(int)
+  d.success(`${pc.green(`处理完成hhhhhhhhhhhhhh`)}\n` + pc.reset(""));
 }, 5000); // 动画持续5秒

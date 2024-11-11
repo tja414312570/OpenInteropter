@@ -15,6 +15,10 @@ export const Icons = {
   failed: '❌'
 }
 
+export const back = (length: number) => {
+  return `\x1b[${length}D\x1b[0m`
+}
+
 export const draw = (stream: Writable, dots: Spinner, options: DrawOptions = {}) => {
 
   let preffix = options.prefix || '';
@@ -26,7 +30,7 @@ export const draw = (stream: Writable, dots: Spinner, options: DrawOptions = {})
     // 更新动画帧
     frameIndex = (frameIndex + 1) % dots.frames.length;
     const content = preffix + dots.frames[frameIndex] + suffix;
-    const frame = `\x1b[${lastLength}D\x1b[0m` + content;
+    const frame = `${back(lastLength)}${content}`;
     lastLength = removeAnsiSequences(frame).length;
     stream.write(frame);
   }, dots.interval);
@@ -39,31 +43,31 @@ export const draw = (stream: Writable, dots: Spinner, options: DrawOptions = {})
     suffix: (content: string) => {
       suffix = content;
     },
-    success: (message?: string,icon:boolean = true) => {
+    success: (message?: string, icon: boolean = true) => {
       clearInterval(interval);
       message = message || `完成`
-      if(icon){
-        message=`${Icons.success} ${message}`
+      if (icon) {
+        message = `${Icons.success} ${message}`
       }
-      stream.write(`\x1b[${lastLength}D${message}`);
+      stream.write(`${back(lastLength)}${message}`);
       lastLength = removeAnsiSequences(message).length
     },
-    failed: (message?: string,icon:boolean = true) => {
+    failed: (message?: string, icon: boolean = true) => {
       clearInterval(interval);
       message = message || `处理失败`
-      if(icon){
-        message=`${Icons.failed} ${message}`
+      if (icon) {
+        message = `${Icons.failed} ${message}`
       }
-      stream.write(`\x1b[${lastLength}D${message}`);
+      stream.write(`${message}`);
       lastLength = removeAnsiSequences(message).length
     },
-    error: (message?: string,icon:boolean = true) => {
-      clearInterval(interval); 
+    error: (message?: string, icon: boolean = true) => {
+      clearInterval(interval);
       message = message || `出现错误`
-      if(icon){
-        message=`${Icons.failed} ${message}`
+      if (icon) {
+        message = `${Icons.failed} ${message}`
       }
-      stream.write(`\x1b[${lastLength}D${message}`);
+      stream.write(`${back(lastLength)}${message}`);
       lastLength = removeAnsiSequences(message).length
     },
   };
