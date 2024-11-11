@@ -39,23 +39,32 @@ export const draw = (stream: Writable, dots: Spinner, options: DrawOptions = {})
     suffix: (content: string) => {
       suffix = content;
     },
-    success: (message?: string) => {
+    success: (message?: string,icon:boolean = true) => {
       clearInterval(interval);
-      message = message || `${Icons.success} 完成`
+      message = message || `完成`
+      if(icon){
+        message=`${Icons.success} ${message}`
+      }
       stream.write(`\x1b[${lastLength}D${message}`);
       lastLength = removeAnsiSequences(message).length
     },
-    failed: (message?: string) => {
+    failed: (message?: string,icon:boolean = true) => {
       clearInterval(interval);
-      message = message || `${Icons.failed} 处理失败`
+      message = message || `处理失败`
+      if(icon){
+        message=`${Icons.failed} ${message}`
+      }
       stream.write(`\x1b[${lastLength}D${message}`);
       lastLength = removeAnsiSequences(message).length
     },
-    error: (error?: string) => {
-      clearInterval(interval);
-      error = error || `${Icons.error} 出现错误`;
-      stream.write(`\x1b[${lastLength}D${error}`);
-      lastLength = removeAnsiSequences(error).length
+    error: (message?: string,icon:boolean = true) => {
+      clearInterval(interval); 
+      message = message || `出现错误`
+      if(icon){
+        message=`${Icons.failed} ${message}`
+      }
+      stream.write(`\x1b[${lastLength}D${message}`);
+      lastLength = removeAnsiSequences(message).length
     },
   };
 };

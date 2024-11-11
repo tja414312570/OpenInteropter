@@ -119,50 +119,32 @@ class DataView {
     this.cleanupEmptyRows();
   }
 
-  // 按列清除 (k 指令)
-  deleteColumn(y: number, mode: number) {
-    for (const [x, xData] of this.map) {
-      if (mode === 0) {
-        // 从光标位置到行尾
-        const columns = Array.from(xData.keys());
-        for (const col of columns) {
-          if (col >= y) xData.delete(col);
-        }
-      } else if (mode === 1) {
-        // 从行首到光标位置
-        const columns = Array.from(xData.keys());
-        for (const col of columns) {
-          if (col <= y) xData.delete(col);
-        }
-      } else if (mode === 2) {
-        // 清除整行
-        xData.clear();
+  // 按行清除 (K 指令)
+  deleteRow(x: number, y: number, mode: number) {
+    for (const [col, colData] of this.map) {
+      const rowData = colData.get(y);
+      if (!rowData) continue;
+      switch (mode) {
+        case 0: // 清除从光标位置到行尾
+          if (col >= x) {
+            colData.delete(y);
+          }
+          break;
+        case 1: // 清除从行首到光标位置
+          if (col <= x) {
+            colData.delete(y);
+          }
+          break;
+        case 2: // 清除整行
+          colData.delete(y);
+          break;
+        default:
+          break;
+      }
+      if (colData.size === 0) {
+        this.map.delete(col); // 删除空的列
       }
     }
-    this.cleanupEmptyRows();
-  }
-
-  // 按行清除 (j 指令)
-  deleteRow(x: number, mode: number) {
-    const xData = this.map.get(x);
-    if (!xData) return;
-    if (mode === 0) {
-      // 从光标位置到行尾
-      const columns = Array.from(xData.keys());
-      for (const col of columns) {
-        if (col >= 0) xData.delete(col);
-      }
-    } else if (mode === 1) {
-      // 从行首到光标位置
-      const columns = Array.from(xData.keys());
-      for (const col of columns) {
-        if (col <= 0) xData.delete(col);
-      }
-    } else if (mode === 2) {
-      // 清除整行
-      this.map.delete(x);
-    }
-    this.cleanupEmptyRows();
   }
   // 清理空行
   private cleanupEmptyRows() {
@@ -172,32 +154,46 @@ class DataView {
       }
     }
   }
-  // 按行和列清除数据
-  clear(x?: number, y?: number) {
-    if (x === undefined || y === undefined) {
+  // 按行和列清除数据 j指令
+  clear(x?: number, y?: number, mode: number = 0) {
+    if (x === undefined || y === undefined || mode > 1) {
       // 如果 x 或 y 未定义，清除整个结构
       this.map.clear();
       return;
     }
-
-    for (const [row, rowData] of this.map) {
-      if (row > y) {
-        // 清除 y 行之后的所有行
-        this.map.delete(row);
-      } else if (row === y) {
-        // 清除 y 行中 x 列之后的所有列
-        const columns = Array.from(rowData.keys());
-        for (const col of columns) {
-          if (col >= x) {
-            rowData.delete(col);
+    switch (mode) {
+      case 0: // 清除从光标位置到屏幕底部
+        for (const [col, colData] of this.map) {
+          for (const row of Array.from(colData.keys())) {
+            if (row >= y) {
+              if (row === y && col >= x) {
+                colData.delete(row);
+              } else if (row > y) {
+                colData.delete(row);
+              }
+            }
+          }
+          if (colData.size === 0) {
+            this.map.delete(col); // 删除空的列
           }
         }
-
-        // 如果 y 行中没有列数据了，则删除整行
-        if (rowData.size === 0) {
-          this.map.delete(row);
+        break;
+      case 1: // 清除从屏幕顶部到光标位置
+        for (const [col, colData] of this.map) {
+          for (const row of Array.from(colData.keys())) {
+            if (row <= y) {
+              if (row === y && col <= x) {
+                colData.delete(row);
+              } else if (row < y) {
+                colData.delete(row);
+              }
+            }
+          }
+          if (colData.size === 0) {
+            this.map.delete(col); // 删除空的列
+          }
         }
-      }
+        break;
     }
   }
   get(x: number, y: number) {
@@ -272,6 +268,9 @@ class VirtualWindow {
         if ((this.handleEscapeSequence(seq)) || this.handleStyleEscapeSequence(seq)) {
           // remainingText = remainingText.substring(seq.fullLength - 1);
           // 确保处理过的控制字符不被保留
+          if (seq.command === 'm') {
+            this.ansiBuffer.add(this.cursorX, this.cursorY, seq.text);
+          }
         } else {
           if (seq.command)
             if (this.debug) {
@@ -403,7 +402,7 @@ class VirtualWindow {
         this.ensureLineLength(this.cursorY, this.cursorX);
         break;
       case "J": // 清屏
-        this.ansiBuffer.deleteRow(this.cursorX, param1);
+        this.ansiBuffer.clear(this.cursorX, this.cursorY, param1);
         if (param1 === 0) {
           // 清除光标到屏幕末尾
           this.ensureLineExists(this.cursorY);
@@ -430,7 +429,7 @@ class VirtualWindow {
         }
         break;
       case "K": // 清除当前行光标后的内容
-        this.ansiBuffer.deleteColumn(this.cursorY, param1);
+        this.ansiBuffer.deleteRow(this.cursorX, this.cursorY, param1);
         this.ensureLineExists(this.cursorY);
         if (param1 === 0) {
           // 清除从光标到行尾
