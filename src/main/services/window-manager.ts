@@ -41,7 +41,7 @@ class WindowManager implements IWindowManager {
       updateDockMenu();
       this.windowMap.set(windowId, window)
       window.on('closed', () => {
-        console.log('主窗口已被销毁');
+        console.log(`窗口[${windowId}]已被销毁`);
         updateDockMenu();
         this.windowMap.delete(windowId)
       });

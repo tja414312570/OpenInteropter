@@ -96,6 +96,7 @@ export default (env = "production", type = "main") => {
       "ref-struct-napi",
       "semver",
       "glob",
+      'heapdump'
     ],
   });
 };

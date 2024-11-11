@@ -30,11 +30,12 @@ export interface ExtensionContext extends ExtExtensionContext {
 export interface PluginInfo extends ExtPluginInfo {
     context: ExtensionContext
 }
+type CloseableCallback = () => void | Promise<any>;
 const notifyApi = getIpcApi('ipc-notify')
 export class PluginContext implements ExtensionContext {
     plugin: PluginInfo;
     settingManager: ISettingManager;
-    private closeCleanResource: Set<() => void> = new Set;
+    private closeCleanResource: Set<CloseableCallback> = new Set;
     envDir: string;
     resourceManager: ResourceManager;
     _pluginPath: string;
@@ -123,7 +124,17 @@ export class PluginContext implements ExtensionContext {
                     mode: "undocked",
                     activate: true,
                 });
-                const closeClear = window.close.bind(window);
+                const closeClear = () => {
+                    return new Promise<void>(resolve => {
+                        console.log('关闭窗口:' + windowId)
+                        window.on('close', async () => {
+                            console.log('关闭窗口2:' + windowId)
+                            window.off('close', closeClear);
+                            resolve();
+                        })
+                        window.close();
+                    })
+                };
                 window.on('close', () => {
                     this.closeCleanResource.delete(closeClear)
                 })
@@ -185,11 +196,12 @@ export class PluginContext implements ExtensionContext {
     create(): void {
         console.log("组件开始注册")
     }
-    destory(): void {
+    async destory() {
         console.log("组件开始移除")
         for (const fun of this.closeCleanResource) {
             try {
-                fun();
+                console.log('卸载:', fun)
+                await fun();
             } catch (err) {
                 console.warn('释放资源时出现异常：', err)
             }

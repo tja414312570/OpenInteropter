@@ -124,7 +124,7 @@ class PluginManager extends EventEmitter<PluginEventMap> {
                 }
             }
         }
-        return new Proxy(pluginInfo.module, proxyHandler);
+        return new Proxy({}, proxyHandler);
     }
     getPluginInfoFromInstance(instance: any): PluginInfo {
         return instance?.['_plugin']
@@ -201,13 +201,14 @@ class PluginManager extends EventEmitter<PluginEventMap> {
                 return;
             }
             await pluginInfo.module.onUnmounted();
-            pluginInfo.context?.destory();
+            await pluginInfo.context?.destory();
             pluginInfo.status = PluginStatus.unload;
             // this.remove(pluginInfo)
             // 清除 require.cache 中的模块缓存
-            delete require.cache[require.resolve(pluginInfo.main)];
+            delete pluginInfo['proxy']
             delete pluginInfo.module;
             delete pluginInfo.context;
+            delete require.cache[require.resolve(pluginInfo.main)];
             this.emit('unloaded', pluginInfo)
             // pluginInfo.onUnloadCallback.forEach(callbackfn => callbackfn())
             console.log(`插件 ${pluginInfo.manifest.name} 已卸载`);

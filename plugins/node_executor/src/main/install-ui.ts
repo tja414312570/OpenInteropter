@@ -3,8 +3,9 @@ import { IpcApi, pluginContext } from "extlib/main";
 import { execa } from "execa";
 import { getPreloadFile, getUrl } from "./static-path";
 import axios from "axios";
-import VirtualWindow from "virtual-window";
-import pc from "picocolors";
+import VirtualWindow, { draw } from "virtual-window";
+import { createColors } from "picocolors";
+const pc = createColors(true);
 //@ts-ignore
 import ansiEscapes from "ansi-escapes";
 //@ts-ignore
@@ -12,11 +13,14 @@ import ora from "ora";
 //@ts-ignore
 import cliSpinners from "cli-spinners";
 import { getFileName } from "./install";
-import { draw } from "./ansi-animail";
 import path from "path";
-import DownloadNode from './download'
-import fs from 'fs'
+import DownloadNode from "./download";
+import fs from "fs";
 import { extractNode } from "./extract";
+import { platform } from "os";
+import util from "util";
+import { exec } from "child_process";
+import { symlink } from "fs/promises";
 function debug(data: string) {
   return data.replace(/[\x00-\x1F\x7F]/g, (char) => {
     const hex = char.charCodeAt(0).toString(16).padStart(2, "0");
@@ -37,7 +41,7 @@ class NodeInstaller {
     });
     this.uiApi.handle("start-install", async (_event, version: any) => {
       this.render(ansiEscapes.eraseScreen);
-      if (typeof version === 'object') {
+      if (typeof version === "object") {
         version = version.version;
       }
       const fileName = `node-${version}-${getFileName()}`;
@@ -61,7 +65,7 @@ class NodeInstaller {
     window.loadURL(url);
     this.uiApi.onRenderBind("installer-output", () => {
       this.virtualWindow.onRender((content) => {
-        console.log(debug(content))
+        console.log(debug(content));
         this.uiApi.send("installer-output", content);
       });
     });
@@ -74,11 +78,13 @@ class NodeInstaller {
     const sha256 = await this.getNodeSha(version, fileName);
     console.log("256:" + sha256);
     const downloadUrl = `https://nodejs.org/dist/${version}/${fileName}`;
-    this.render(`\n准备从服务器下载资源:${downloadUrl}`)
+    this.render(`\n准备从服务器下载资源:${downloadUrl}`);
     const downpath = pluginContext.getPath("downloads");
-    this.render('\x1b[0m')
+    this.render("\x1b[0m");
     const filePath = path.join(downpath, fileName);
-    const ani = draw(this.virtualWindow.getStream(), cliSpinners.dots, { prefix: '下载中  ' });
+    const ani = draw(this.virtualWindow.getStream(), cliSpinners.dots, {
+      prefix: "下载中  ",
+    });
     let cache = -1;
     await DownloadNode(
       downloadUrl,
@@ -87,8 +93,8 @@ class NodeInstaller {
         progress = parseInt(progress);
         if (progress !== cache) {
           cache = progress;
-          ani.prefix(' ')
-          ani.suffix(` ${progress} %`)
+          ani.prefix(" ");
+          ani.suffix(` ${progress} %`);
           pluginContext.notifyManager.showTask({
             content: `正在下载文件:${fileName}`,
             progress: progress,
@@ -97,13 +103,15 @@ class NodeInstaller {
       },
       sha256
     );
-    ani.success(`${pc.green(`下载完成`)}\n` + pc.reset(''))
+    ani.success(`${pc.green(`下载完成`)}\n` + pc.reset(""));
     const extSaveNodePath = path.join(
       pluginContext.workPath,
       "node-" + version
     );
-    this.render(`正在解压数据:${extSaveNodePath}`)
-    const extAni = draw(this.virtualWindow.getStream(), cliSpinners.dots,{prefix:'请稍后 '});
+    this.render(`正在解压数据:${extSaveNodePath}`);
+    const extAni = draw(this.virtualWindow.getStream(), cliSpinners.dots, {
+      prefix: "请稍后 ",
+    });
     if (fs.existsSync(extSaveNodePath)) {
       fs.mkdirSync(extSaveNodePath, { recursive: true });
     }
@@ -113,12 +121,12 @@ class NodeInstaller {
     });
     let extNodePath: string = await extractNode(
       filePath,
-      (progress:any) => {
+      (progress: any) => {
         progress = parseInt(progress);
         if (progress !== cache) {
           cache = progress;
-          extAni.prefix(' ')
-          extAni.suffix(` ${progress} %`)
+          extAni.prefix(" ");
+          extAni.suffix(` ${progress} %`);
           pluginContext.notifyManager.showTask({
             content: `正在解压文件:${fileName}`,
             progress: progress,
@@ -131,7 +139,79 @@ class NodeInstaller {
       content: `文件解压完成:${fileName}`,
       progress: -2,
     });
-    extAni.success(`${pc.green(`解压完成`)}\n` + pc.reset(''))
+    extAni.success(`${pc.green(`解压完成`)}\n` + pc.reset(""));
+    if (platform() !== "win32") {
+      extNodePath = path.join(extNodePath, "bin");
+    }
+    const nodeCmd = path.join(extNodePath, "node");
+    this.render("正在检测版本");
+    const execAni = draw(this.virtualWindow.getStream(), cliSpinners.dots, {
+      prefix: "请稍后 ",
+    });
+    const execPromise = util.promisify(exec);
+    try {
+      const env = {};
+      const { stdout, stderr } = await execPromise(`"${nodeCmd}" -v`, { env });
+      const getVersion = stdout.trim();
+      if (getVersion.length > 0) {
+        pluginContext.settingManager.save(`version`, getVersion);
+        pluginContext.settingManager.save(`path`, extNodePath);
+        pluginContext.notifyManager.showTask({
+          content: `NodeJs，版本:${stdout}`,
+        });
+        if (platform() === "win32") {
+          await symlink(
+            path.join(extNodePath, "node.exe"),
+            path.join(pluginContext.envDir, "node.exe"),
+            "file"
+          );
+          await symlink(
+            path.join(extNodePath, "npm.cmd"),
+            path.join(pluginContext.envDir, "npm.cmd"),
+            "file"
+          );
+          await symlink(
+            path.join(extNodePath, "npx.cmd"),
+            path.join(pluginContext.envDir, "npx.cmd"),
+            "file"
+          );
+          await symlink(
+            path.join(extNodePath, "node_modules"),
+            path.join(pluginContext.envDir, "node_modules"),
+            "junction"
+          );
+        } else {
+          await symlink(
+            path.join(extNodePath, "node"),
+            path.join(pluginContext.envDir, "node"),
+            "file"
+          );
+          await symlink(
+            path.join(extNodePath, "npm"),
+            path.join(pluginContext.envDir, "npm"),
+            "file"
+          );
+          await symlink(
+            path.join(extNodePath, "npx"),
+            path.join(pluginContext.envDir, "npx"),
+            "file"
+          );
+          await symlink(
+            path.join(extNodePath, "node_modules"),
+            path.join(pluginContext.envDir, "node_modules"),
+            "dir"
+          );
+        }
+        execAni.success(`版本：${getVersion}`);
+        return;
+      }
+      console.error("STD Error:", stderr);
+      execAni.failed(`执行失败：${stderr}`);
+    } catch (err) {
+      execAni.success(`安装失败${err}`);
+      console.error("Error:", err);
+    }
+    this.render("正在检测版本");
   }
   async getNodeSha(version: string, fileName: string) {
     const shaUrl = `https://nodejs.org/dist/${version}/SHASUMS256.txt`;

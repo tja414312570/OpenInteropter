@@ -3,6 +3,7 @@
 //   console.error('Unhandled Promise Rejection:', reason);
 //   process.exit(1); // 以非零状态码退出程序
 // });
+// import './utils/dump'
 import { useMainDefaultIpc } from "./services/ipc-main";
 import { app, BrowserWindow, dialog, ipcMain, IpcMainEvent, Menu, MenuItem, MenuItemConstructorOptions, session } from "electron";
 import { MainInit } from "./services/window-manager";
