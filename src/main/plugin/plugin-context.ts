@@ -130,6 +130,7 @@ export class PluginContext implements ExtensionContext {
                         window.on('close', async () => {
                             console.log('关闭窗口2:' + windowId)
                             window.off('close', closeClear);
+                            window.destroy();
                             resolve();
                         })
                         window.close();
@@ -197,10 +198,8 @@ export class PluginContext implements ExtensionContext {
         console.log("组件开始注册")
     }
     async destory() {
-        console.log("组件开始移除")
         for (const fun of this.closeCleanResource) {
             try {
-                console.log('卸载:', fun)
                 await fun();
             } catch (err) {
                 console.warn('释放资源时出现异常：', err)
