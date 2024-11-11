@@ -4,7 +4,7 @@ type EscapeSequence = {
   params: string[];
   command: string;
   fullLength: number;
-  dec: boolean;
+  type: 'default' | 'dec' | 'osc' | 'bel' | 'sort'
   text: string;
 };
 
@@ -17,7 +17,7 @@ function debug(data: string) {
 class VirtualTerminalAdapter extends Writable {
   virtualWindow: VirtualWindow;
   isTTY = true;
-  constructor(virtualWindow) {
+  constructor(virtualWindow: VirtualWindow) {
     super();
     this.virtualWindow = virtualWindow;
   }
@@ -64,7 +64,7 @@ class VirtualTerminalAdapter extends Writable {
     this.virtualWindow.write(`\x1b[0J`);
   }
   // 写入数据
-  _write(chunk, encoding, callback) {
+  _write(chunk: Buffer, encoding: any, callback: () => void) {
     // 将数据直接写入虚拟窗口
     this.virtualWindow.write(chunk.toString());
     callback();
@@ -144,8 +144,8 @@ class DataView {
 
   // 按行清除 (j 指令)
   deleteRow(x: number, mode: number) {
-    if (!this.map.has(x)) return;
     const xData = this.map.get(x);
+    if (!xData) return;
     if (mode === 0) {
       // 从光标位置到行尾
       const columns = Array.from(xData.keys());
@@ -216,10 +216,10 @@ class VirtualWindow {
   private savedCursorY: number;
   private cursorVisible: boolean;
   private bel: boolean;
-  private stream: VirtualTerminalAdapter;
-  private debug: boolean;
+  private stream: VirtualTerminalAdapter | undefined;
+  private debug: boolean = false;
   private ansiBuffer: DataView; // 行缓冲区
-  renderCallback: (content: string) => void;
+  renderCallback: ((content: string) => void | undefined) | undefined;
 
   constructor() {
     this.buffer = [""]; // 初始化时至少有一行
@@ -269,10 +269,7 @@ class VirtualWindow {
         }
         const seq = this.parseEscapeSequence("\x1b" + remainingText);
         remainingText = remainingText.substring(seq.fullLength - 1);
-        if (
-          (seq && this.handleEscapeSequence(seq)) ||
-          this.handleStyleEscapeSequence(seq)
-        ) {
+        if ((this.handleEscapeSequence(seq)) || this.handleStyleEscapeSequence(seq)) {
           // remainingText = remainingText.substring(seq.fullLength - 1);
           // 确保处理过的控制字符不被保留
         } else {
@@ -330,23 +327,31 @@ class VirtualWindow {
     this.cursorX++;
   }
 
-  private parseEscapeSequence(text: string): EscapeSequence | null {
+  private parseEscapeSequence(text: string): EscapeSequence {
     // 尝试匹配标准ANSI控制序列
     // const match = text.match(/^\x1b\[(\d*(;\d*)*)([A-Za-z])/);
     // const match = text.match(/^\x1b[\[\(P\]?[0-9;]*[A-Za-z]/);
     const match = text.match(/^\x1b[\[\(P\]](\?*)([0-9;]*)([A-Za-z])/);
-
     if (match) {
       return {
         params: match[2].split(";"),
         command: match[3],
-        dec: match[1] === "?",
+        type: match[1] === "?" ? 'dec' : 'default',
         fullLength: match[0].length,
         text: match[0],
       };
+    } else {
+      if (text.charAt(1) === ']') {
+        throw new Error("osc序列不支持")
+      }
+      return {
+        params: [],
+        command: text.charAt(1),
+        type: 'sort',
+        fullLength: 2,
+        text: text.substring(0, 2)
+      }
     }
-
-    return null;
   }
 
   private handleEscapeSequence(seq: EscapeSequence): boolean {
