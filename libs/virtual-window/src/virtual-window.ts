@@ -144,8 +144,7 @@ class DataView {
     switch (mode) {
       case 0: // 清除从光标位置到屏幕底部
         for (const [col, colData] of this.map) {
-          // 修改后的代码
-          const rows = Array.from(colData.keys()); // 将 `Array.from(colData.keys())` 提取到外部，避免重复调用
+          const rows = Array.from(colData.keys());
           for (const row of rows) {
             if (row >= y) {
               if (row === y && col >= x) {
@@ -162,8 +161,7 @@ class DataView {
         break;
       case 1: // 清除从屏幕顶部到光标位置
         for (const [col, colData] of this.map) {
-          // 修改后的代码
-          const rows = Array.from(colData.keys()); // 将 `Array.from(colData.keys())` 提取到外部，避免重复调用
+          const rows = Array.from(colData.keys());
           for (const row of rows) {
             if (row <= y) {
               if (row === y && col <= x) {

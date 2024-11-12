@@ -13,7 +13,10 @@ export const Icons = {
   success: '✔️',
   warn: '⚠️',
   error: '⛔',
-  failed: '❌'
+  failed: '❌',
+  pause: '⏸️',
+  resume: '⏯️',
+  reset: '🔄'
 };
 
 export type DrawCallback = {
@@ -23,8 +26,8 @@ export type DrawCallback = {
   success: (message?: string, icon?: boolean) => void;
   failed: (message?: string, icon?: boolean) => void;
   error: (message?: string, icon?: boolean) => void;
-  pause: () => void;
-  resume: () => void;
+  pause: (message?: string, icon?: boolean) => void;
+  resume: (message?: string, icon?: boolean) => void;
   reset: () => void;
 };
 
@@ -52,6 +55,13 @@ export const draw = (stream: Writable, dots: Spinner, options: DrawOptions = {})
     interval = setInterval(updateFrame, dots.interval);
   };
 
+  const notify = (message: string, icon: string | false) => {
+    if (icon) {
+      message = `${icon} ${message}`;
+    }
+    stream.write(`${back(lastLength)}${message}`);
+    lastLength = removeAnsiSequences(message).length;
+  }
   startAnimation();
   return {
     getRenderLength: () => lastLength,
@@ -63,33 +73,19 @@ export const draw = (stream: Writable, dots: Spinner, options: DrawOptions = {})
     },
     success: (message?: string, icon: boolean = true) => {
       if (interval) clearInterval(interval);
-      message = message || `完成`;
-      if (icon) {
-        message = `${Icons.success} ${message}`;
-      }
-      stream.write(`${back(lastLength)}${message}`);
-      lastLength = removeAnsiSequences(message).length;
+      notify(message || `完成`, icon && Icons.success)
     },
     failed: (message?: string, icon: boolean = true) => {
       if (interval) clearInterval(interval);
-      message = message || `处理失败`;
-      if (icon) {
-        message = `${Icons.failed} ${message}`;
-      }
-      stream.write(`${back(lastLength)}${message}`);
-      lastLength = removeAnsiSequences(message).length;
+      notify(message || `处理失败`, icon && Icons.failed)
     },
     error: (message?: string, icon: boolean = true) => {
       if (interval) clearInterval(interval);
-      message = message || `出现错误`;
-      if (icon) {
-        message = `${Icons.error} ${message}`;
-      }
-      stream.write(`${back(lastLength)}${message}`);
-      lastLength = removeAnsiSequences(message).length;
+      notify(message || `出现错误`, icon && Icons.error)
     },
-    pause: () => {
+    pause: (message?: string, icon: boolean = true) => {
       if (interval) clearInterval(interval);
+      notify(message || `任务暂停`, icon && Icons.pause)
     },
     resume: () => {
       if (!interval) startAnimation();
