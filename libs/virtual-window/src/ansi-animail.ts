@@ -35,24 +35,24 @@ export const back = (length: number) => {
 export const draw = (stream: Writable, dots: Spinner, options: DrawOptions = {}): DrawCallback => {
   let preffix = options.prefix || '';
   let suffix = options.suffix || '';
-  let frameIndex = 0;
-  let lastLength = 1 + preffix.length + suffix.length;
+  let frameIndex = -1;
+  let lastLength = removeAnsiSequences(preffix + dots.frames[0] + suffix).length;
   let interval: NodeJS.Timeout | null = null;
-
-  const startAnimation = () => {
-    interval = setInterval(() => {
-      // 更新动画帧
-      frameIndex = (frameIndex + 1) % dots.frames.length;
-      const content = preffix + dots.frames[frameIndex] + suffix;
-      const frame = `${back(lastLength)}${content}`;
-      lastLength = removeAnsiSequences(frame).length;
-      stream.write(frame);
-    }, dots.interval);
+  stream.write(`\x1b[${lastLength}C`);
+  const updateFrame = () => {
+    frameIndex = (frameIndex + 1) % dots.frames.length;
+    const content = preffix + dots.frames[frameIndex] + suffix;
+    const frame = `${back(lastLength)}${content}`;
+    lastLength = removeAnsiSequences(frame).length;
+    stream.write(frame);
   };
 
-  // 启动动画
-  startAnimation();
+  const startAnimation = () => {
+    updateFrame();
+    interval = setInterval(updateFrame, dots.interval);
+  };
 
+  startAnimation();
   return {
     getRenderLength: () => lastLength,
     prefix: (content: string) => {
