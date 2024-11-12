@@ -13,7 +13,7 @@
     </v-card-title>
 
     <v-divider></v-divider>
-    <v-card-text style="flex: 1">
+    <v-card-text style="flex: 1;overflow: hidden;display: flex;flex-direction: column;">
       <div>
         <div>
           当前系统信息
@@ -60,7 +60,7 @@
           :options="nodeList.list"
         ></v-select>
       </div>
-      <div v-html="output"></div>
+      <div class='out-render' ref='renderlContainer' v-html="output"></div>
     </v-card-text>
     <v-divider></v-divider>
     <v-card-actions>
@@ -79,7 +79,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onUnmounted, reactive, ref, toRaw } from "vue";
+import { onUnmounted, reactive, ref, toRaw, watch } from "vue";
 import { getIpcApi } from "extlib/render";
 import { AnsiUp } from 'ansi-up';
 import Convert from "ansi-to-html";
@@ -93,6 +93,15 @@ const platInfo = {
   arch: platApi.arch,
   platform: platApi.platform,
 };
+const renderlContainer = ref<HTMLElement>();
+const scrollToBottom = () => {
+  if (renderlContainer.value) {
+    renderlContainer.value.scrollTop = renderlContainer.value.scrollHeight;
+  }
+};
+
+// 监听 `htmlContent` 的变化并自动滚动到底部
+watch(output, scrollToBottom);
 
 const disableBtn = ref(false);
 const title = ref("选择版本");
@@ -192,5 +201,9 @@ const confirmSelection = () => {
 }
 .error {
   color: #f00;
+}
+.out-render{
+  flex: 1;
+  overflow: scroll
 }
 </style>

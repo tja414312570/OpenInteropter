@@ -18,7 +18,7 @@ import { ChildProcess, exec, fork } from "child_process";
 import VirtualWindow from "virtual-window";
 import path from "path";
 import util from "util";
-import DownloadNode from "./download";
+import DownloadNode from "./util";
 import { extractNode } from "./extract";
 import { startNodeChildProcess } from "./node-executor";
 import { platform } from "os";

@@ -3,7 +3,7 @@ import { IpcApi, pluginContext } from "extlib/main";
 import { execa } from "execa";
 import { getPreloadFile, getUrl } from "./static-path";
 import axios from "axios";
-import VirtualWindow, { draw } from "virtual-window";
+import VirtualWindow, { draw, DrawCallback } from "virtual-window";
 import { createColors } from "picocolors";
 const pc = createColors(true);
 //@ts-ignore
@@ -13,9 +13,10 @@ import ora from "ora";
 //@ts-ignore
 import cliSpinners from "cli-spinners";
 import { getFileName } from "./install";
+import { DownloaderHelper } from "node-downloader-helper";
 import path from "path";
-import DownloadNode from "./download";
-import fs from "fs";
+import { getFileSHA256Sync } from './util'
+import fs, { createReadStream, existsSync, unlinkSync } from "fs";
 import { extractNode } from "./extract";
 import { platform } from "os";
 import util from "util";
@@ -85,30 +86,23 @@ class NodeInstaller {
     const ani = draw(this.virtualWindow.getStream(), cliSpinners.dots, {
       prefix: "下载中  ",
     });
-    let cache = -1;
-    await DownloadNode(
-      downloadUrl,
-      filePath,
-      (progress: any) => {
-        progress = parseInt(progress);
-        if (progress !== cache) {
-          cache = progress;
-          ani.prefix(" ");
-          ani.suffix(` ${progress} %`);
-          pluginContext.notifyManager.showTask({
-            content: `正在下载文件:${fileName}`,
-            progress: progress,
-          });
-        }
-      },
-      sha256
-    );
-    ani.success(`${pc.green(`下载完成`)}\n` + pc.reset(""));
+    try {
+      const donaload = await this.startDownload(
+        downloadUrl,
+        filePath,
+        ani,
+        sha256,
+      );
+      ani.success(`${pc.green(`下载完成`)}\n` + pc.reset(""));
+    } catch (err) {
+      ani.error(`${pc.red(err)}\n` + pc.reset(""))
+    }
+
     const extSaveNodePath = path.join(
       pluginContext.workPath,
       "node-" + version
     );
-    this.render(`正在解压数据:${extSaveNodePath}`);
+    this.render(`正在解压文件:${extSaveNodePath}`);
     const extAni = draw(this.virtualWindow.getStream(), cliSpinners.dots, {
       prefix: "请稍后 ",
     });
@@ -119,6 +113,7 @@ class NodeInstaller {
       content: `正在解压文件:${fileName}`,
       progress: -1,
     });
+    let cache = -1;
     let extNodePath: string = await extractNode(
       filePath,
       (progress: any) => {
@@ -144,7 +139,7 @@ class NodeInstaller {
       extNodePath = path.join(extNodePath, "bin");
     }
     const nodeCmd = path.join(extNodePath, "node");
-    this.render("正在检测版本");
+    this.render("正在检测版本:");
     const execAni = draw(this.virtualWindow.getStream(), cliSpinners.dots, {
       prefix: "请稍后 ",
     });
@@ -159,7 +154,20 @@ class NodeInstaller {
         pluginContext.notifyManager.showTask({
           content: `NodeJs，版本:${stdout}`,
         });
+
         if (platform() === "win32") {
+          if (existsSync('node.exe')) {
+            unlinkSync('node.exe');
+          }
+          if (existsSync('npm.cmd')) {
+            unlinkSync('npm.cmd');
+          }
+          if (existsSync('npx.cmd')) {
+            unlinkSync('npx.cmd');
+          }
+          if (existsSync('node_modules')) {
+            unlinkSync('node_modules');
+          }
           await symlink(
             path.join(extNodePath, "node.exe"),
             path.join(pluginContext.envDir, "node.exe"),
@@ -181,11 +189,24 @@ class NodeInstaller {
             "junction"
           );
         } else {
+          if (existsSync('node')) {
+            unlinkSync('node');
+          }
+          if (existsSync('npm')) {
+            unlinkSync('npm');
+          }
+          if (existsSync('npx')) {
+            unlinkSync('npx');
+          }
+          if (existsSync('node_modules')) {
+            unlinkSync('node_modules');
+          }
           await symlink(
             path.join(extNodePath, "node"),
             path.join(pluginContext.envDir, "node"),
             "file"
           );
+
           await symlink(
             path.join(extNodePath, "npm"),
             path.join(pluginContext.envDir, "npm"),
@@ -208,11 +229,165 @@ class NodeInstaller {
       console.error("STD Error:", stderr);
       execAni.failed(`执行失败：${stderr}`);
     } catch (err) {
-      execAni.success(`安装失败${err}`);
+      execAni.error(`安装失败${err}`);
       console.error("Error:", err);
     }
-    this.render("正在检测版本");
+
   }
+
+  async startDownload(
+    url: string, filePath: string, ani: DrawCallback, hash?: string | null) {
+      ani.prefix(" ");
+    if (hash && fs.existsSync(filePath)) {
+      const file_hash = await getFileSHA256Sync(filePath);
+      console.log("文件hash值");
+      if (hash === file_hash) {
+        console.log("文件已下载:", filePath);
+        return filePath;
+      } else {
+        console.log("文件不完整，重新下载");
+        unlinkSync(filePath);
+      }
+    }
+    const fileName = path.basename(filePath);
+    const downloadDir = path.dirname(filePath);
+    const dl = new DownloaderHelper(url, downloadDir, {
+      fileName: fileName,
+      resumeIfFileExists: true, // 如果文件存在则继续下载
+      override: true, // 默认不覆盖已有文件
+      httpsRequestOptions: {},
+    });
+    dl.on("start", () => {
+      pluginContext.notifyManager.showTask({
+        content: `开始下载文件: ${fileName}`,
+        progress: 0,
+      });
+    
+      ani.suffix(` ${0} %`);
+    });
+
+    dl.on("skip", (stats) => {
+      pluginContext.notifyManager.showTask({
+        content: `文件已存在，跳过下载: ${fileName}`,
+        progress: 100,
+      });
+    });
+
+    dl.on("download", (stats) => {
+     
+    });
+    let cache = -1;
+    dl.on("progress", (stats) => {
+      const progress =  Math.floor(stats.progress);
+      if (progress !== cache) {
+        cache = progress;
+        pluginContext.notifyManager.showTask({
+          content: `正在下载文件: ${fileName}`,
+          progress: progress,
+        });
+        ani.suffix(` ${progress} %`);
+      }
+    });
+
+    dl.on("progress.throttled", (stats) => {
+      const progress = stats.progress.toFixed(2);
+      pluginContext.notifyManager.showTask({
+        content: `正在下载文件(更新中): ${fileName}`,
+        progress: parseFloat(progress),
+      });
+    });
+
+    dl.on("retry", (attempt, retryOptions, error) => {
+      pluginContext.notifyManager.showTask({
+        content: `下载失败，正在重试（第${attempt}次）: ${fileName}`,
+        progress: 0,
+      });
+      ani.suffix(`重试（第${attempt}次）`);
+    });
+
+    dl.on("end", (stats) => {
+      pluginContext.notifyManager.showTask({
+        content: `文件下载完成: ${fileName}`,
+        progress: 100,
+      });
+    });
+
+    dl.on("error", (stats) => {
+      pluginContext.notifyManager.showTask({
+        content: `下载出错: ${fileName}`,
+        progress: 0,
+      });
+      // ani.error(`下载出错:${pc.red(stats.message)}\n` + pc.reset(""));
+    });
+
+    dl.on("timeout", () => {
+      pluginContext.notifyManager.showTask({
+        content: `下载超时: ${fileName}`,
+        progress: 0,
+      });
+      ani.failed(`${pc.red("下载超时")}\n` + pc.reset(""));
+    });
+
+    dl.on("pause", () => {
+      pluginContext.notifyManager.showTask({
+        content: `下载暂停: ${fileName}`,
+        progress: cache,
+      });
+      ani.pause("下载暂停中");
+    });
+
+    dl.on("resume", (isResume) => {
+      pluginContext.notifyManager.showTask({
+        content: `下载恢复: ${fileName}`,
+        progress: cache,
+      });
+      ani.resume("下载恢复");
+    });
+
+    dl.on("stop", () => {
+      pluginContext.notifyManager.showTask({
+        content: `下载已停止: ${fileName}`,
+        progress: 0,
+      });
+      ani.error(`${pc.red("下载已停止")}\n` + pc.reset(""));
+    });
+
+    dl.on("renamed", (stats) => {
+      pluginContext.notifyManager.showTask({
+        content: `文件重命名: ${stats.fileName}`,
+        progress: cache,
+      });
+      ani.prefix("文件重命名中");
+    });
+
+    dl.on("redirected", (newUrl, oldUrl) => {
+      pluginContext.notifyManager.showTask({
+        content: `重定向到新地址: ${newUrl}`,
+        progress: cache,
+      });
+      ani.prefix("重定向中");
+    });
+
+    dl.on("stateChanged", (state) => {
+      pluginContext.notifyManager.showTask({
+        content: `下载状态更改为: ${state}`,
+        progress: cache,
+      });
+    });
+
+    dl.on("warning", (error) => {
+      pluginContext.notifyManager.showTask({
+        content: `下载警告: ${error.message}`,
+        progress: cache,
+      });
+      ani.prefix("警告中");
+    });
+    try {
+      return dl.start();
+    } catch (err) {
+      throw new Error(`下载失败: ${(err as Error).message}`);
+    }
+  };
   async getNodeSha(version: string, fileName: string) {
     const shaUrl = `https://nodejs.org/dist/${version}/SHASUMS256.txt`;
     this.virtualWindow.write("\n正在从服务器获取文件sha值 ");

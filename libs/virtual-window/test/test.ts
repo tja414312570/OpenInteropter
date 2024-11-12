@@ -19,9 +19,9 @@ virtualWindow.onRender((content) => {
 setTimeout(() => {
   // virtualWindow.write(ansiEscapes.clearScreen)
 }, 2000)
-const spinner = cliSpinners.dots; // 使用 "dots" 样式的动画
+const spinner = cliSpinners.balloon2; // 使用 "dots" 样式的动画
 const message = "加载中"; // 文本内容
-virtualWindow.write("\n" + message + "\n");
+virtualWindow.write("\n" + message + "\n正在加载：");
 virtualWindow.write(pc.reset(''))
 const d = draw(virtualWindow.getStream(), spinner, { suffix: pc.bgRed('处理中 ') });
 let i = 0;
@@ -29,7 +29,10 @@ const int = setInterval(() => {
   d.suffix(' ' + (i++) + '%')
 }, 1000);
 setTimeout(() => {
-  virtualWindow.write(pc.reset(''))
   clearInterval(int)
-  d.success(`${pc.green(`处理完成hhhhhhhhhhhhhh`)}\n` + pc.reset(""));
+  d.success(`${pc.green(`处理完成hhhhhhhhhhhhhh`)}`);
 }, 5000); // 动画持续5秒
+
+setTimeout(() => {
+  d.failed();
+}, 6000); // 动画持续5秒
