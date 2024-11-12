@@ -262,44 +262,44 @@ class NodeExecutor
     const nodeVersion = await pluginContext.settingManager.get(`version`);
     const nodePath = await pluginContext.settingManager.get(`path`);
     const execPromise = util.promisify(exec);
-    // if (nodeVersion && nodePath) {
-    //   pluginContext.notifyManager.showTask({
-    //     content: "正在获取node信息",
-    //     progress: -1,
-    //   });
-    //   //使用默认nodejs
-    //   let nodeCmd = "node";
-    //   let env = {};
-    //   if (nodePath !== "default") {
-    //     // if (platform() === "win32") {
-    //     nodeCmd = path.join(nodePath, nodeCmd);
-    //     // } else {
-    //     //   nodeCmd = path.join(nodePath, nodeCmd);
-    //     // }
-    //   } else {
-    //     env = { ...process.env };
-    //   }
-    //   try {
-    //     const { stdout, stderr } = await execPromise(`"${nodeCmd}" -v`, {
-    //       env,
-    //     });
-    //     const getVersion = stdout.trim();
-    //     if (getVersion.length > 0) {
-    //       this.env = env;
-    //       if (nodeVersion.trim() !== getVersion) {
-    //         pluginContext.settingManager.save(`version`, getVersion);
-    //       }
-    //       pluginContext.notifyManager.showTask({
-    //         content: `已获取到Node，版本:${stdout}`,
-    //       });
-    //       return;
-    //     }
-    //     console.error("STD Error:", stderr);
-    //   } catch (err) {
-    //     console.error("execute Error:", err);
-    //   }
-    //   pluginContext.notifyManager.showTask({ content: `Node环境已损坏` });
-    // }
+    if (nodeVersion && nodePath) {
+      pluginContext.notifyManager.showTask({
+        content: "正在获取node信息",
+        progress: -1,
+      });
+      //使用默认nodejs
+      let nodeCmd = "node";
+      let env = {};
+      if (nodePath !== "default") {
+        // if (platform() === "win32") {
+        nodeCmd = path.join(nodePath, nodeCmd);
+        // } else {
+        //   nodeCmd = path.join(nodePath, nodeCmd);
+        // }
+      } else {
+        env = { ...process.env };
+      }
+      try {
+        const { stdout, stderr } = await execPromise(`"${nodeCmd}" -v`, {
+          env,
+        });
+        const getVersion = stdout.trim();
+        if (getVersion.length > 0) {
+          this.env = env;
+          if (nodeVersion.trim() !== getVersion) {
+            pluginContext.settingManager.save(`version`, getVersion);
+          }
+          pluginContext.notifyManager.showTask({
+            content: `已获取到Node，版本:${stdout}`,
+          });
+          return;
+        }
+        console.error("STD Error:", stderr);
+      } catch (err) {
+        console.error("execute Error:", err);
+      }
+      pluginContext.notifyManager.showTask({ content: `Node环境已损坏` });
+    }
     nodeInstaller.start();
   }
 

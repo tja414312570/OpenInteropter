@@ -24,7 +24,7 @@ class WindowManager implements IWindowManager {
   }
   createWindow(windowId: string, options?: IBrowserWindowOptions) {
     let window = this.windowMap.get(windowId);
-    if (!window) {
+    if (!window || window.isDestroyed()) {
       const mergedOptions = _.merge({}, options, {
         titleBarStyle: "hidden",
         frame: false,
@@ -43,6 +43,17 @@ class WindowManager implements IWindowManager {
       window.on('closed', () => {
         console.log(`窗口[${windowId}]已被销毁`);
         updateDockMenu();
+        if (window && window.webContents.isDevToolsOpened()) {
+          window.webContents.closeDevTools(); // 关闭开发者工具
+        }
+        window.webContents.executeJavaScript(`
+          const webviews = document.querySelectorAll('webview');
+          webviews.forEach(webview => {
+            if (webview.isDevToolsOpened()) {
+              webview.closeDevTools(); // 关闭每个 webview 的开发者工具
+            }
+          });
+        `);
         this.windowMap.delete(windowId)
       });
     }

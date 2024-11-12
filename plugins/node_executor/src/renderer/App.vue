@@ -13,7 +13,9 @@
     </v-card-title>
 
     <v-divider></v-divider>
-    <v-card-text style="flex: 1;overflow: hidden;display: flex;flex-direction: column;">
+    <v-card-text
+      style="flex: 1; overflow: hidden; display: flex; flex-direction: column"
+    >
       <div>
         <div>
           当前系统信息
@@ -35,17 +37,13 @@
             <v-btn
               class="ma-2"
               color="orange-darken-2"
-              @click='refreshNodeList'
+              @click="refreshNodeList"
             >
-              <v-icon
-                icon="mdi-refresh"
-                start
-              ></v-icon>
+              <v-icon icon="mdi-refresh" start></v-icon>
               重试
             </v-btn>
-            {{
-            nodeList.error
-          }}</span>
+            {{ nodeList.error }}</span
+          >
         </div>
       </div>
 
@@ -60,18 +58,26 @@
           :options="nodeList.list"
         ></v-select>
       </div>
-      <div class='out-render' ref='renderlContainer' v-html="output"></div>
+      <div class="out-render" ref="renderlContainer" v-html="output"></div>
     </v-card-text>
     <v-divider></v-divider>
     <v-card-actions>
       <v-spacer></v-spacer>
       <v-btn
         color="primary"
-        :disabled="!selectedVersion && !disableBtn"
+        :disabled="!selectedVersion || disableBtn"
         depressed
         @click="confirmSelection"
       >
         下一步
+      </v-btn>
+      <v-btn
+        color="primary"
+        v-show="completed"
+        depressed
+        @click="completedInstall"
+      >
+        完成
       </v-btn>
       <!-- <v-btn color="secondary" text @click="cancelSelection"> 取消 </v-btn> -->
     </v-card-actions>
@@ -81,10 +87,11 @@
 <script lang="ts" setup>
 import { onUnmounted, reactive, ref, toRaw, watch } from "vue";
 import { getIpcApi } from "extlib/render";
-import { AnsiUp } from 'ansi-up';
+import { AnsiUp } from "ansi-up";
 import Convert from "ansi-to-html";
 var convert = new Convert();
 const output = ref("");
+const completed = ref(false);
 const ansiUp = new AnsiUp();
 // output.value = convert.toHtml("\x1b[30mblack\x1b[37mwhite");
 // console.log(output.value);
@@ -118,27 +125,43 @@ ipc.on("installer-output", (event, data) => {
 ipc.on("test", (event, data) => {
   selectedVersion.value = data;
 });
-const refreshNodeList = ()=>{
-   nodeList.error = ''
+const refreshNodeList = () => {
+  nodeList.error = "";
   ipc
-  .invoke("list-node-version")
-  .then((result) => {
-    nodeList.list = result;
-    selectedVersion.value = result[0];
-  })
-  .catch((err) => {
-    nodeList.error = err;
-  });
-}
+    .invoke("list-node-version")
+    .then((result) => {
+      nodeList.list = result;
+      selectedVersion.value = result[0];
+    })
+    .catch((err) => {
+      nodeList.error = err;
+    });
+};
 refreshNodeList();
 const confirmSelection = () => {
   const version = toRaw(selectedVersion.value);
   console.log(version);
+  disableBtn.value = true;
   ipc
     .invoke("start-install", version)
-    .then((result) => {})
+    .then((result) => {
+      console.log("下载完成？", result);
+      completed.value = true;
+    })
     .catch((err) => {
+      disableBtn.value = false;
+      console.log("下载失败:", err);
       nodeList.error = err;
+    });
+};
+const completedInstall = () => {
+  ipc
+    .invoke("close-window")
+    .then((result) => {
+      console.log("下载完成？", result);
+    })
+    .catch((err) => {
+      alert("窗口关闭失败:" + err.message);
     });
 };
 </script>
@@ -202,8 +225,8 @@ const confirmSelection = () => {
 .error {
   color: #f00;
 }
-.out-render{
+.out-render {
   flex: 1;
-  overflow: scroll
+  overflow: scroll;
 }
 </style>

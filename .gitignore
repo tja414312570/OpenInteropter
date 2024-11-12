@@ -6,6 +6,7 @@ yarn-error.log*
 myenv/
 .http-mitm-proxy/
 
+dump/
 dist/
 build/
 !build/icons

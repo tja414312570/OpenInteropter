@@ -7,7 +7,11 @@ export function updateDockMenu() {
             return {
                 label: `${window.getTitle() || '窗口 ' + (index + 1)}`,
                 click: () => {
-                    if (window) window.show();
+                    if (window) {
+                        if (window.isMinimized()) window.restore(); // 如果窗口最小化则恢复
+                        window.show(); // 显示窗口
+                        window.focus(); // 聚焦窗口
+                    }
                 },
             };
         });

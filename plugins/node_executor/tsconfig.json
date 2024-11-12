@@ -23,6 +23,6 @@
     "typeRoots": ["node_modules/@types"],
     "lib": ["ES2022", "dom"]
   },
-  "include": ["src/main/**/*", "customTypes/*", "lib/**/*", ".vite/**/*"],
+  "include": ["src/**/*", "test/**/*", ".vite/**/*"],
   "exclude": ["node_modules"]
 }

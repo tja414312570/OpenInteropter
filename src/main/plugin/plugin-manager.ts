@@ -124,7 +124,7 @@ class PluginManager extends EventEmitter<PluginEventMap> {
                 }
             }
         }
-        return new Proxy({}, proxyHandler);
+        return new Proxy(pluginInfo.module, proxyHandler);
     }
     getPluginInfoFromInstance(instance: any): PluginInfo {
         return instance?.['_plugin']
