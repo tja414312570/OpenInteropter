@@ -32,7 +32,7 @@ export type DrawCallback = {
 };
 
 export const back = (length: number) => {
-  return `\x1b[${length}D\x1b[0m`
+  return `\x1b[${length}D\x1b[0K`
 };
 
 export const draw = (stream: Writable, dots: Spinner, options: DrawOptions = {}): DrawCallback => {
