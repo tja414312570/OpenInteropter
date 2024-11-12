@@ -596,6 +596,7 @@ class VirtualWindow {
   }
 
   clear(): void {
+    this.ansiBuffer.clear();
     this.buffer = [""]; // 清空屏幕内容，只留一行
     this.cursorX = 0; // 重置光标到屏幕左上角
     this.cursorY = 0;
