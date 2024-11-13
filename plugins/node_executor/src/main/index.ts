@@ -11,12 +11,13 @@ import { ExtensionContext } from "extlib/main";
 import { stringify } from "circular-json";
 import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
-import { ChildProcess, exec, fork } from "child_process";
+import { ChildProcess, exec, fork, spawn } from "child_process";
 import VirtualWindow from "virtual-window";
 import path from "path";
 import util from "util";
 import { watcher } from "extlib/dev";
 import nodeInstaller from "./install-ui";
+import { getPreloadFile, getUrl } from "./static-path";
 watcher();
 class ExecuteContext {
   private _data: ((data: string) => void) | undefined;
@@ -86,7 +87,6 @@ class NodeExecutor
   implements Pluginlifecycle, InstructExecutor
 {
   private executeContext: null | ExecuteContext = null;
-  env = {} as any;
   currentTask(): string[] {
     return this.executeContext ? [""] : [];
   }
@@ -106,6 +106,7 @@ class NodeExecutor
       const { code, language, id } = instruct;
       this.executeContext = new ExecuteContext(null as any);
       try {
+       const env = pluginContext.env;
         let childProcess: ChildProcess;
         const destory = () => {
           this.executeContext = null;
@@ -143,14 +144,14 @@ class NodeExecutor
             type,
           });
         };
-        childProcess = fork(
-          path.join(__dirname, "../lib/child-process-script.ts"),
-          [],
-          {
-            stdio: ["pipe", "pipe", "pipe", "ipc"],
-            env: { FORCE_COLOR: "1" },
-          }
-        );
+        // childProcess = spawn('node',
+        //   path.join(__dirname, "../lib/child-process-script.ts"),
+        //   [],
+        //   {
+        //     stdio: ["pipe", "pipe", "pipe", "ipc"],
+        //     env: {...env, FORCE_COLOR: "1" },
+        //   }
+        // );
         childProcess.stdout?.setEncoding("utf8");
         childProcess.stdout?.on("data", (data) => {
           render(data, InstructResultType.executing);
@@ -271,13 +272,9 @@ class NodeExecutor
       let nodeCmd = "node";
       let env = {};
       if (nodePath !== "default") {
-        // if (platform() === "win32") {
         nodeCmd = path.join(nodePath, nodeCmd);
-        // } else {
-        //   nodeCmd = path.join(nodePath, nodeCmd);
-        // }
       } else {
-        env = { ...process.env };
+        env = pluginContext.env;
       }
       try {
         const { stdout, stderr } = await execPromise(`"${nodeCmd}" -v`, {
@@ -285,13 +282,22 @@ class NodeExecutor
         });
         const getVersion = stdout.trim();
         if (getVersion.length > 0) {
-          this.env = env;
           if (nodeVersion.trim() !== getVersion) {
             pluginContext.settingManager.save(`version`, getVersion);
           }
-          pluginContext.notifyManager.showTask({
-            content: `已获取到Node，版本:${stdout}`,
-          });
+          if(nodePath !== "default"){
+            const envVersion = await nodeInstaller.getFromCurrentEnv()
+            if(envVersion.trim() !== getVersion.trim()){
+              pluginContext.notifyManager.showTask({
+                content: `检测到版本不一致,正在修复中，环境版本:${envVersion},安装版本:${getVersion}`,
+              });
+              nodeInstaller.modify(nodePath);
+            }
+          }else{
+            pluginContext.notifyManager.showTask({
+              content: `已获取到Node，版本:${stdout}`,
+            });
+          }
           return;
         }
         console.error("STD Error:", stderr);

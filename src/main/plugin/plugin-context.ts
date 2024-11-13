@@ -45,6 +45,7 @@ export class PluginContext implements ExtensionContext {
     appPath: string;
     windowManager: IWindowManager;
     getIpcApi: GetIpcApi;
+    env: { [key: string]: string; };
     getPath(path: 'home' | 'appData' | 'userData' | 'sessionData' | 'temp' | 'exe' | 'module' | 'desktop' | 'documents' | 'downloads' | 'music' | 'pictures' | 'videos' | 'recent' | 'logs' | 'crashDumps') {
         return app.getPath(path);
     }
@@ -58,6 +59,7 @@ export class PluginContext implements ExtensionContext {
     constructor(plugin: PluginInfo) {
         this.plugin = plugin;
         this.resourceManager = resourceManager;
+        this.env = { ...appContext.env };
         const appid = plugin.appId.replaceAll('.', '-');
         this.settingManager = {
             on(_evnent: string, listener: (...args: any) => void) {

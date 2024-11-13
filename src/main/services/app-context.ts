@@ -5,17 +5,20 @@ import settingManager from './service-setting';
 
 const appPath = app.getPath('userData');
 
-interface FromSetting {
+interface FromSetting<T = string> {
     key: string;
-    default: string;
-    before: (path: string) => void;
+    default: T;
+    before: (path: T) => void;
 }
 
 interface Context {
     appPath: string;
     pluginPath: FromSetting;
     envPath: FromSetting;
+    env: FromSetting<{ [key: string]: string }>;
 }
+
+const process_env = { ...process.env };
 
 const context: Context = {
     appPath,
@@ -37,6 +40,14 @@ const context: Context = {
                 fs.mkdirSync(path, { recursive: true });
             }
         }
+    },
+    env: {
+        key: 'general.env',
+        default: {},
+        before: (path: {}) => {
+            Object.assign(path, process_env)
+            process.env = path
+        }
     }
 };
 const appContext = new Proxy(context, {
@@ -47,12 +58,16 @@ const appContext = new Proxy(context, {
                 const settingKey = value['key'];
                 let sValue = settingManager.get(settingKey);
                 sValue = (sValue === undefined ? value['default'] : sValue);
-                if ('before' in value) {
-                    value['before'](sValue);
+                const before = value['before'];
+                if (before) {
+                    before(sValue);
                 }
                 value = sValue;
-                settingManager.onValueChange(settingKey, (value) => {
-                    context[prop] = value
+                settingManager.onValueChange(settingKey, (_value) => {
+                    if (before) {
+                        before(_value);
+                    }
+                    context[prop] = _value
                 })
                 context[prop] = value
             }
@@ -62,7 +77,12 @@ const appContext = new Proxy(context, {
         }
     }
 })
+const pathKey = Object.keys(process.env).find(key => key.toLowerCase() === 'path') || 'PATH';
+// context.env = { ...process.env, [pathKey]: `${appContext.envPath.replaceAll(' ', '\\ ')}${path.delimiter}${process.env[pathKey]}` };
+process.env = appContext.env;
 type IContext = {
-    [K in keyof Context]: string;
+    env: { [key: string]: string };
+} & {
+    [K in keyof Omit<Context, "env">]: string;
 };
 export default appContext as IContext;

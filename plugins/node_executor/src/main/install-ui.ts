@@ -35,6 +35,52 @@ function debug(data: string) {
   });
 }
 class NodeInstaller {
+  modify(nodePath: any) {
+    this.checkStatus();
+    this.uiApi =  pluginContext.getIpcApi('node');
+      this.virtualWindow = new VirtualWindow();
+        const window = pluginContext.windowManager.createWindow('render',{
+          title: "Nodejs安装器",
+            webPreferences: {
+              preload: getPreloadFile("index"),
+            },
+            width: 720,
+            height: 360,
+            minimizable: false,
+            resizable: false, // 禁用调整窗口大小
+          } );
+        try{
+          window.loadURL(getUrl('render'))
+          this.uiApi.onRenderBind('installer-output',()=>{
+            this.virtualWindow.write('正在修复依赖环境')
+            const extAni = draw(this.virtualWindow.getStream(), cliSpinners.dots, {
+              suffix: " 请稍后",
+            });
+            try{
+              this.copyBin(nodePath)
+              
+              const current = this.getFromCurrentEnv();
+              this.uiApi.send('installer-output-completed');
+              extAni.success(`修复完成,当前版本:${current}`)
+            }catch(err){
+              extAni.error(pc.red('修复失败:'+err))
+            }
+          });
+          window.on("close", () => {
+            this.virtualWindow.clear();
+          });
+          this.uiApi.handle("close-window", async (_event, version: any) => {
+            window.close();
+          });
+        }catch(err){
+         throw err;
+        }
+  }
+  checkStatus() {
+    if(this.uiApi != null || this.virtualWindow != null){
+      throw new Error("一个安装程序正在运行中")
+    }
+  }
   uiApi: IpcApi;
   virtualWindow: VirtualWindow;
   render(content: string) {
@@ -342,7 +388,7 @@ class NodeInstaller {
       progress: -1,
     });
     try {
-      const env = { ...process.env };
+      const env = pluginContext.env;
       const { stdout, stderr } = await execa("node -v", { env });
       const getVersion = stdout.trim();
       if (getVersion.length > 0) {
@@ -354,8 +400,9 @@ class NodeInstaller {
         return getVersion;
       }
       console.error("STD Error:", stderr);
+      throw new Error("STD ERR:"+stderr)
     } catch (err) {
-      console.log(err);
+      throw err;
     }
   }
 }

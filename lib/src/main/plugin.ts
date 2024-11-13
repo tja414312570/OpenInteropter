@@ -109,6 +109,7 @@ export interface ExtensionContext {
   resourceManager: ResourceManager;
   _pluginPath: string;
   workPath: string;
+  env: { [key: string]: string; };
   windowManager: IWindowManager;
   getPath(path: 'home' | 'appData' | 'userData' | 'sessionData' | 'temp' | 'exe' | 'module' | 'desktop' | 'documents' | 'downloads' | 'music' | 'pictures' | 'videos' | 'recent' | 'logs' | 'crashDumps'): string;
   /**

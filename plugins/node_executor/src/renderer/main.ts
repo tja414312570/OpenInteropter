@@ -4,9 +4,14 @@ import "./styles/index.scss";
 import App from "./App.vue";
 // Vuetify 配置
 import "vuetify/styles"; // 引入 Vuetify 的全局样式
+//@ts-ignore
 import { createVuetify } from "vuetify";
+import router from "./router";
+//@ts-ignore
 import * as components from "vuetify/components";
+//@ts-ignore
 import * as directives from "vuetify/directives";
+//@ts-ignore
 import { VIcon } from "vuetify/components"; // 导入实际的 v-icon 组件
 import { mdiHome } from "@mdi/js"; // 或者你自定义的图标
 import "@mdi/font/css/materialdesignicons.css";
@@ -27,6 +32,7 @@ const vuetify = createVuetify({
 const app = createApp(App);
 const store = createPinia();
 app.use(store);
+app.use(router)
 app.component("v-select", vSelect);
 // app.use(VueMonacoEditorPlugin, {
 //   paths: {

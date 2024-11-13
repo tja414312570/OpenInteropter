@@ -4,6 +4,7 @@
 //   process.exit(1); // 以非零状态码退出程序
 // });
 // import './utils/dump'
+import './services/app-context'
 import { useMainDefaultIpc } from "./services/ipc-main";
 import { app, BrowserWindow, dialog, ipcMain, IpcMainEvent, Menu, MenuItem, MenuItemConstructorOptions, session } from "electron";
 import { MainInit } from "./services/window-manager";
@@ -15,18 +16,18 @@ import { startProxyServer } from "./services/proxy";
 import fs, { glob } from "fs"
 import { init as ptyInit } from './services/service-inner-shell'
 import { notify } from "./ipc/notify-manager";
-import { listeners } from "process";
 import pluginManager from "./plugin/plugin-manager";
 import path from "path";
 import { showErrorDialog } from "./utils/dialog";
-import { createWindow } from "./services/window-settings";
 const innerPluginPath = path.join(__dirname, '../../../plugins');
 import './ipc-bind/core-ipc-bind'
 app.setName('开放解释器');
+import './services/service-env'
 import './services/global-agents'
 import './services/service-setting'
 import './services/service-menu'
 import "./services/window-settings";
+
 // import { onAppReady } from "./ipc-bind/core-ipc-bind";
 import { getIpcApi } from "./ipc/ipc-wrapper";
 function startWindow(proxy: string) {
