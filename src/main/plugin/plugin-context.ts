@@ -2,17 +2,20 @@ import {
     DialogOpt, DialogReturnValue, ExtensionContext as ExtExtensionContext, IIpcMain, ISetting, ISettingManager, IWindowManager, NotifyManager, PluginInfo as ExtPluginInfo,
     ResourceManager,
     GetIpcApi,
-    IpcApi
+    IpcApi,
+    IEnvManager,
+    EnvVariable
 } from '@lib/main'
 import settingManager from '@main/services/service-setting'
 import path from 'path';
 import appContext from '@main/services/app-context';
 import resourceManager from './resource-manager';
-import { app, IpcMainInvokeEvent } from 'electron';
+import { app, dialog, IpcMainInvokeEvent } from 'electron';
 import windowManager from '@main/services/window-manager';
 import pluginManager from './plugin-manager';
 import { getPreloadFile, getUrl } from "@main/config/static-path";
 import { getIpcApi } from '@main/ipc/ipc-wrapper';
+import envManager from '@main/services/env-manager';
 
 export interface ExtensionContext extends ExtExtensionContext {
     /**
@@ -46,6 +49,8 @@ export class PluginContext implements ExtensionContext {
     windowManager: IWindowManager;
     getIpcApi: GetIpcApi;
     env: { [key: string]: string; };
+    appEnv: { [key: string]: string; };
+    envManager: IEnvManager;
     getPath(path: 'home' | 'appData' | 'userData' | 'sessionData' | 'temp' | 'exe' | 'module' | 'desktop' | 'documents' | 'downloads' | 'music' | 'pictures' | 'videos' | 'recent' | 'logs' | 'crashDumps') {
         return app.getPath(path);
     }
@@ -59,7 +64,42 @@ export class PluginContext implements ExtensionContext {
     constructor(plugin: PluginInfo) {
         this.plugin = plugin;
         this.resourceManager = resourceManager;
-        this.env = { ...appContext.env };
+        this.env = appContext.env;
+        this.appEnv = appContext.appEnv;
+        this.showDialog = dialog.showMessageBox;
+        this.envManager = {
+            getAll: envManager.getAll.bind(envManager),
+            getEnv: envManager.getEnv.bind(envManager),
+            getProcessEnv: envManager.getProcessEnv.bind(envManager),
+            get: envManager.get.bind(envManager),
+            getValue: envManager.getValue.bind(envManager),
+            setEnv: (env: EnvVariable | string, value?: string) => {
+                if (!env) {
+                    throw new Error('变量名不能为空')
+                }
+                if (typeof env === 'object') {
+                    env.source = this.plugin.appId;
+                } else {
+                    env = {
+                        name: env,
+                        value,
+                        source: this.plugin.appId
+                    }
+                }
+                return envManager.setEnv(env);
+            },
+            disable: envManager.disable.bind(envManager),
+            enable: envManager.enable.bind(envManager),
+            setStatus: envManager.setStatus.bind(envManager),
+            delete: (name: string) => {
+                const env = envManager.get(name);
+                if (env.source !== this.plugin.appId) {
+                    throw new Error("只能删除组件创建的变量")
+                }
+                return envManager.delete(name);
+            },
+            on: envManager.on.bind(envManager)
+        };
         const appid = plugin.appId.replaceAll('.', '-');
         this.settingManager = {
             on(_evnent: string, listener: (...args: any) => void) {
@@ -119,7 +159,7 @@ export class PluginContext implements ExtensionContext {
                 const loadUrl = window.loadURL;
                 window.loadURL = async (url, options) => {
                     const pluginUrl = getUrl('plugin-window');
-                    const newUrl = `${pluginUrl}?path=${encodeURI(url)}`;
+                    const newUrl = `${pluginUrl}?path=${encodeURIComponent(url)}`;
                     loadUrl.bind(window)(newUrl, options);
                 }
                 window.webContents.openDevTools({
@@ -195,6 +235,7 @@ export class PluginContext implements ExtensionContext {
             }
         }
     }
+
 
     create(): void {
         console.log("组件开始注册")

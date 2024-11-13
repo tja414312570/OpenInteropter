@@ -26,7 +26,7 @@ import { exec } from "child_process";
 import { symlink } from "fs/promises";
 import { pipeline } from "stream";
 import { promisify } from "util";
-
+const execPromise = util.promisify(exec);
 const streamPipeline = promisify(pipeline);
 function debug(data: string) {
   return data.replace(/[\x00-\x1F\x7F]/g, (char) => {
@@ -35,50 +35,71 @@ function debug(data: string) {
   });
 }
 class NodeInstaller {
-  modify(nodePath: any) {
+  async modify(nodePath: any, version: string) {
+    console.log("修复;" + nodePath);
     this.checkStatus();
-    this.uiApi =  pluginContext.getIpcApi('node');
-      this.virtualWindow = new VirtualWindow();
-        const window = pluginContext.windowManager.createWindow('render',{
-          title: "Nodejs安装器",
-            webPreferences: {
-              preload: getPreloadFile("index"),
-            },
-            width: 720,
-            height: 360,
-            minimizable: false,
-            resizable: false, // 禁用调整窗口大小
-          } );
-        try{
-          window.loadURL(getUrl('render'))
-          this.uiApi.onRenderBind('installer-output',()=>{
-            this.virtualWindow.write('正在修复依赖环境')
-            const extAni = draw(this.virtualWindow.getStream(), cliSpinners.dots, {
-              suffix: " 请稍后",
+    this.uiApi = pluginContext.getIpcApi("node");
+    this.virtualWindow = new VirtualWindow();
+    this.virtualWindow.onRender((message) => {});
+    const window = pluginContext.windowManager.createWindow("render", {
+      title: "Nodejs安装器",
+      webPreferences: {
+        preload: getPreloadFile("index"),
+      },
+      width: 720,
+      height: 360,
+      minimizable: false,
+      resizable: false, // 禁用调整窗口大小
+    });
+    try {
+      const url = getUrl("render");
+      window.loadURL(url);
+      this.uiApi.onRenderBind("installer-output", async () => {
+        this.virtualWindow.onRender((content) => {
+          console.log(debug(content));
+          this.uiApi.send("installer-output", content);
+        });
+        this.virtualWindow.write("正在修复依赖环境");
+        const extAni = draw(this.virtualWindow.getStream(), cliSpinners.dots, {
+          suffix: " 请稍后",
+        });
+        try {
+          await pluginContext.envManager.setEnv("NODE_HOME", nodePath);
+          const current = await this.getFromCurrentEnv();
+          if (current.trim() !== version.trim()) {
+            extAni.suffix(` 修复失败,等待用户确认`);
+            const result = await pluginContext.showDialog({
+              message: "修复失败，是否确认使用系统版本",
+              buttons: ["确认", "取消"],
+              defaultId: 0, // 默认选择第一个按钮
+              cancelId: 1, // 当用户关闭对话框时，视为点击“取消”
             });
-            try{
-              this.copyBin(nodePath)
-              
-              const current = this.getFromCurrentEnv();
-              this.uiApi.send('installer-output-completed');
-              extAni.success(`修复完成,当前版本:${current}`)
-            }catch(err){
-              extAni.error(pc.red('修复失败:'+err))
+            if (result.response === 0) {
+              pluginContext.settingManager.save(`version`, version);
+              pluginContext.settingManager.save(`path`, "default");
+            } else {
+              throw new Error(`环境中版本和安装版本不一致!`);
             }
-          });
-          window.on("close", () => {
-            this.virtualWindow.clear();
-          });
-          this.uiApi.handle("close-window", async (_event, version: any) => {
-            window.close();
-          });
-        }catch(err){
-         throw err;
+          }
+          this.uiApi.send("installer-output-completed");
+          extAni.success(`修复完成,当前版本:${current}`);
+        } catch (err) {
+          extAni.error(pc.red("修复失败:" + err));
         }
+      });
+      window.on("close", () => {
+        this.virtualWindow.clear();
+      });
+      this.uiApi.handle("close-window", async (_event, version: any) => {
+        window.close();
+      });
+    } catch (err) {
+      throw err;
+    }
   }
   checkStatus() {
-    if(this.uiApi != null || this.virtualWindow != null){
-      throw new Error("一个安装程序正在运行中")
+    if (this.uiApi != null || this.virtualWindow != null) {
+      throw new Error("一个安装程序正在运行中");
     }
   }
   uiApi: IpcApi;
@@ -87,6 +108,7 @@ class NodeInstaller {
     this.virtualWindow.write(content);
   }
   startUi() {
+    console.log("安装;");
     this.virtualWindow = new VirtualWindow();
     this.uiApi = pluginContext.getIpcApi("node");
     this.uiApi.handle("list-node-version", async () => {
@@ -191,7 +213,7 @@ class NodeInstaller {
     const execAni = draw(this.virtualWindow.getStream(), cliSpinners.dots, {
       suffix: " 请稍后",
     });
-    const execPromise = util.promisify(exec);
+
     try {
       const env = {};
       const { stdout, stderr } = await execPromise(`"${nodeCmd}" -v`, { env });
@@ -202,7 +224,7 @@ class NodeInstaller {
         pluginContext.notifyManager.showTask({
           content: `NodeJs，版本:${stdout}`,
         });
-        this.copyBin(extNodePath);
+        await pluginContext.envManager.setEnv("NODE_HOME", extNodePath);
         execAni.success(pc.green(`版本：${getVersion}`));
       } else {
         throw new Error(`${stderr}`);
@@ -213,74 +235,7 @@ class NodeInstaller {
     }
   }
   async copyBin(extNodePath: string) {
-    if (platform() === "win32") {
-      if (existsSync("node.exe")) {
-        unlinkSync("node.exe");
-      }
-      if (existsSync("npm.cmd")) {
-        unlinkSync("npm.cmd");
-      }
-      if (existsSync("npx.cmd")) {
-        unlinkSync("npx.cmd");
-      }
-      if (existsSync("node_modules")) {
-        unlinkSync("node_modules");
-      }
-      await symlink(
-        path.join(extNodePath, "node.exe"),
-        path.join(pluginContext.envDir, "node.exe"),
-        "file"
-      );
-      await symlink(
-        path.join(extNodePath, "npm.cmd"),
-        path.join(pluginContext.envDir, "npm.cmd"),
-        "file"
-      );
-      await symlink(
-        path.join(extNodePath, "npx.cmd"),
-        path.join(pluginContext.envDir, "npx.cmd"),
-        "file"
-      );
-      await symlink(
-        path.join(extNodePath, "node_modules"),
-        path.join(pluginContext.envDir, "node_modules"),
-        "junction"
-      );
-    } else {
-      if (existsSync("node")) {
-        unlinkSync("node");
-      }
-      if (existsSync("npm")) {
-        unlinkSync("npm");
-      }
-      if (existsSync("npx")) {
-        unlinkSync("npx");
-      }
-      if (existsSync("node_modules")) {
-        unlinkSync("node_modules");
-      }
-      await symlink(
-        path.join(extNodePath, "node"),
-        path.join(pluginContext.envDir, "node"),
-        "file"
-      );
-
-      await symlink(
-        path.join(extNodePath, "npm"),
-        path.join(pluginContext.envDir, "npm"),
-        "file"
-      );
-      await symlink(
-        path.join(extNodePath, "npx"),
-        path.join(pluginContext.envDir, "npx"),
-        "file"
-      );
-      await symlink(
-        path.join(extNodePath, "node_modules"),
-        path.join(pluginContext.envDir, "node_modules"),
-        "dir"
-      );
-    }
+    await pluginContext.envManager.setEnv("NODE_HOME", extNodePath);
   }
   async startDownload(url: string, filePath: string, hash?: string | null) {
     const ani = draw(this.virtualWindow.getStream(), cliSpinners.dots, {
@@ -364,7 +319,10 @@ class NodeInstaller {
   }
   async start() {
     let version = await this.getFromCurrentEnv();
-    if (!version) {
+    if (version) {
+      pluginContext.settingManager.save(`version`, version);
+      pluginContext.settingManager.save(`path`, "default");
+    } else {
       this.startUi();
     }
   }
@@ -389,18 +347,16 @@ class NodeInstaller {
     });
     try {
       const env = pluginContext.env;
-      const { stdout, stderr } = await execa("node -v", { env });
+      const { stdout, stderr } = await execPromise("node -v", env);
       const getVersion = stdout.trim();
       if (getVersion.length > 0) {
-        pluginContext.settingManager.save(`version`, getVersion);
-        pluginContext.settingManager.save(`path`, "default");
         pluginContext.notifyManager.showTask({
           content: `已获取到Node，版本:${stdout}`,
         });
         return getVersion;
       }
       console.error("STD Error:", stderr);
-      throw new Error("STD ERR:"+stderr)
+      throw new Error("STD ERR:" + stderr);
     } catch (err) {
       throw err;
     }

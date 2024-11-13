@@ -40,7 +40,7 @@ class WindowManager implements IWindowManager {
       window['options'] = mergedOptions;
       updateDockMenu();
       this.windowMap.set(windowId, window)
-      window.on('closed', () => {
+      window.on('close', () => {
         console.log(`窗口[${windowId}]已被销毁`);
         updateDockMenu();
         if (window && window.webContents.isDevToolsOpened()) {

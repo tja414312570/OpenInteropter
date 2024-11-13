@@ -15,7 +15,7 @@ const loaded = ref(true)
 const queryParams = route.query;
 
 console.log(queryParams); // 打印所有查询参数
-const url = ref(queryParams.path)
+const url = ref(decodeURIComponent(queryParams.path as string))
 const loading = ref(false); // 加载状态
 
 // 加载页面时设置 loading 状态

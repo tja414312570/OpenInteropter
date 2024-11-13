@@ -22,7 +22,7 @@ import { showErrorDialog } from "./utils/dialog";
 const innerPluginPath = path.join(__dirname, '../../../plugins');
 import './ipc-bind/core-ipc-bind'
 app.setName('开放解释器');
-import './services/service-env'
+import './services/env-manager'
 import './services/global-agents'
 import './services/service-setting'
 import './services/service-menu'

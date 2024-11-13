@@ -106,7 +106,7 @@ class NodeExecutor
       const { code, language, id } = instruct;
       this.executeContext = new ExecuteContext(null as any);
       try {
-       const env = pluginContext.env;
+        const env = pluginContext.env;
         let childProcess: ChildProcess;
         const destory = () => {
           this.executeContext = null;
@@ -285,15 +285,15 @@ class NodeExecutor
           if (nodeVersion.trim() !== getVersion) {
             pluginContext.settingManager.save(`version`, getVersion);
           }
-          if(nodePath !== "default"){
-            const envVersion = await nodeInstaller.getFromCurrentEnv()
-            if(envVersion.trim() !== getVersion.trim()){
+          if (nodePath !== "default") {
+            const envVersion = await nodeInstaller.getFromCurrentEnv();
+            if (envVersion.trim() !== getVersion.trim()) {
               pluginContext.notifyManager.showTask({
                 content: `检测到版本不一致,正在修复中，环境版本:${envVersion},安装版本:${getVersion}`,
               });
-              nodeInstaller.modify(nodePath);
+              await nodeInstaller.modify(nodePath, getVersion.trim());
             }
-          }else{
+          } else {
             pluginContext.notifyManager.showTask({
               content: `已获取到Node，版本:${stdout}`,
             });

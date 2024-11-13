@@ -110,9 +110,15 @@ class SettingManager extends EventEmitter<SettingEventMap> implements ISettingMa
         }
         return menus;
     }
-    get = (key: string) => {
+    get = <T = any>(key: string): T => {
         const config = this.getSettingConfig();
-        const value = _.get(config, key)
+        let value = _.get(config, key)
+        if (!value) {
+            const settins = foundSetting(key);
+            if (settins && settins.default) {
+                value = settins.default;
+            }
+        }
         return value;
     }
     save = (key: string | Record<string, any>, value?: any) => {
@@ -133,7 +139,7 @@ class SettingManager extends EventEmitter<SettingEventMap> implements ISettingMa
                 if (!_.isEqual(currentValue, value)) { // 值相同时跳过写入
                     _.set(config, path, value);
                     this.emit('change', path, value);
-                    this.emit(`change.${key}`, value)
+                    this.emit(`change.${path}`, value)
                     hasNews = true;
                 }
             }

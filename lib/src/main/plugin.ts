@@ -63,6 +63,7 @@ export type ISetting = {
   page?: string;
   path?: string;
   hide?: boolean;
+  default?: any;
   subs?: Array<ISetting> | null;
 };
 
@@ -97,11 +98,38 @@ export interface ISettingManager extends EventEmitter<SettingEventMap> {
   ): Promise<void>;
   getSettings(path?: string): ISetting[] | ISetting;
 }
+
+export interface EnvEventMap {
+  change: [];
+}
+
 export type NotifyManager = {
   notify: (message: string) => void;
   notifyError: (message: string) => void;
   showTask: (task: { content: string, progress?: number }) => void;
 };
+export interface IEnvManager extends Pick<EventEmitter<EnvEventMap>, "on"> {
+  getAll(): Array<EnvVariable> | undefined;
+  getEnv(): Record<string, string>;
+  getProcessEnv(): NodeJS.ProcessEnv;
+  // foundEnv(name: string, envs?: Array<EnvVariable>): EnvVariable | undefined;
+  // foundEnvById(id: string, envs?: Array<EnvVariable>): EnvVariable | undefined;
+  get(name: string): EnvVariable | undefined;
+  getValue(name: string): string | undefined;
+  setEnv(env: EnvVariable): Promise<void>;
+  setEnv(name: string, value: string): Promise<void>;
+  disable(name: string): Promise<void>;
+  enable(name: string): Promise<void>;
+  setStatus(name: string, status: EnvVariable['status']): Promise<void>;
+  delete(name: string): Promise<void>;
+}
+export type EnvVariable = {
+  id?: string
+  name: string
+  value: string
+  source: string
+  status?: 'enable' | 'disable'
+}
 export interface ExtensionContext {
   plugin: PluginInfo,
   settingManager: ISettingManager;
@@ -110,6 +138,8 @@ export interface ExtensionContext {
   _pluginPath: string;
   workPath: string;
   env: { [key: string]: string; };
+  appEnv: { [key: string]: string; };
+  envManager: IEnvManager;
   windowManager: IWindowManager;
   getPath(path: 'home' | 'appData' | 'userData' | 'sessionData' | 'temp' | 'exe' | 'module' | 'desktop' | 'documents' | 'downloads' | 'music' | 'pictures' | 'videos' | 'recent' | 'logs' | 'crashDumps'): string;
   /**

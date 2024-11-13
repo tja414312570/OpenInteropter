@@ -58,7 +58,6 @@
 <script lang="ts" setup>
 import { Splitpanes, Pane } from 'splitpanes'
 import 'splitpanes/dist/splitpanes.css'
-import proxyView from '../components/settings-proxy.vue';
 import { onMounted, onUnmounted, reactive, ref, shallowRef, toRaw, watch, WatchHandle } from 'vue';
 import { getIpcApi } from '@preload/lib/ipc-api';
 import { settingCompents } from '@renderer/ts/setting-compents';

@@ -4,6 +4,7 @@ import resourceManager from "@main/plugin/resource-manager";
 import path from "path";
 import appContext from "./app-context";
 import { getIpcApi } from "@main/ipc/ipc-wrapper";
+import envManager from "./env-manager";
 const api = getIpcApi('pty')
 let isinit = false;
 function init() {
@@ -36,7 +37,25 @@ function init() {
         ptyProcess.onData((data) => {
             api.send('terminal-output', data);
         });
-
+        const clearEnv = () => {
+            if (process.platform === 'win32') {
+                ptyProcess.write(`Get-ChildItem env: | ForEach-Object { Remove-Item env:\\$_ }\n`);
+            } else {
+                ptyProcess.write('unset $(compgen -v)\n'); // 使用 `unset` 清除所有环境变量
+            }
+        }
+        envManager.on('change', () => {
+            const envs = envManager.getEnv();
+            // clearEnv();
+            for (const key in envs) {
+                const value = envs[key];
+                if (process.platform === 'win32') {
+                    ptyProcess.write(`[Environment]::SetEnvironmentVariable('${key}', '${value}', 'Process')\n`);
+                } else {
+                    ptyProcess.write(`export ${key}="${value}"\n`);
+                }
+            }
+        })
         api.on('terminal-into', (event, data) => {
             ptyProcess.write(data);
         });
