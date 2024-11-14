@@ -5,16 +5,21 @@ import {
   InstructResult,
   InstructResultType,
   pluginContext,
-} from "mylib/main";
-import { Pluginlifecycle } from "mylib/main";
-import { ExtensionContext } from "mylib/main";
+} from "extlib/main";
+import { Pluginlifecycle } from "extlib/main";
+import { ExtensionContext } from "extlib/main";
+import { watcher } from "extlib/dev";
+import { stringify } from "circular-json";
+import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
 import { runPythonCode } from "./python";
-import { stringify } from "circular-json";
 import util from "util";
-import VirtualWindow from "../../../ssh_executor/src/main/virtual-window";
-import { ChildProcess, spawn } from "child_process";
+import VirtualWindow from "virtual-window";
+import { ChildProcess, exec, spawn } from "child_process";
+import path from "path";
+import installer from "./installer";
 
+watcher();
 class ExecuteContext {
   private _data: ((data: string) => void) | undefined;
   private _write: ((data: string) => void) | undefined;
@@ -103,6 +108,7 @@ class PythonExecutor
       const { code, language, id } = instruct;
       this.executeContext = new ExecuteContext(null as any);
       try {
+        const env = pluginContext.env;
         let childProcess: ChildProcess;
         const destory = () => {
           this.executeContext = null;
@@ -139,9 +145,15 @@ class PythonExecutor
             type,
           });
         };
-        childProcess = spawn("python", ["-c", code], {
+        const dir = path.join(pluginContext.workPath, "script");
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir);
+        }
+        const js_file = path.join(dir, `${execId}.ts`);
+        fs.writeFileSync(js_file, code);
+        childProcess = spawn("python", [`${js_file}`], {
           stdio: ["pipe", "pipe", "pipe"],
-          env: { FORCE_COLOR: "1" },
+          env: { ...env, FORCE_COLOR: "1" },
         });
         childProcess.stdout?.setEncoding("utf8");
         childProcess.stdout?.on("data", (data) => {
@@ -229,7 +241,68 @@ class PythonExecutor
     });
   }
 
-  async onMounted(ctx: ExtensionContext) {}
-  onUnmounted(): void {}
+  async onMounted(ctx: ExtensionContext) {
+    // 插件挂载时的处理逻辑
+    pluginContext.notifyManager.showTask({
+      content: "正在检查环境",
+      progress: -1,
+    });
+
+    const plugHome = pluginContext.workPath;
+    if (fs.existsSync(plugHome)) {
+      fs.mkdirSync(plugHome, { recursive: true });
+    }
+    const version = await pluginContext.settingManager.get(`version`);
+    const dir = await pluginContext.settingManager.get(`path`);
+    const execPromise = util.promisify(exec);
+    if (version && dir) {
+      pluginContext.notifyManager.showTask({
+        content: "正在获取node信息",
+        progress: -1,
+      });
+      //使用默认nodejs
+      let cmd = "python";
+      let env = {};
+      if (dir !== "default") {
+        cmd = path.join(dir, cmd);
+      } else {
+        env = pluginContext.env;
+      }
+      try {
+        const { stdout, stderr } = await execPromise(`"${cmd}" -V`, {
+          env,
+        });
+        const getVersion = stdout.trim();
+        if (getVersion.length > 0) {
+          if (version.trim() !== getVersion) {
+            pluginContext.settingManager.save(`version`, getVersion);
+          }
+          if (dir !== "default") {
+            const envVersion = await installer.getFromCurrentEnv();
+            if (envVersion.trim() !== getVersion.trim()) {
+              pluginContext.notifyManager.showTask({
+                content: `检测到版本不一致,正在修复中，环境版本:${envVersion},安装版本:${getVersion}`,
+              });
+              await installer.modify(dir, getVersion.trim());
+            }
+          } else {
+            pluginContext.notifyManager.showTask({
+              content: `已获取到Node，版本:${stdout}`,
+            });
+          }
+          return;
+        }
+        console.error("STD Error:", stderr);
+      } catch (err) {
+        console.error("execute Error:", err);
+      }
+      pluginContext.notifyManager.showTask({ content: `Node环境已损坏` });
+    }
+    installer.start();
+  }
+
+  onUnmounted(): void {
+    // 插件卸载时的处理逻辑
+  }
 }
 export default new PythonExecutor();

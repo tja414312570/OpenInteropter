@@ -9,7 +9,7 @@
   <v-card class="installer-card">
     <!-- 标题 -->
     <v-card-title class="installer-title">
-      NodeJs安装器 ：{{ title }}
+      Python安装器 ：{{ title }}
     </v-card-title>
 
     <v-divider></v-divider>
@@ -118,8 +118,8 @@ const nodeList = reactive({
 });
 const selectedVersion = ref(null);
 
-const ipc = getIpcApi("node", onUnmounted);
-ipc.on("installer-output", (event, data) => {
+const ipc = getIpcApi("installer", onUnmounted);
+ipc.on("render", (event, data) => {
   output.value = ansiUp.ansi_to_html(data).replace(/\n/g, "<br>");
 });
 ipc.on("test", (event, data) => {
@@ -128,9 +128,10 @@ ipc.on("test", (event, data) => {
 const refreshNodeList = () => {
   nodeList.error = "";
   ipc
-    .invoke("list-node-version")
+    .invoke("list-version")
     .then((result) => {
       nodeList.list = result;
+      console.log(result);
       selectedVersion.value = result[0];
     })
     .catch((err) => {
@@ -150,10 +151,10 @@ const confirmSelection = () => {
     })
     .catch((err) => {
       disableBtn.value = false;
-      console.log("下载失败:", err);
       output.value = ansiUp
         .ansi_to_html(`\x1b[31m下载失败:${err}\x1b[39m`)
         .replace(/\n/g, "<br>");
+      console.log("下载失败:", err);
     });
 };
 const completedInstall = () => {

@@ -9,7 +9,7 @@
   <v-card class="installer-card">
     <!-- 标题 -->
     <v-card-title class="installer-title">
-      NodeJs安装器 ：{{ title }}
+      Python安装器：修复程序
     </v-card-title>
 
     <v-divider></v-divider>
@@ -23,40 +23,6 @@
           <b>平台 : </b>{{ platInfo.platform }},<b>架构 : </b
           >{{ platInfo.arch }}
         </div>
-        <div v-show="nodeList.list.length === 0">
-          正在获取当前环境所有可用的版本
-          <div class="split" />
-          <v-progress-circular
-            v-show="nodeList.list.length === 0 && !nodeList.error"
-            size="14"
-            width="2"
-            color="primary"
-            indeterminate
-          ></v-progress-circular>
-          <span class="error" v-show="nodeList.error">
-            <v-btn
-              class="ma-2"
-              color="orange-darken-2"
-              @click="refreshNodeList"
-            >
-              <v-icon icon="mdi-refresh" start></v-icon>
-              重试
-            </v-btn>
-            {{ nodeList.error }}</span
-          >
-        </div>
-      </div>
-
-      <div v-show="nodeList.list.length > 0" style="display: flex">
-        <div class="step-title">选择 Node.js 版本:</div>
-
-        <v-select
-          style="width: 250px"
-          label="version"
-          v-model="selectedVersion"
-          :reduce="(option) => option.version"
-          :options="nodeList.list"
-        ></v-select>
       </div>
       <div class="out-render" ref="renderlContainer" v-html="output"></div>
     </v-card-text>
@@ -65,21 +31,12 @@
       <v-spacer></v-spacer>
       <v-btn
         color="primary"
-        :disabled="!selectedVersion || disableBtn"
-        depressed
-        @click="confirmSelection"
-      >
-        下一步
-      </v-btn>
-      <v-btn
-        color="primary"
         v-show="completed"
         depressed
         @click="completedInstall"
       >
         完成
       </v-btn>
-      <!-- <v-btn color="secondary" text @click="cancelSelection"> 取消 </v-btn> -->
     </v-card-actions>
   </v-card>
 </template>
@@ -88,13 +45,9 @@
 import { onUnmounted, reactive, ref, toRaw, watch } from "vue";
 import { getIpcApi } from "extlib/render";
 import { AnsiUp } from "ansi-up";
-import Convert from "ansi-to-html";
-var convert = new Convert();
 const output = ref("");
 const completed = ref(false);
 const ansiUp = new AnsiUp();
-// output.value = convert.toHtml("\x1b[30mblack\x1b[37mwhite");
-// console.log(output.value);
 const platApi = getIpcApi("process", onUnmounted) as any;
 const platInfo = {
   arch: platApi.arch,
@@ -106,56 +59,15 @@ const scrollToBottom = () => {
     renderlContainer.value.scrollTop = renderlContainer.value.scrollHeight;
   }
 };
-
 // 监听 `htmlContent` 的变化并自动滚动到底部
 watch(output, scrollToBottom);
-
-const disableBtn = ref(false);
-const title = ref("选择版本");
-const nodeList = reactive({
-  list: [],
-  error: "",
-});
-const selectedVersion = ref(null);
-
-const ipc = getIpcApi("node", onUnmounted);
-ipc.on("installer-output", (event, data) => {
+const ipc = getIpcApi("installer", onUnmounted);
+ipc.on("render", (event, data) => {
   output.value = ansiUp.ansi_to_html(data).replace(/\n/g, "<br>");
 });
-ipc.on("test", (event, data) => {
-  selectedVersion.value = data;
+ipc.on("installer-completed", (event, data) => {
+  completed.value = true;
 });
-const refreshNodeList = () => {
-  nodeList.error = "";
-  ipc
-    .invoke("list-node-version")
-    .then((result) => {
-      nodeList.list = result;
-      selectedVersion.value = result[0];
-    })
-    .catch((err) => {
-      nodeList.error = err;
-    });
-};
-refreshNodeList();
-const confirmSelection = () => {
-  const version = toRaw(selectedVersion.value);
-  console.log(version);
-  disableBtn.value = true;
-  ipc
-    .invoke("start-install", version)
-    .then((result) => {
-      console.log("下载完成？", result);
-      completed.value = true;
-    })
-    .catch((err) => {
-      disableBtn.value = false;
-      console.log("下载失败:", err);
-      output.value = ansiUp
-        .ansi_to_html(`\x1b[31m下载失败:${err}\x1b[39m`)
-        .replace(/\n/g, "<br>");
-    });
-};
 const completedInstall = () => {
   ipc
     .invoke("close-window")
