@@ -126,7 +126,7 @@ const filterItems = (items: ISetting[]): ISetting[] => {
 settingApi.invoke('get-settings').then((data: Array<ISetting>) => {
     settingMenus.value = filterItems(data);
     settingMenus.value.push({
-        name: '所有设置',
+        name: '高级模式',
         key: '',
         path: ''
     })
@@ -182,9 +182,7 @@ const onActivated = (item: Array<ISetting>) => {
                     if (unwatch) {
                         unwatch();
                     }
-                    console.log('观察:', wValue)
                     unwatch = watch(wValue, newValue => {
-                        console.log('值改变')
                         newSettingsValue.set(current.path, toRaw(newValue))
                     }, { deep: true })
                     loading.value = false;
