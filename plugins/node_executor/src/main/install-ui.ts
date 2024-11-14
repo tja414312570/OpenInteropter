@@ -320,11 +320,19 @@ class NodeInstaller {
   async start() {
     let version = await this.getFromCurrentEnv();
     if (version) {
-      pluginContext.settingManager.save(`version`, version);
-      pluginContext.settingManager.save(`path`, "default");
-    } else {
+      const result = await pluginContext.showDialog({
+        message: `检查到系统中已存在node ${version}，是否确认使用系统版本`,
+        buttons: ["确认", "取消"],
+        defaultId: 0, // 默认选择第一个按钮
+        cancelId: 1, // 当用户关闭对话框时，视为点击“取消”
+      });
+      if (result.response === 0) {
+        pluginContext.settingManager.save(`version`, version);
+        pluginContext.settingManager.save(`path`, "default");
+        return;
+      } 
+    } 
       this.startUi();
-    }
   }
   async getNodeVersions() {
     try {

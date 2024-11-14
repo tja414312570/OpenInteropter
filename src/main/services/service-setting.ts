@@ -112,6 +112,9 @@ class SettingManager extends EventEmitter<SettingEventMap> implements ISettingMa
     }
     get = <T = any>(key: string): T => {
         const config = this.getSettingConfig();
+        if (!key) {
+            return config;
+        }
         let value = _.get(config, key)
         if (!value) {
             const settins = foundSetting(key);
@@ -120,6 +123,24 @@ class SettingManager extends EventEmitter<SettingEventMap> implements ISettingMa
             }
         }
         return value;
+    }
+    _saveJson = (json: Record<string, any>) => {
+        //查找删除的
+        const config = this.getSettingConfig();
+        for (const key in config) {
+            if (!(key in json)) {
+                delete config[key];
+                this.emit('delete', key);
+            }
+        }
+        //保存新增的
+        for (const key in json) {
+            this.save(key, json[key])
+        }
+        if (json.length === 0) {
+            this.cache = config;
+            return this.write();
+        }
     }
     save = (key: string | Record<string, any>, value?: any) => {
         const config = this.getSettingConfig();

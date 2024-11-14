@@ -10,6 +10,10 @@ ipc.handle('get-setting-value', (event, key) => {
 });
 
 ipc.handle('save-setting-value', (event, json) => {
-    settingManager.save(json)
+    if (json['']) {
+        settingManager._saveJson(json[''])
+    } else {
+        settingManager.save(json)
+    }
     return;
 });

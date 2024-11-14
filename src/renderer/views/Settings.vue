@@ -61,10 +61,12 @@ import 'splitpanes/dist/splitpanes.css'
 import { onMounted, onUnmounted, reactive, ref, shallowRef, toRaw, watch, WatchHandle } from 'vue';
 import { getIpcApi } from '@preload/lib/ipc-api';
 import { settingCompents } from '@renderer/ts/setting-compents';
+import JsonEditor from '@renderer/components/settings/JsonEditor.vue';
 import { ISetting } from '@lib/main';
+import path from 'path';
 const coreApi = getIpcApi('ipc-core.window', onUnmounted);
-const selected = ref([
-])
+const selected = ref([])
+settingCompents[''] = JsonEditor;
 const loading = ref(false)
 const openAll = ref(false)
 const temp = ref([]);
@@ -89,7 +91,7 @@ function foundSetting(target: string, path = [], _menus = settingMenus.value): I
     }
     return [];
 }
-const findPath = (targetKey, path = [], nodes = settingMenus.value) => {
+const findPath = (targetKey: any, path = [], nodes = settingMenus.value) => {
     for (let node of nodes) {
         const currentPath = [...path, { id: node.key, title: node.name }];
         if (node.key === targetKey) {
@@ -123,6 +125,11 @@ const filterItems = (items: ISetting[]): ISetting[] => {
 
 settingApi.invoke('get-settings').then((data: Array<ISetting>) => {
     settingMenus.value = filterItems(data);
+    settingMenus.value.push({
+        name: '所有设置',
+        key: '',
+        path: ''
+    })
     loading.value = false;
 })
 const close = () => {
@@ -175,9 +182,11 @@ const onActivated = (item: Array<ISetting>) => {
                     if (unwatch) {
                         unwatch();
                     }
+                    console.log('观察:', wValue)
                     unwatch = watch(wValue, newValue => {
+                        console.log('值改变')
                         newSettingsValue.set(current.path, toRaw(newValue))
-                    })
+                    }, { deep: true })
                     loading.value = false;
                 })
             }

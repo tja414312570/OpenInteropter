@@ -55,10 +55,10 @@
 </template>
 
 <script setup lang="ts">
-import { ISetting } from 'lib/dist/main';
 import { reactive, ref, toRaw } from 'vue';
 import { v4 as uuid } from 'uuid';
 import { EnvVariable } from '@main/services/env-manager';
+import { ISetting } from '@lib/main';
 const props = defineProps<{
     menu: ISetting;
     value: Array<EnvVariable>;
