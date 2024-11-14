@@ -19,8 +19,8 @@ api.on('send_execute-result', async (event, input) => {
             await agent.send(input)
         }
     } else {
-        showErrorDialog('没有注册的代理')
-        throw new Error('没有注册的代理')
+        showErrorDialog('没有注册的agent')
+        throw new Error('没有注册的agent')
     }
 });
 

@@ -144,14 +144,21 @@ class NodeExecutor
             type,
           });
         };
-        // childProcess = spawn('node',
-        //   path.join(__dirname, "../lib/child-process-script.ts"),
-        //   [],
-        //   {
-        //     stdio: ["pipe", "pipe", "pipe", "ipc"],
-        //     env: {...env, FORCE_COLOR: "1" },
-        //   }
-        // );
+        const dir = path.join(pluginContext.workPath, "script");
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir);
+        }
+        const js_file = path.join(dir, `${execId}.ts`);
+        fs.writeFileSync(js_file, code);
+        childProcess = spawn(
+          "tsx",
+          [`${js_file}`],
+          // path.join(__dirname, "../lib/child-process-script.ts"),
+          {
+            stdio: ["pipe", "pipe", "pipe"],
+            env: { ...env, FORCE_COLOR: "1" },
+          }
+        );
         childProcess.stdout?.setEncoding("utf8");
         childProcess.stdout?.on("data", (data) => {
           render(data, InstructResultType.executing);
@@ -241,7 +248,7 @@ class NodeExecutor
           }
         });
         // 向子进程发送用户代码
-        childProcess.send({ code, execId });
+        // childProcess.send({ code, execId });
       } catch (error: any) {
         this.executeContext.error(error);
         this.executeContext = null;

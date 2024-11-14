@@ -15,7 +15,7 @@
                 size="small" variant="tonal">
                 删除结果
             </v-btn>
-            <v-btn class="text-none" prepend-icon="mdi-content-copy" @click="del" size="small" variant="tonal">
+            <v-btn class="text-none" prepend-icon="mdi-content-copy" @click="copy" size="small" variant="tonal">
                 复制结果
             </v-btn>
         </v-card-actions>
