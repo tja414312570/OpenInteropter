@@ -67,7 +67,7 @@ class VirtualWindow {
       return this._group;
     }
   }
-  constructor() {
+  constructor(callback?: (content: string) => void) {
     this._creator = new Error('Creator Recoder');
     this._destory = false;
     this.buffer = [""]; // 初始化时至少有一行
@@ -78,6 +78,7 @@ class VirtualWindow {
     this.cursorVisible = true; // 默认显示光标
     this.bel = false;
     this.ansiBuffer = new DataView();
+    this.renderCallback = callback;
   }
   onRender(callback: (content: string) => void) {
     this.renderCallback = callback;
