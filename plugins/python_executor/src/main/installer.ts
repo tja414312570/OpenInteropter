@@ -303,6 +303,10 @@ class pythonInstaller {
           installProcess.stderr.on("data", (data) => {
             processWindow.write(data);
           });
+          installProcess.on("error", (code) => {
+            console.log("\u9000\u51FA\u7801:" + code);
+            reject(code);
+        });
           installProcess.on("exit", (code) => {
             console.log('退出码:'+code)
             if (code === 0) {
