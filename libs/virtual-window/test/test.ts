@@ -1,38 +1,31 @@
-import VirtualWindow, { draw } from "../src/index";
-import ansiEscapes from "ansi-escapes";
-import cliSpinners, { Spinner } from 'cli-spinners'
-import pc from "picocolors";
-const virtualWindow = new VirtualWindow();
-virtualWindow.setDebug(false);
-function debug(data: string) {
-  return data.replace(/[\x00-\x1F\x7F]/g, (char) => {
-    const hex = char.charCodeAt(0).toString(16).padStart(2, "0");
-    return `\\x${hex}`;
-  });
-}
-virtualWindow.write(pc.bgRedBright("hello world\n"));
-virtualWindow.onRender((content) => {
-  console.clear();
-  console.log(content);
-  console.log(debug(content));
-});
-setTimeout(() => {
-  // virtualWindow.write(ansiEscapes.clearScreen)
-}, 2000)
-const spinner = cliSpinners.balloon2; // 使用 "dots" 样式的动画
-const message = "加载中"; // 文本内容
-virtualWindow.write("\n" + message + "\n正在加载：");
-virtualWindow.write(pc.reset(''))
-const d = draw(virtualWindow.getStream(), spinner, { suffix: pc.bgRed('处理中 ') });
-let i = 0;
-const int = setInterval(() => {
-  d.suffix(' ' + (i++) + '%')
-}, 1000);
-setTimeout(() => {
-  clearInterval(int)
-  d.success(`${pc.green(`处理完成hhhhhhhhhhhhhh`)}`);
-}, 5000); // 动画持续5秒
+import Spinner from "cli-spinners";
+import VirtualWindow, { draw } from "../src/index"; // 根据实际路径修改
 
+const virtualWindow = new VirtualWindow();
+
+virtualWindow.write("hello word\n");
+virtualWindow.onRender(content => {
+  process.stdout.write('\x1b[1J\x1b[H' + content + '\n' + JSON.stringify(virtualWindow.getCursor()))
+})
+
+const windowGroup = virtualWindow.getWindowGroup();
+// virtualWindow.write('world\n')
+const aniStream = windowGroup.createChildWindow();
+const dr = draw(aniStream.getStream(), Spinner.dots, {
+  prefix: "加载中: ",
+});
+
+const writeable = windowGroup.createChildWindow();
+const an2 = windowGroup.createChildWindow();
+const dr2 = draw(an2.getStream(), Spinner.dots10, {
+  prefix: "加载中2: ",
+});
+
+// // 模拟输出
 setTimeout(() => {
-  d.failed();
-}, 6000); // 动画持续5秒
+  dr.success("加载完成"), windowGroup.close(true), windowGroup.createChildWindow()
+}, 7000);//windowGroup.close()
+setTimeout(() => virtualWindow.write("\n加载完成了222222"), 8000);
+setTimeout(() => writeable.write("输出数据: 第一个数据包"), 2000);
+setTimeout(() => writeable.write("\n输出数据: 第二个数据包"), 4000);
+setTimeout(() => writeable.write("\n加载完程"), 6000);
