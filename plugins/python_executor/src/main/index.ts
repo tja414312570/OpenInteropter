@@ -149,7 +149,7 @@ class PythonExecutor
         if (!fs.existsSync(dir)) {
           fs.mkdirSync(dir);
         }
-        const js_file = path.join(dir, `${execId}.ts`);
+        const js_file = path.join(dir, `${execId}.py`);
         fs.writeFileSync(js_file, code);
         childProcess = spawn("python", [`${js_file}`], {
           stdio: ["pipe", "pipe", "pipe"],

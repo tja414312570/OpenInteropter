@@ -27,6 +27,7 @@ import { exec, spawn } from "child_process";
 import { symlink } from "fs/promises";
 import { pipeline } from "stream";
 import { promisify } from "util";
+import { stringify } from "circular-json";
 const execPromise = util.promisify(exec);
 const streamPipeline = promisify(pipeline);
 function debug(data: string) {
@@ -43,7 +44,7 @@ class pythonInstaller {
     this.virtualWindow = new VirtualWindow();
     this.virtualWindow.onRender((message) => {});
     const window = pluginContext.windowManager.createWindow("render", {
-      title: "pythonjs安装器",
+      title: "python安装器",
       webPreferences: {
         preload: getPreloadFile("index"),
       },
@@ -128,7 +129,7 @@ class pythonInstaller {
     const window = pluginContext.windowManager.createWindow(
       pluginContext.plugin.appId,
       {
-        title: "pythonjs安装器",
+        title: "python安装器",
         webPreferences: {
           preload: getPreloadFile("index"),
         },
@@ -162,11 +163,11 @@ class pythonInstaller {
     const downpath = pluginContext.getPath("downloads");
     const filePath = path.join(downpath, fileName);
     await this.startDownload(downloadUrl, filePath, sha256);
-    const extSavepythonPath = path.join(
+    let extSavepythonPath = path.join(
       pluginContext.workPath,
       "python-" + version
     );
-    this.render(`\n正在安装:${extSavepythonPath}`);
+    this.render(`\n正在安装:${fileName}`);
     const windowGroup = this.virtualWindow.getWindowGroup();
     const progressWindow = windowGroup.createChildWindow();
     const processWindow = windowGroup.createChildWindow();
@@ -181,9 +182,14 @@ class pythonInstaller {
       progress: -1,
     });
     let cache = -1;
-    let extpythonPath: string;
+
     try {
-      await this.installPython(filePath, extSavepythonPath,processWindow);
+      if (extSavepythonPath.includes(" ")) {
+        const dir = path.join(await this.selectdir(), "python-" + version);
+        processWindow.write("python安装路径:" + stringify(dir) + "\n");
+        extSavepythonPath = dir;
+      }
+      await this.installPython(filePath, extSavepythonPath, processWindow);
       pluginContext.notifyManager.showTask({
         content: `安装完成:${fileName}`,
         progress: -2,
@@ -192,44 +198,46 @@ class pythonInstaller {
     } catch (err) {
       extAni.error(pc.red(`安装完成:${(err as Error).message}`));
       throw err;
-    }finally{
+    } finally {
       progressWindow.destory();
       processWindow.destory();
       windowGroup.destory();
     }
-    // if (platform() !== "win32") {
-    //   extpythonPath = path.join(extpythonPath, "bin");
-    // }
-    // const pythonCmd = path.join(extpythonPath, "python");
-    // this.render("\n检测版本:");
-    // const execAni = draw(this.virtualWindow.getStream(), cliSpinners.dots, {
-    //   suffix: " 请稍后",
-    // });
-
-    // try {
-    //   const env = {};
-    //   const { stdout, stderr } = await execPromise(`"${pythonCmd}" -V`, {
-    //     env,
-    //   });
-    //   const getVersion = stdout.trim();
-    //   if (getVersion.length > 0) {
-    //     pluginContext.settingManager.save(`version`, getVersion);
-    //     pluginContext.settingManager.save(`path`, extpythonPath);
-    //     pluginContext.notifyManager.showTask({
-    //       content: `pythonJs，版本:${stdout}`,
-    //     });
-    //     await pluginContext.envManager.setEnv("python_HOME", extpythonPath);
-    //     execAni.success(pc.green(`版本：${getVersion}`));
-    //   } else {
-    //     throw new Error(`${stderr}`);
-    //   }
-    // } catch (err) {
-    //   execAni.error(pc.red(`安装失败:${err.message}`));
-    //   throw err;
-    // }
+    let extpythonPath: string;
+    if (platform() !== "win32") {
+      extpythonPath = path.join(extSavepythonPath, "bin");
+    } else {
+      extpythonPath = extSavepythonPath;
+    }
+    const pythonCmd = path.join(extpythonPath, "python");
+    this.render("\n检测版本:");
+    const execAni = draw(this.virtualWindow.getStream(), cliSpinners.dots, {
+      suffix: " 请稍后",
+    });
+    try {
+      const env = {};
+      const { stdout, stderr } = await execPromise(`"${pythonCmd}" -V`, {
+        env,
+      });
+      const getVersion = stdout.trim();
+      if (getVersion.length > 0) {
+        pluginContext.settingManager.save(`version`, getVersion);
+        pluginContext.settingManager.save(`path`, extpythonPath);
+        pluginContext.notifyManager.showTask({
+          content: `python版本:${stdout}`,
+        });
+        await pluginContext.envManager.setEnv("PYTHON_HOME", extpythonPath);
+        execAni.success(pc.green(`版本：${getVersion}`));
+      } else {
+        throw new Error(`${stderr}`);
+      }
+    } catch (err) {
+      execAni.error(pc.red(`安装失败:${(err as Error).message}`));
+      throw err;
+    }
   }
   async copyBin(extpythonPath: string) {
-    await pluginContext.envManager.setEnv("python_HOME", extpythonPath);
+    await pluginContext.envManager.setEnv("PYTHON_HOME", extpythonPath);
   }
   async startDownload(url: string, filePath: string, hash?: string | null) {
     const ani = draw(this.virtualWindow.getStream(), cliSpinners.dots, {
@@ -286,15 +294,48 @@ class pythonInstaller {
       checkInterval && clearInterval(checkInterval);
     }
   }
+  async selectdir(): Promise<string> {
+    const result = await pluginContext.dialog.showOpenDialog({
+      title: "选择python安装目录",
+      message: "请选择一个没有空格的目录安装python",
+      properties: ["openDirectory"],
+    });
+    if (!result.filePaths[0] || result.filePaths[0].includes(" ")) {
+      const dialogResult = await pluginContext.dialog.showMessageBox(
+        pluginContext.windowManager.getWindow(pluginContext.plugin.appId),
+        {
+          message: `请选择没有空格的目录,当前所选路径:${result.filePaths[0]}`,
+          buttons: ["重选", "取消"],
+          defaultId: 0,
+          cancelId: 1,
+        }
+      );
+      if (dialogResult.response === 0) {
+        return await this.selectdir();
+      } else {
+        throw new Error("用户未选择python安装路径");
+      }
+    } else {
+      return result.filePaths[0];
+    }
+  }
   // 安装 Python
-  installPython(downloadPath: string, INSTALL_DIR: string, processWindow: VirtualWindow & { _line: boolean | undefined; _id: number | string | undefined; }) {
+  async installPython(
+    downloadPath: string,
+    INSTALL_DIR: string,
+    processWindow: VirtualWindow
+  ) {
     return new Promise((resolve, reject) => {
       if (platform() === "win32") {
-        try{
-          const installProcess = spawn('cmd.exe chcp 65001 &&',[`start /wait "" ${downloadPath} /InstallationType=JustMe /RegisterPython=0 /RegisterPython=[0] /S /D=${INSTALL_DIR}`],{
-          
-          })
-          console.log(installProcess.spawnargs.join(' '))
+        try {
+          const installProcess = spawn(
+            "cmd.exe chcp 65001 &&",
+            [
+              `start /wait "" ${downloadPath} /InstallationType=JustMe /RegisterPython=0 /RegisterPython=[0] /S /D=${INSTALL_DIR}`,
+            ],
+            {}
+          );
+          console.log(installProcess.spawnargs.join(" "));
           installProcess.stdout.setEncoding("utf-8");
           installProcess.stdout.on("data", (data) => {
             processWindow.write(data);
@@ -306,27 +347,27 @@ class pythonInstaller {
           installProcess.on("error", (code) => {
             console.log("\u9000\u51FA\u7801:" + code);
             reject(code);
-        });
+          });
           installProcess.on("exit", (code) => {
-            console.log('退出码:'+code)
+            console.log("退出码:" + code);
             if (code === 0) {
               resolve("");
             } else {
-              reject(new Error("安装 Miniconda 失败,退出码:"+code));
+              reject(new Error("安装 Miniconda 失败,退出码:" + code));
             }
           });
           installProcess.on("close", (code) => {
-            console.log('退出码:'+code)
+            console.log("退出码:" + code);
             if (code === 0) {
               resolve("");
             } else {
-              reject(new Error("安装 Miniconda 失败,退出码:"+code));
+              reject(new Error("安装 Miniconda 失败,退出码:" + code));
             }
           });
-        }catch(err){
-          reject(err)
+        } catch (err) {
+          reject(err);
         }
-        
+
         // Windows: 解压嵌入式 Python
         // const unzip = require("unzipper");
         // fs.createReadStream(INSTALL_DIR)
@@ -349,6 +390,10 @@ class pythonInstaller {
         installProcess.stdout.on("data", (data) => {
           processWindow.write(data);
         });
+        installProcess.on("error", (code) => {
+          console.log("进程错误:" + code);
+          reject(code);
+        });
         installProcess.stderr.setEncoding("utf-8");
         installProcess.stderr.on("data", (data) => {
           processWindow.write(data);
@@ -357,7 +402,7 @@ class pythonInstaller {
           if (code === 0) {
             resolve("");
           } else {
-            reject(new Error("安装 Miniconda 失败"));
+            reject(new Error("安装 Miniconda 失败,错误码" + code));
           }
         });
       }

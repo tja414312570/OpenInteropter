@@ -48,7 +48,7 @@
       </div>
 
       <div v-show="nodeList.list.length > 0" style="display: flex">
-        <div class="step-title">选择 Node.js 版本:</div>
+        <div class="step-title">选择 Python 版本:</div>
 
         <v-select
           style="width: 250px"
