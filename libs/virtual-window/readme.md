@@ -1,6 +1,7 @@
 # VirtualWindow 项目功能开发
 
 ## 简介
+
 `VirtualWindow` 是一个无 GUI 的虚拟窗口系统，支持解析和渲染 ANSI 转义序列，适用于终端输出，并支持窗口组管理。Web 端可以使用 `ansiup` 等库对输出进行渲染和着色。
 
 ## 功能需求
@@ -11,23 +12,28 @@
 - [x] 获取流：提供可写流以便从流中写入数据。
 - [x] 动画支持：支持加载动画，例如结合 `cli-spinners` 使用。
 - [x] 窗口组管理：支持将多个 `VirtualWindow` 组合成一个窗口组，并进行统一管理。
+- [x] 窗口宽度：通过 setCols 设置窗口，当 cols < 0 时，将启用自动换行，兼容 tty 自动换行。
 
 ## 待办事项
 
 ### 基本功能
+
 - [x] 基础 `VirtualWindow` 类定义
 - [x] 支持 ANSI 控制码的解析和渲染
 - [x] 提供 `write` 和 `render` 方法
 - [x] 提供 `draw` 基础动画
 
 ### 高级功能
+
 - [x] 实现窗口组 `WindowGroup` 功能
 - [ ] **窗口拆分功能**
+
   - [ ] 支持窗口组的 **水平拆分**
   - [ ] 支持窗口组的 **垂直拆分**
   - [ ] 自定义窗口比例
 
 - [x] **窗口固定位置插入**
+
   - [x] 支持在窗口组中 **指定位置插入** 新窗口
   - [x] 插入后自动 **刷新布局**
 
@@ -36,21 +42,22 @@
   - [ ] 添加 `moveWindow` 方法，将窗口移动到指定位置
 
 ### 动画与动态内容
+
 - [x] 基础动画功能（如加载动画）
 - [x] 添加成功、失败等状态变化
 - [ ] 更多动画效果
   - [ ] 支持不同风格的加载动画
 
 ### 性能优化
+
 - [ ] 优化 `refresh` 方法以减少多次刷新带来的性能消耗
 - [ ] 在 `refresh` 方法中添加节流机制，避免频繁更新
 
 ## 未来扩展
 
-- [ ] **OSC序列**：提供OSC序列解析
-- [ ] **C1序列**：部分c1序列已支持
-- [ ] **DEC序列**：完整的dec序列支持
-
+- [ ] **OSC 序列**：提供 OSC 序列解析
+- [ ] **C1 序列**：部分 c1 序列已支持
+- [ ] **DEC 序列**：完整的 dec 序列支持
 
 # VirtualWindow 支持的 ANSI 转义序列
 
@@ -100,43 +107,53 @@
   - `\x1b[4m`：设置下划线。
   - `\x1b[30m` 至 `\x1b[37m`：设置前景色（黑、红、绿、黄、蓝、紫、青、白）。
   - `\x1b[40m` 至 `\x1b[47m`：设置背景色（黑、红、绿、黄、蓝、紫、青、白）。
-## 未支持的csi序列:
+
+## 未支持的 csi 序列:
+
 请参阅 [完整清单](./unsupported_ansi_sequences.md)。
 
 ## 使用
-* 基础使用
+
+- 基础使用
+
 ```javascript
-    import VirtualWindow from "../src/index";
-    const virtualWindow = new VirtualWindow();
-    virtualWindow.write('hello world');
-    
-    //获取渲染结果 懒渲染，调用才时渲染
-    console.log(virtualWindow.render())
+import VirtualWindow from "../src/index";
+const virtualWindow = new VirtualWindow();
+virtualWindow.write("hello world");
+
+//获取渲染结果 懒渲染，调用才时渲染
+console.log(virtualWindow.render());
 ```
-* 即时渲染
+
+- 即时渲染
+
 ```javascript
-    import VirtualWindow from "../src/index";
-    const virtualWindow = new VirtualWindow();
-    //传入回调时每次write立即渲染
-    virtualWindow.onRenader((content:string)=>{
-        console.clear()
-        console.log(content)
-    })
-    virtuaWindow.write('hello world')
+import VirtualWindow from "../src/index";
+const virtualWindow = new VirtualWindow();
+//传入回调时每次write立即渲染
+virtualWindow.onRenader((content: string) => {
+  console.clear();
+  console.log(content);
+});
+virtuaWindow.write("hello world");
 ```
-* 获取流
+
+- 获取流
+
 ```javascript
-    import VirtualWindow from "../src/index";
-    const virtualWindow = new VirtualWindow();
-    virtualWindow.onRenader((content:string)=>{
-        console.clear()
-        console.log(content)
-    });
-    //通过流写入数据
-   const writeable = virtualWindow.getStream();
-   writeable.write('hello world')
+import VirtualWindow from "../src/index";
+const virtualWindow = new VirtualWindow();
+virtualWindow.onRenader((content: string) => {
+  console.clear();
+  console.log(content);
+});
+//通过流写入数据
+const writeable = virtualWindow.getStream();
+writeable.write("hello world");
 ```
-* 动画
+
+- 动画
+
 ```javascript
     import VirtualWindow {draw} from "../src/index";
     import Spinner from "cli-spinners";
@@ -152,10 +169,12 @@
     });
     setTimeout(()=>animate.success('ok'),2000)
 ```
-* 窗口组
+
+- 窗口组
+
 ```javascript
     import Spinner from "cli-spinners";
-    import VirtualWindow, { draw } from "../src/index"; 
+    import VirtualWindow, { draw } from "../src/index";
     const virtualWindow = new VirtualWindow();
     virtualWindow.write("hello word\n");
     virtualWindow.onRender(content => {
@@ -185,7 +204,7 @@ hello word
 输出数据: 第二个数据包
 加载完程
 ❌ 处理失败
-主窗口重新继续写入数据   
+主窗口重新继续写入数据
 ```
 
 ## 开发进度日志

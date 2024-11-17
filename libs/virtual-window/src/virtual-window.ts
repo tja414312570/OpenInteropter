@@ -1,6 +1,8 @@
 import { VirtualTerminalAdapter } from './virtual-window-stream-adapter'
 import { DataView } from "./ansi-data-view";
 import { WindowGroup } from "./virtual-window-group";
+//@ts-ignore
+import stringWidth from 'string-width';
 
 type EscapeSequence = {
   params: string[];
@@ -9,13 +11,19 @@ type EscapeSequence = {
   type: "default" | "dec" | "osc" | "bel" | "sort";
   text: string;
 };
-
-function debug(data: string) {
+export function debug(data: string) {
   return data.replace(/[\x00-\x1F\x7F]/g, (char) => {
     const hex = char.charCodeAt(0).toString(16).padStart(2, "0");
     return `\\x${hex}`;
   });
 }
+export function restore(data: string) {
+  return data.replace(/\\x([0-9a-fA-F]{2})/g, (match, hex) => {
+    return String.fromCharCode(parseInt(hex, 16));
+  });
+}
+
+
 
 class VirtualWindow {
   private buffer: string[]; // 行缓冲区
@@ -32,8 +40,13 @@ class VirtualWindow {
   private _destory: boolean;
   private _group: WindowGroup | undefined;
   private _close: boolean = false;
+  private cols: number = -1;
+  private rows: number = -1;
   renderCallback: ((content: string) => void | undefined) | undefined;
   private _creator: Error;
+  setCols(cols: number) {
+    this.cols = cols;
+  }
   destory() {
     this.close();
     if (this._destory) {
@@ -105,18 +118,26 @@ class VirtualWindow {
       this.renderCache = undefined;
     }
     let remainingText = text;
-
     while (remainingText) {
       const char = remainingText.charAt(0);
       remainingText = remainingText.slice(1);
-
       if (char === "\n") {
+        this.addCharToBuffer("\n");
         this.cursorY++;
         this.cursorX = 0;
         this.ensureLineExists(this.cursorY);
       } else if (char === "\r") {
-        this.cursorX = 0; // 回车符重置光标到行首
-        this.ansiBuffer.delete(this.cursorX);
+        const nextChar = remainingText.length > 0 ? remainingText.charAt(0) : '';
+        if (nextChar === '\n') {
+          this.cursorX = this.buffer[this.cursorY].length;
+          this.addCharToBuffer("\n");
+          this.cursorY++;
+          this.cursorX = 0;
+          remainingText = remainingText.slice(1);
+        } else {
+          this.cursorX = 0; // 回车符重置光标到行首
+          //this.ansiBuffer.delete(this.cursorX);
+        }
       } else if (char === "\x1b") {
         if (remainingText.charAt(0) === "c") {
           remainingText = remainingText.substring(1);
@@ -176,8 +197,12 @@ class VirtualWindow {
     return support;
   }
   private addCharToBuffer(char: string): void {
+    const chWidth = stringWidth(char)
+    if (this.cols > 0 && stringWidth(this.buffer[this.cursorY]) + chWidth > this.cols) {
+      this.cursorY++;
+      this.cursorX = 0;
+    }
     this.ensureLineExists(this.cursorY);
-
     if (this.cursorX < this.buffer[this.cursorY].length) {
       this.buffer[this.cursorY] =
         this.buffer[this.cursorY].substring(0, this.cursorX) +
@@ -354,9 +379,6 @@ class VirtualWindow {
           result += ansiString;
         }
         y++;
-        if (y < this.buffer.length) {
-          result += "\n";
-        }
       }
       this.renderCache = result;
     }
