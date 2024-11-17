@@ -6,10 +6,10 @@ import {
   InstructResultType,
   pluginContext,
 } from "mylib/main";
+import VirtualWindow, { debug } from "virtual-window";
 import { Pluginlifecycle } from "mylib/main";
 import { ExtensionContext } from "mylib/main";
 import { v4 as uuidv4 } from "uuid";
-import VirtualWindow from "./virtual-window";
 import fs from "fs";
 import path from "path";
 import util from "util";
@@ -98,16 +98,6 @@ class ExecuteContext {
     this._end = callback;
   }
 }
-const isDebug = true;
-
-export function debug(data: string) {
-  return isDebug
-    ? data.replace(/[\x00-\x1F\x7F]/g, (char) => {
-        const hex = char.charCodeAt(0).toString(16).padStart(2, "0");
-        return `\\x${hex}`;
-      })
-    : data;
-}
 
 class SshExecutor
   extends AbstractPlugin
@@ -176,12 +166,24 @@ class SshExecutor
       });
       try {
         const pty = await pluginContext.resourceManager.require<IPty>("pty");
+        virtualWindow.setCols(pty.cols);
+        try {
+          const { x, y, buffer } = await (pty as any).getCursor();
+          // const spaces = " ".repeat(x);
+          virtualWindow.write(buffer.slice(0, x));
+        } catch (err) {
+          console.warn(
+            "没有获取到xterm的原有缓存，可能影响虚拟窗口渲染效果",
+            err
+          );
+        }
         this.cache.set(id, executeContext);
         executeContext.onWrite((data) => pty.write(data));
         // const path_ = path.join(__dirname, "frames.txt");
 
         // let frame = 0;
         dispose = pty.onData((data: string) => {
+          console.log(debug(data));
           render(data, InstructResultType.executing);
           const output = virtualWindow.render();
           // fs.appendFileSync(path_,"\r\n=========================原始帧【"+(frame++)+'\r\n')
@@ -218,33 +220,33 @@ class SshExecutor
           });
         });
 
-        const code_splits = instruct.code
-          .split(/\r?\n/)
-          .filter((line) => line.trim() && !/^\s*(#|REM|::)/i.test(line));
-        (async () => {
-          for (const instruct of code_splits) {
-            try {
-              const exitCode = await this.executeLine(
-                id,
-                instruct,
-                line,
-                execId,
-                executeContext
-              );
-              if (!isCommandSuccessful(exitCode)) {
-                executeContext.abort(`程序异常退出，退出码${exitCode}`);
-                break;
-              }
-              // 如果需要在执行成功后处理 result，可以在这里添加逻辑
-            } catch (error: any) {
-              // 在此捕获执行过程中可能发生的错误
-              console.error(`Error executing line: ${instruct}`, error);
-              executeContext.error(error);
-              break; // 如果发生错误，可以选择中断循环
-            }
+        // const code_splits = instruct.code
+        //   .split(/\r?\n/)
+        //   .filter((line) => line.trim() && !/^\s*(#|REM|::)/i.test(line));
+        // (async () => {
+        //   for (const instruct of code_splits) {
+        try {
+          const exitCode = await this.executeLine(
+            id,
+            instruct.code,
+            line,
+            execId,
+            executeContext
+          );
+          if (!isCommandSuccessful(exitCode)) {
+            executeContext.abort(`程序异常退出，退出码${exitCode}`);
+            // break;
           }
-          executeContext.end();
-        })();
+          // 如果需要在执行成功后处理 result，可以在这里添加逻辑
+        } catch (error: any) {
+          // 在此捕获执行过程中可能发生的错误
+          console.error(`Error executing line: ${instruct}`, error);
+          executeContext.error(error);
+          // break; // 如果发生错误，可以选择中断循环
+        }
+        // }
+        executeContext.end();
+        // })();
       } catch (error: any) {
         executeContext.error(error);
         reject(error);
@@ -263,8 +265,13 @@ class SshExecutor
     const end_tag = `_${uuidv4()}_`;
     const cmd =
       process.platform === "win32"
-        ? `try { ${instruct} } catch { Write-Error $_.Exception.Message ;$_.ErrorRecord } finally { Write-Host "${end_tag}$?" }` //ps
-        : `${instruct} ; echo "${end_tag}$?"`; //ssh
+        ? `try { ^
+        ${instruct} ^
+        } catch {^
+        Write-Error $_.Exception.Message ;$_.ErrorRecord ^
+        } finally { ^
+         Write-Host "${end_tag}$?" }` //ps
+        : `eval "${instruct.replaceAll('"', '\\"')}" ; echo "${end_tag}$?"`; //ssh
     const msg = `命令[${instruct}]开始执行,执行id[${end_tag}],命令：${cmd}`;
     pluginContext.notifyManager.notify(msg);
     return new Promise((resolve) => {

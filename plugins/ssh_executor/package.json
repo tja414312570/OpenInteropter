@@ -26,6 +26,7 @@
     "webpack-cli": "^4.9.1"
   },
   "dependencies": {
-    "uuid": "^10.0.0"
+    "uuid": "^10.0.0",
+    "virtual-window": "file://../../libs/virtual-window"
   }
 }
