@@ -27,6 +27,7 @@ import './services/global-agents'
 import './services/service-setting'
 import './services/service-menu'
 import "./services/window-settings";
+import remoteWebviewManager from './services/remote-webview-manager';
 
 // import { onAppReady } from "./ipc-bind/core-ipc-bind";
 import { getIpcApi } from "./ipc/ipc-wrapper";
@@ -82,6 +83,8 @@ const pluginDisposeable = pluginApi.onRenderBind('remove', (webId: number): void
   })
   pluginManager.loadPluginFromDir(innerPluginPath).catch(err => {
     notify("插件加载异常:" + err)
+  }).finally(() => {
+    remoteWebviewManager.onAppReady()
   })
 })
 const gpuDisableds = ['disabled_off', 'unavailable', 'disabled', 'off']
@@ -92,10 +95,8 @@ if (gpuDisableds.indexOf(gpuStatus.webgl) > -1 || gpuDisableds.indexOf(gpuStatus
 }
 
 app.whenReady().then(() => {
-
   startProxyServer().then(proxy => {
     startWindow(`http://${proxy.httpHost}:${proxy.httpPort}`);
-
   })
 });
 // 由于9.x版本问题，需要加入该配置关闭跨域问题

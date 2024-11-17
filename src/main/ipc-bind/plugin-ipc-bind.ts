@@ -97,7 +97,7 @@ api.handle('load-preload-script', (event, url) => {
                 const result = { appId: pluginManager.getPluginInfoFromInstance(agent).appId, script: await agent.preloadScript() as any };
                 resolve(result)
             }
-            resolve('')
+            resolve({ appId: '', script: '' })
         } catch (err) {
             reject(err)
         }

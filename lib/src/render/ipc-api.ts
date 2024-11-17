@@ -18,7 +18,7 @@ function showCustomAlert(message: string) {
 }
 
 const _win: { [key: string]: any } = (window as any);
-
+const CHILD_PRELOAD = 'childPreload';
 class IpcApi {
     private uuid: string;
     private channel: string;

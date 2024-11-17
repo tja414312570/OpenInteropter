@@ -29,7 +29,7 @@ const editor = shallowRef<monaco.editor.IStandaloneCodeEditor | null>(null);
 const decorations = ref<string[]>([]);
 const currentLine = ref<number>(2); // 当前执行的行，默认是第2行
 const language = ref('shell')
-const instrunctId = ref('1')
+const instrunctId = ref('')
 const orange_language = ref(language.value)
 const decorationsCollection = ref<monaco.editor.IEditorDecorationsCollection>(null);
 

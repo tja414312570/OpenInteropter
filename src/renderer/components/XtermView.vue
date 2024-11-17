@@ -17,7 +17,7 @@ import { WebLinksAddon } from 'xterm-addon-web-links';
 const fitAddon = new FitAddon();
 const terminalRef = ref(null);
 const terminalWrapper = ref(null);
-let terminal = null;
+let terminal: Terminal = null;
 let resizeObserver = null;
 // const cnm = (event, data) => {
 //   executeing = true;
@@ -77,9 +77,15 @@ onMounted(async () => {
   fitAddon.fit();
   terminalApi.on('terminal-output', (event, data) => {
     console.log('从终端收到数据:', terminalRef, data);  // 调试终
-    terminal.write(data);
+    terminal.write(data, () => {
+      console.log('回调:', terminal)
+    });
   });
-
+  terminalApi.on('cursorX', (_event) => {
+    const buffer = (terminal as any)._core._bufferService.buffers._activeBuffer
+    const _buffer = buffer.lines.get(buffer.ybase + buffer.y).translateToString()
+    terminalApi.send('cursorX', { x: buffer.x, y: buffer.y, buffer: _buffer })
+  })
   // 监听终端输入并发送到主进程
 
   terminal.onData((data) => {
@@ -93,9 +99,9 @@ onMounted(async () => {
 
   resizeObserver.observe(terminalWrapper.value);
 
-  terminal.prompt = () => {
-    terminalApi.send('terminal-into', '\r');
-  };
+  // terminal.prompt = () => {
+  //   terminalApi.send('terminal-into', '\r');
+  // };
   terminal.clear()
   terminal.writeln('Welcome to chat interpter');
   // ipcRenderer.send("terminal-into", "ls -ila\r");

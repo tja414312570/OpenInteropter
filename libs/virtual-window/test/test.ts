@@ -12,7 +12,7 @@ virtualWindow.onRender(content => {
 })
 // console.log(debug(`eval "\x0d\x0a`))
 
-virtualWindow.write(restore(`eval "\x0d\x0a`))
-virtualWindow.write(restore(`> $max=3;for($i=0;$i-le $max;$i++){$p=($i/$max)*100;Write-Progress -Activity "正在处理数据..." -Status "$i%  \x1b[K完\x0d完成" -PercentComplete $p;Start-`))
-virtualWindow.write(restore(`Sleep -Milliseconds 100}$max=3;for($i=0;$i-le $max;$i++){$p=($i/$max)*100;Wri \x0dte-Progress -Activity "正在处理数据..." -Status "$i% 完成" -PercentComplete $p;Start-Sleep -Milliseconds 100} \x0d\x1b[A\x0d\x0a> " ; echo "_f8c6107f-f9c5-4a90-96bb-d088e943bd9e_$?"\x0d\x0abash: syntax error near unexpected token \`('\x0d\x0a_f8c6107f-f9c5-4a90-96bb-d088e943bd9e_0\x0d\x0abash-3.2$`))
-// virtualWindow.write(restore(`890123 \x0d456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123 \x0d456789012345678901234567890123456789\x0d\x0a> " ; echo "_c16586e1-af30-431f-91aa-798eced4cff6_$?"\x0d\x0a`))
+virtualWindow.write(restore(`eval "osascript -e 'tell application "System Events" to tell appearance preferences to set dark mod \x0de to true'\x0d\x0a> " ; echo "_7822ac59-d7bf-4407-bbef-1be6da11b917_$?"\x0d\x0a24:30: syntax error: 预期是行的结尾，却找到复数类名称。 (-2741)\x0d\x0a_7822ac59-d7bf-4407-bbef-1be6da11b917_1\x0d\x0abash-3.2$`))
+// virtualWindow.write(restore(`> $max=3;for($i=0;$i-le $max;$i++){$p=($i/$max)*100;Write-Progress -Activity "正在处理数据..." -Status "$i%  \x1b[K完\x0d完成" -PercentComplete $p;Start-`))
+// virtualWindow.write(restore(`Sleep -Milliseconds 100}$max=3;for($i=0;$i-le $max;$i++){$p=($i/$max)*100;Wri \x0dte-Progress -Activity "正在处理数据..." -Status "$i% 完成" -PercentComplete $p;Start-Sleep -Milliseconds 100} \x0d\x1b[A\x0d\x0a> " ; echo "_f8c6107f-f9c5-4a90-96bb-d088e943bd9e_$?"\x0d\x0abash: syntax error near unexpected token \`('\x0d\x0a_f8c6107f-f9c5-4a90-96bb-d088e943bd9e_0\x0d\x0abash-3.2$`))
+// // virtualWindow.write(restore(`890123 \x0d456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123 \x0d456789012345678901234567890123456789\x0d\x0a> " ; echo "_c16586e1-af30-431f-91aa-798eced4cff6_$?"\x0d\x0a`))

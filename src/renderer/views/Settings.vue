@@ -3,7 +3,7 @@
         <v-progress-linear color="yellow-darken-2" indeterminate v-show="loading"
             style="position: absolute;z-index: 10;"></v-progress-linear>
         <splitpanes style="flex: 1;overflow-y: hidden;">
-            <pane min-size="20" size="30" max-size="40" class="menu-area">
+            <pane min-size="20" size="25" max-size="40" class="menu-area">
                 <div style="display:block;" class='seach-box'>
                     <v-text-field v-model="search" prepend-inner-icon="mdi-magnify" single-line
                         clear-icon="mdi-close-circle-outline" label="搜索" clearable dark flat hide-details

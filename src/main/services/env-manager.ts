@@ -12,6 +12,7 @@ export type EnvVariable = {
     name: string
     value: string
     source: string
+    path: boolean
     status?: 'enable' | 'disable'
 }
 const Env_Setting_Key = 'general.env';
@@ -27,7 +28,12 @@ class EnvManager extends EventEmitter<EnvEventMap> {
         const result: Record<string, string> = {};
         let env_path = '';
         for (const env of envs) {
-            env_path += `${env.value}${path.delimiter}`;
+            if (env.status === 'disable') {
+                continue;
+            }
+            if (env.path !== false) {
+                env_path += `${env.value}${path.delimiter}`;
+            }
             result[env.name] = env.value;
         }
         result[ENV_PATH_KEY] = env_path;
@@ -69,7 +75,7 @@ class EnvManager extends EventEmitter<EnvEventMap> {
     getValue(name: string) {
         return this.get(name)?.value
     }
-    async setEnv(env: EnvVariable | string, value?: string) {
+    async setEnv(env: EnvVariable | string, value?: string, path = true) {
         if (typeof env === 'object') {
             if (!env.name || !env.value || !env.source) {
                 throw new Error('环境名称、值、创建者必填!')
@@ -81,8 +87,12 @@ class EnvManager extends EventEmitter<EnvEventMap> {
             env = {
                 name: env,
                 value,
+                path,
                 source: 'Default'
             }
+        }
+        if (!Object.hasOwn(env, 'path')) {
+            env.path = path;
         }
         env.status = env.status || 'enable'
         const envs = this.getAll();
@@ -117,13 +127,15 @@ class EnvManager extends EventEmitter<EnvEventMap> {
         await this.save(envs);
     }
 
-    async delete(name: string) {
+    async delete(...names: string[]) {
         const envs = this.getAll();
-        const index = envs.findIndex(item => item.name === name);
-        if (index < 0) {
-            throw new Error(`没有找到环境变量${name}`)
+        for (const name of names) {
+            const index = envs.findIndex(item => item.name === name);
+            if (index < 0) {
+                throw new Error(`没有找到环境变量${name}`)
+            }
+            envs.splice(index, 1);
         }
-        envs.splice(index, 1);
         await this.save(envs)
     }
 

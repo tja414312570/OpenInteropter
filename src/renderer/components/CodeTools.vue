@@ -203,19 +203,20 @@ const closeAll = () => {
 const toggleAutoSend = () => {
     isAutoSend.value = !isAutoSend.value;
 };
-let result = [];
-codeApi.on('insertLine', (event: any, lineDiff: { code: string, line: number, type: InstructResultType }) => {
+const current_code = [];
+codeApi.on('insertLine', (event: any, lineDiff: { code: string, id: string, line: number, type: InstructResultType }) => {
     refreshPluginStatus(selected.value);
-    const { code, line, type } = lineDiff;
+    const { code, line, type, id } = lineDiff;
     try {
-        result.push(code)
         if (type !== InstructResultType.executing) {
             isExecuting.value = false;
-            if (isAutoSend.value) {
-                codeApi.send('send_execute-result', result.join('\r\n'))
-                result = [];
+            if (isAutoSend.value && current_code.indexOf(id) === -1) {
+                codeApi.send('send_execute-result', code)
+                current_code.push(id);
+                if (current_code.length > 10) {
+                    current_code.shift()
+                }
             }
-
         }
     } catch (error) {
         console.error(`执行出错:`, error);

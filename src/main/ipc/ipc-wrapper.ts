@@ -2,7 +2,7 @@ import { ipcMain, IpcMainEvent, IpcMainInvokeEvent, WebContents, webContents } f
 import { getWebContentIds, handleChannelBind, handleChannelUnbind, removeListenerChannel } from "@main/services/web-content-listener";
 import { showErrorDialog } from "@main/utils/dialog";
 
-class IpcApi {
+export class IpcApi {
     private api: string;
     constructor(api: string) {
         this.api = api;

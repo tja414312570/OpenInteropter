@@ -71,10 +71,10 @@ class PluginManager extends EventEmitter<PluginEventMap> {
         this.typeMapping.remove(pluginInfo.type, pluginInfo)
     }
     public getPluginsFromType(type: PluginType): Array<PluginInfo> | undefined | null {
-        return Array.from(this.typeMapping.get(type));
+        return Array.from(this.typeMapping.get(type) || []);
     }
     public getAllPlugins(): Array<PluginInfo> {
-        return Array.from(this.pluginSet);
+        return Array.from(this.pluginSet || []);
     }
 
     public filtePlugins(condition: PluginInfo): PluginInfo[] {

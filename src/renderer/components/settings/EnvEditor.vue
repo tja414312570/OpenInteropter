@@ -17,6 +17,12 @@
             :items-per-page="-1" :filter-keys="['name', 'value']" v-model="selected" :items="props.value"
             item-value="id" item-key="id" :headers="headers" hide-default-footer virtual-scroll no-data-text="暂无数据"
             @click:row="editVariable">
+            <template v-slot:item.path="{ item }">
+                <div class="text-end">
+                    <v-chip :color="item.path === false ? '' : 'green'" :text="item.path === false ? '否' : '是'"
+                        class="text-uppercase" size="small" label></v-chip>
+                </div>
+            </template>
             <template v-slot:item.status="{ item }">
                 <div class="text-end">
                     <v-chip :color="item.status == 'enable' ? 'green' : 'red'"
@@ -32,7 +38,6 @@
                 <v-card-title>编辑环境变量</v-card-title>
                 <v-card-text>
                     <v-form ref="form">
-
                         <v-text-field label="变量名称" v-model="currentVariable.name" :rules="[nameRule]"
                             required></v-text-field>
                         <v-textarea label="变量值" v-model="currentVariable.value" :rules="[valueRule]"
@@ -40,7 +45,9 @@
                         <v-card-text>
                             <b>创建者：</b>{{ currentVariable.source }}
                         </v-card-text>
-                        <v-checkbox :label="currentVariable.status === 'enable' ? '启用' : '禁用'"
+                        <v-checkbox :label="currentVariable.path === false ? '是否环境变量(否)' : '是否环境变量(是)'"
+                            v-model="currentVariable.path"></v-checkbox>
+                        <v-checkbox :label="currentVariable.status === 'enable' ? '是否启用(启用)' : '是否启用(禁用)'"
                             v-model="currentVariable.status" true-value="enable" false-value="disable"></v-checkbox>
                     </v-form>
                 </v-card-text>
@@ -63,7 +70,6 @@ const props = defineProps<{
     menu: ISetting;
     value: Array<EnvVariable>;
 }>();
-console.log('草拟吗:', props)
 const headers = reactive<Array<{
     title?: string,
     key?: string,
@@ -71,6 +77,7 @@ const headers = reactive<Array<{
 }>>([
     { title: '名称', key: 'name', align: 'center' },
     { title: '值', key: 'value', align: 'center' },
+    { title: '路径变量', key: 'path', align: 'center' },
     { title: '状态', key: 'status', align: 'end' },
 ])
 const nameRule = (value: string) => {
@@ -155,5 +162,9 @@ const saveVariable = async () => {
 <style scoped>
 :deep(table tbody) {
     overflow: scroll;
+}
+
+:deep(.v-checkbox .v-input__details) {
+    display: none;
 }
 </style>

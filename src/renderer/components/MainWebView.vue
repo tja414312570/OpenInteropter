@@ -23,7 +23,13 @@
 
     <!-- 主内容区域，加载 webview -->
     <div class="webview-container">
-      <webview ref="webviews" :src="url" partition="persist:your-partition"
+      <v-overlay v-model="isOverlayVisible" class="align-center justify-center" contained>
+        <div class="text-center">
+          <v-progress-circular indeterminate color="primary" />
+          <p>应用初始化中，请稍后</p>
+        </div>
+      </v-overlay>
+      <webview ref="webviews" v-show="appReady" :src="url" partition="persist:your-partition"
         useragent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36"
         class="webview" @did-start-loading="onStartLoading" @did-finish-load="onLoad"></webview>
     </div>
@@ -31,10 +37,13 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { WebviewTag } from 'electron';
+import { getIpcApi } from '@preload/lib/ipc-api';
 
-const url = ref('https://www.doubao.com/');
+const isOverlayVisible = computed(() => !appReady.value)
+const appReady = ref(false)
+const url = ref('');
 const tempUrl = ref(url.value);
 const webviews = ref<WebviewTag | null>(null);
 const isFocused = ref(false);
@@ -42,6 +51,12 @@ const canGoBack = ref(false);
 const canGoForward = ref(false);
 const loading = ref(false); // 加载状态
 
+const webviewApi = getIpcApi('remote-webview', onUnmounted)
+webviewApi.on('to', (_event, targetUrl) => {
+  console.log('地址', targetUrl)
+  url.value = targetUrl;
+  appReady.value = true;
+})
 // 加载页面时设置 loading 状态
 function onStartLoading() {
   loading.value = true;
@@ -72,11 +87,16 @@ onMounted(() => {
     myWebview.addEventListener('did-navigate', (event) => {
       if (!isFocused.value) {
         tempUrl.value = event.url;
+        console.log('加载1：', tempUrl.value)
       }
+      const title = myWebview.getTitle();
+      const url = event.url;
+      webviewApi.send('save-history', { url, title });
     });
     myWebview.addEventListener('did-navigate-in-page', (event) => {
       if (!isFocused.value) {
         tempUrl.value = event.url;
+        console.log('加载2：', tempUrl.value)
       }
     });
   }

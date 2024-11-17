@@ -5,6 +5,10 @@ import path from "path";
 import appContext from "./app-context";
 import { getIpcApi } from "@main/ipc/ipc-wrapper";
 import envManager from "./env-manager";
+import { platform } from "os";
+import settingManager from "./service-setting";
+import { buildProxy, Proxy } from "./global-agents";
+import { debug } from '../../../libs/virtual-window/src/index'
 const api = getIpcApi('pty')
 let isinit = false;
 function init() {
@@ -20,7 +24,6 @@ function init() {
         // 创建 PTY 实例
         const shell = process.platform === 'win32' ? 'powershell.exe' : 'bash';
         console.log("启动shell:", shell);
-        const _user_data = app.getPath('userData')
         const ptyProcess = pty.spawn(shell, [], {
             name: 'xterm-color',
             cols: 80,
@@ -35,8 +38,55 @@ function init() {
         });
         // 监听终端数据输出
         ptyProcess.onData((data) => {
+            console.log('==>', debug(data))
             api.send('terminal-output', data);
         });
+        (ptyProcess as any).getCursor = () => {
+            return new Promise<{ x: Number, y: number }>((resolve, reject) => {
+                try {
+                    const TIMEOUT = 1000;
+                    const timeout = setTimeout(() => {
+                        reject(new Error('获取光标位置超时'));
+                    }, TIMEOUT);
+                    api.on('cursorX', (_event, cursor) => {
+                        clearTimeout(timeout); // 在接收到事件后清除超时
+                        resolve(cursor);
+                    });
+                    api.send('cursorX');
+                } catch (err) {
+                    reject(err)
+                }
+            });
+        }
+        const setProxy = (proxy: Proxy) => {
+            const url = proxy.http || proxy.https
+            let cmd: string;
+            if (platform() === 'win32') {
+                cmd = url
+                    ? `
+                    $env:https_proxy = "${url}"
+                    $env:http_proxy = "${url}"
+                    `
+                    : `
+                    Remove-Item Env:https_proxy -ErrorAction SilentlyContinue
+                    Remove-Item Env:http_proxy -ErrorAction SilentlyContinue
+                    `;
+            } else {
+                cmd = url
+                    ? `
+                    export https_proxy=${url} http_proxy=${url}
+                    `
+                    : `
+                    unset https_proxy http_proxy
+                    `;
+            }
+
+            ptyProcess.write(cmd + '\n')
+        }
+        settingManager.onValueChange('network.proxy', (value) => {
+            const proxy = buildProxy(value);
+            setProxy(proxy)
+        })
         const clearEnv = () => {
             if (process.platform === 'win32') {
                 ptyProcess.write(`Get-ChildItem env: | ForEach-Object { Remove-Item env:\\$_ }\n`);

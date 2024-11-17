@@ -51,6 +51,7 @@ export class PluginContext implements ExtensionContext {
     env: { [key: string]: string; };
     appEnv: { [key: string]: string; };
     envManager: IEnvManager;
+    dialog: Electron.Dialog;
     getPath(path: 'home' | 'appData' | 'userData' | 'sessionData' | 'temp' | 'exe' | 'module' | 'desktop' | 'documents' | 'downloads' | 'music' | 'pictures' | 'videos' | 'recent' | 'logs' | 'crashDumps') {
         return app.getPath(path);
     }
@@ -67,6 +68,7 @@ export class PluginContext implements ExtensionContext {
         this.env = appContext.env;
         this.appEnv = appContext.appEnv;
         this.showDialog = dialog.showMessageBox;
+        this.dialog = dialog;
         this.envManager = {
             getAll: envManager.getAll.bind(envManager),
             getEnv: envManager.getEnv.bind(envManager),

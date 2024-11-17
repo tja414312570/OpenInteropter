@@ -1,6 +1,7 @@
 import {
   BrowserWindow,
   BrowserWindowConstructorOptions,
+  Dialog,
   IpcMainEvent,
   MessageBoxOptions,
   MessageBoxReturnValue,
@@ -150,6 +151,7 @@ export interface ExtensionContext {
   appPath: string;
   getIpcApi: GetIpcApi;
   showDialog: (message: DialogOpt) => Promise<DialogReturnValue>;
+  dialog: Dialog;
   reload: () => void;
   unload: () => void;
 }

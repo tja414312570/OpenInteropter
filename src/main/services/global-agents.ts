@@ -2,6 +2,7 @@ process.env.DEBUG = 'global-agent';
 import { createGlobalProxyAgent, bootstrap, ProxyAgentConfigurationType } from "global-agent";
 import settingManager from "./service-setting";
 import '../ipc-bind/proxy-ipc-bind'
+import envManager from "./env-manager";
 bootstrap();
 settingManager.register({
   name: "代理设置",
@@ -53,7 +54,17 @@ function assembleProxyUrl(protocol: string, hostname: string, port: number, user
   return proxyUrl;
 }
 
+const setProxyToEnv = (proxy: Proxy) => {
+  const url = proxy.http || proxy.https;
+  if (url) {
+    envManager.setEnv('http_proxy', url, false)
+    envManager.setEnv('https_proxy', url, false)
+  } else {
+    envManager.delete('http_proxy', 'https_proxy')
+  }
+}
 export const setProxy = (proxy: Proxy) => {
+  setProxyToEnv(proxy);
   if (proxy.http) {
     setHttpsProxy(proxy.http);
     setHttpProxy(proxy.http)

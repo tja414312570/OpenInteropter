@@ -48,4 +48,7 @@ export default defineConfig({
     },
   }), viteIkarosTools()],
   optimizeDeps: {},
+  esbuild: {
+    sourcemap: true
+  }
 });

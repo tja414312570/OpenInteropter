@@ -79,9 +79,10 @@ class IpcReanderMapper implements IpcRendererExtended {
   _off(channel: string) {
     const listener = invokers.get(this._id_ as string)?.get(channel);
     if (!listener) {
-      const error = new Error(`没有找到监听器${this._id_}::${channel}`);
-      console.log(error)
-      throw error;
+      // const error = new Error(`没有找到监听器${this._id_}::${channel}`);
+      // console.log(error)
+      // throw error;
+      return;
     }
     removeListener(this._id_, channel)
     ipcRenderer.off(channel, listener);

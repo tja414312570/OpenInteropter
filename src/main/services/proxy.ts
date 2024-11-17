@@ -22,13 +22,13 @@ export const getAgent = async (domain: string) => {
     for (const plugin of pluginsOfType) {
       const isMatch = isUrlMatched(domain, plugin.match);
       if (isMatch) {
-        for (const [key] of map) {
-          const value = map.get(key);
-          map.delete(key);
-          if (value) {
-            pluginManager.unload(value['_plugin'])
-          }
-        }
+        // for (const [key] of map) {
+        //   const value = map.get(key);
+        //   map.delete(key);
+        //   if (value) {
+        //     pluginManager.unload(value['_plugin'])
+        //   }
+        // }
         if (plugin.status !== PluginStatus.load) {
           await pluginManager.load(plugin as any);
         }
