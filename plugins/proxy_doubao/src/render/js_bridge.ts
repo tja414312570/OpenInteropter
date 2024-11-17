@@ -254,6 +254,7 @@ const js_bridge = () => {
         myApp.ready = true;
         myApp.notify("桥接程序已就绪！");
         console.log("桥接程序已就绪！");
+        agentApi.off("send-content");
         agentApi.on("send-content", (event: any, message: any) => {
           console.log("发送消息到doubao：", event, message);
           _doc.myApp.send(message);

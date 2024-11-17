@@ -19,6 +19,24 @@ const _observer = new MutationObserver(function (mutationsList, observer) {
 _observer.observe(document.body, { childList: true, subtree: true });
 // 开始观察整个 body 元素，检测子节点变化
 
+const setNativeValue = (el: any, value: any) => {
+  const previousValue = el.value;
+
+  if (el.type === "checkbox" || el.type === "radio") {
+    if ((!!value && !el.checked) || (!!!value && el.checked)) {
+      el.click();
+    }
+  } else el.value = value;
+
+  const tracker = el._valueTracker;
+  if (tracker) {
+    tracker.setValue(previousValue);
+  }
+
+  // 'change' instead of 'input', see https://github.com/facebook/react/issues/11488#issuecomment-381590324
+  el.dispatchEvent(new Event("change", { bubbles: true }));
+};
+
 const js_bridge = () => {
   if (_doc.myApp) {
     console.log("桥接程序已初始化", _doc.myApp);
@@ -54,6 +72,7 @@ const js_bridge = () => {
         alert("界面异常，没有找到表单组件");
         return;
       }
+      // setNativeValue(textarea, message);
       if (textarea.tagName.toLowerCase() === "textarea") {
         textarea.value = message; // 对 textarea 赋值
       }
@@ -76,7 +95,7 @@ const js_bridge = () => {
       let times = 0;
       var loopBtn = () => {
         const sendBtn = document.querySelector(
-          "button[data-testid]"
+          "form button[data-testid]"
         ) as HTMLElement;
         if (sendBtn) {
           if (!sendBtn.hasAttribute("disabled")) {
