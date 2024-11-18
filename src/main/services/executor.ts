@@ -6,7 +6,7 @@ import { InstructExecutor, InstructResult } from '@lib/main';
 import { showErrorDialog } from "@main/utils/dialog";
 import { PluginInfo } from "@main/plugin/plugin-context";
 import { getIpcApi } from "@main/ipc/ipc-wrapper";
-import { getCurrentAgent } from "./proxy";
+import { getCurrentAgent } from "./mitm-proxy-service";
 
 const api = getIpcApi('code-view-api')
 

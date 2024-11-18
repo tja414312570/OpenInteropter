@@ -98,7 +98,10 @@ const js_bridge = () => {
           "form button[data-testid]"
         ) as HTMLElement;
         if (sendBtn) {
-          if (!sendBtn.hasAttribute("disabled")) {
+          if (
+            !sendBtn.hasAttribute("disabled") &&
+            sendBtn.getAttribute("data-testid") !== "stop-button"
+          ) {
             sendBtn.click();
             return;
           }

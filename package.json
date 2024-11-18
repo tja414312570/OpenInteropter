@@ -6,6 +6,7 @@
   "description": "开放解释器，提供网页版gpt的解释功能。！！！在执行过程中，你应该像观察自动驾驶一样观察他，并时刻准备终止代码的执行",
   "license": "MIT",
   "scripts": {
+    "prisma": "npx prisma migrate dev --name init",
     "dev": "tsx .electron-vite/dev-runner.ts",
     "dev-plugin": "cross-env plugin=dev tsx .electron-vite/dev-runner.ts",
     "build": "cross-env BUILD_TARGET=clean tsx .electron-vite/build.ts -m prod && electron-builder -c build.json",

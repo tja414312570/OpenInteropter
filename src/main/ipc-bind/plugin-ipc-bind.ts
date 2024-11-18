@@ -1,7 +1,7 @@
 import _ from 'lodash';  // 使用 ES6 import 语法
 import { Bridge, InstructExecutor, PluginInfo, PluginType } from '@lib/main';
 import pluginManager, { PluginEventMap } from "@main/plugin/plugin-manager";
-import { getAgentFromUrl } from "@main/services/proxy";
+import { getAgentFromUrl } from "@main/services/mitm-proxy-service";
 import { getIpcApi } from "@main/ipc/ipc-wrapper";
 
 const api = getIpcApi('plugin-view-api')

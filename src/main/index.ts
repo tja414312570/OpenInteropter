@@ -11,7 +11,7 @@ import { MainInit } from "./services/window-manager";
 import { useDisableButton } from "./hooks/disable-button-hook";
 import { useProcessException } from "@main/hooks/exception-hook";
 import { useMenu } from "@main/hooks/menu-hook"
-import { startProxyServer } from "./services/proxy";
+import { startProxyServer } from "./services/mitm-proxy-service";
 
 import fs, { glob } from "fs"
 import { init as ptyInit } from './services/service-inner-shell'
