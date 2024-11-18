@@ -94,6 +94,10 @@ const js_bridge = () => {
       // 立即点击按钮
       let times = 0;
       var loopBtn = () => {
+        if (!textarea.value?.trim() && !textarea.textContent?.trim()) {
+          console.log("已发送:", message);
+          return;
+        }
         const sendBtn = document.querySelector(
           "form button[data-testid]"
         ) as HTMLElement;
