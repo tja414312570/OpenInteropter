@@ -1,21 +1,20 @@
 process.env.NODE_ENV = "production";
 
-import { join } from "path";
+import path, { join } from "path";
 import { say } from "cfonts";
+//@ts-ignore
 import { deleteAsync } from "del";
+//@ts-ignore
 import chalk from "chalk";
 import { rollup, OutputOptions, RollupOptions } from "rollup";
 import { DefaultRenderer, Listr } from "listr2";
 import rollupOptions from "./rollup.config";
+import rollupPreloadOptions from "./rollup.preload.config";
 import { errorLog, doneLog } from "./log";
-import rimraf from 'rimraf'
+import bundler from './bundler.config';
 
-const mainOpt = rollupOptions(process.env.NODE_ENV, "main") as RollupOptions;
-const preloadOpt = rollupOptions(
-  process.env.NODE_ENV,
-  "preload"
-) as RollupOptions[];
-// const pluginsOpt = rollupOptions(process.env.NODE_ENV, "executor");
+const mainOpt = rollupOptions(process.env.NODE_ENV) as RollupOptions;
+const preloadOpt = rollupPreloadOptions(process.env.NODE_ENV) as RollupOptions[];
 const isCI = process.env.CI || false;
 
 if (process.env.BUILD_TARGET === "web") web();
@@ -71,18 +70,6 @@ async function unionBuild() {
         },
       },
       ...buildPreload(),
-      //  {
-      //   title: "building plugin process",
-      //   task: async () => {
-      //     try {
-      //       const build = await rollup(pluginsOpt);
-      //       await build.write(pluginsOpt.output as OutputOptions);
-      //     } catch (error) {
-      //       errorLog(`failed to build main process\n`);
-      //       return Promise.reject(error);
-      //     }
-      //   },
-      // },
       {
         title: "building renderer process",
         task: async (_, tasks) => {
@@ -105,6 +92,22 @@ async function unionBuild() {
     }
   );
   await tasksLister.run();
+  const bundlerTask = new Listr(
+    [
+      {
+        title: "building dist bundler",
+        task: async () => {
+          try {
+            await bundler()
+          } catch (error) {
+            errorLog(`failed to build main process\n`);
+            return Promise.reject(error);
+          }
+        },
+      }
+    ]
+  )
+  await bundlerTask.run();
 }
 
 async function web() {

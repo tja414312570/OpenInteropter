@@ -99,6 +99,9 @@
                                     }}</v-chip>
                             </v-list-item-content>
                         </v-list-item>
+                        <v-list-item>
+                            <v-list-item-content>插件地址: {{ selectedPlugin?.dir }}</v-list-item-content>
+                        </v-list-item>
                     </v-list>
                 </v-card-text>
                 <v-card-actions>
@@ -126,6 +129,7 @@ interface PluginInfo {
     status: string;
     enable: boolean;
     event: string;
+    dir: string;
     loading: boolean;
 }
 

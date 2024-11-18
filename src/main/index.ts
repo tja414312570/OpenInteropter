@@ -19,7 +19,9 @@ import { notify } from "./ipc/notify-manager";
 import pluginManager from "./plugin/plugin-manager";
 import path from "path";
 import { showErrorDialog } from "./utils/dialog";
-const innerPluginPath = path.join(__dirname, '../../../plugins');
+const plugin_load_type = process.env.plugin_load_type;
+const innerPluginPath = plugin_load_type === 'dev' ? path.join(__dirname, '../../../plugins') : path.join(__dirname, '../plugins');
+console.log('插件加载地址:', innerPluginPath)
 import './ipc-bind/core-ipc-bind'
 app.setName('开放解释器');
 import './services/env-manager'

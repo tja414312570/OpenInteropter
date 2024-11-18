@@ -5,10 +5,9 @@
   "main": "dist/main.js",
   "scripts": {
     "lint": "eslint 'src/**/*.{ts,js}' --fix",
-    "build": "webpack --config webpack.config.js && webpack --config webpack.zip.js",
+    "build": "npm run clean && webpack --config webpack.config.js && webpack --config webpack.zip.js",
     "clean": "rimraf build dist",
-    "test": "tsx test/test.ts",
-    "zip": "npm run clean && npm run build"
+    "test": "tsx test/test.ts"
   },
   "devDependencies": {
     "@types/vue": "^1.0.31",

@@ -12,6 +12,7 @@
   },
   "devDependencies": {
     "@rollup/plugin-inject": "^5.0.5",
+    "@types/archiver": "^6.0.3",
     "@types/circular-json": "^0.4.0",
     "@types/cross-spawn": "^6.0.6",
     "@types/decompress": "^4.2.7",

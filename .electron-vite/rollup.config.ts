@@ -11,6 +11,7 @@ import { defineConfig } from "rollup";
 import * as glob from "glob"; // 引入glob模块
 import { getConfig } from "./utils";
 import getPreloadConfigs from './rollup.preload.config'
+import copy from "rollup-plugin-copy";
 import { assert } from "console";
 
 const config = getConfig();
@@ -44,11 +45,18 @@ export default (env = "production", type = "main") => {
         sourcemap: true,
       },
     plugins: [
+      copy({
+        targets: [
+          { src: "prisma", dest: "dist/electron" },
+        ],
+        hook: "writeBundle", // 在构建完成后进行文件内容修改
+      }),
       replace({
         preventAssignment: true,
         "process.env.userConfig": config ? JSON.stringify(config) : "{}",
         'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
         'process.env.PORT': JSON.stringify(process.env.PORT || '9080'),
+        'process.env.plugin_load_type': JSON.stringify(process.env.plugin || 'default'),
       }),
       nodeResolve({
         preferBuiltins: true,

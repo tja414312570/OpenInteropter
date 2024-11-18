@@ -8,6 +8,7 @@ import { rollup, OutputOptions, RollupOptions } from "rollup";
 import { DefaultRenderer, Listr } from "listr2";
 import rollupOptions from "./rollup.config";
 import { errorLog, doneLog } from "./log";
+import bundlePlugin from './plugin.bundler.config'
 
 const mainOpt = rollupOptions(process.env.NODE_ENV, "main") as RollupOptions;
 const preloadOpt = rollupOptions(process.env.NODE_ENV, "preload") as RollupOptions[];
@@ -95,6 +96,17 @@ async function unionBuild() {
           }
         },
       },
+      {
+        title: "building plugin bundler",
+        task: async () => {
+          try {
+            await bundlePlugin()
+          } catch (error) {
+            errorLog(`failed to build plugin bundler\n`);
+            return Promise.reject(error);
+          }
+        },
+      }
     ],
     {
       concurrent: true,

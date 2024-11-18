@@ -1,4 +1,4 @@
-import { PrismaClient, History } from '@prisma/client';
+import { PrismaClient, History } from '../prisma/generated/client';
 import path from 'path';
 import fs from 'fs';
 import appContext from './app-context';

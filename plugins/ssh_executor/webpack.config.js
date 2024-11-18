@@ -66,7 +66,18 @@ const copy = {
   plugins: [
     new CopyWebpackPlugin({
       patterns: [
-        { from: 'manifest.json', to: 'manifest.json' },  // 复制到 dist 根目录
+        {
+          from: 'manifest.json', to: 'manifest.json',
+           transform(content) {
+            const manifest = JSON.parse(content.toString());
+            Object.keys(manifest).forEach((key) => {
+              if (typeof manifest[key] === 'string') {
+                manifest[key] = manifest[key].replace('./dist/', '');
+              }
+            });
+            return JSON.stringify(manifest, null, 2);
+          },
+        },  // 复制到 dist 根目录
         { from: 'assets', to: 'assets' },  // 复制到 dist 根目录
       ],
     }),

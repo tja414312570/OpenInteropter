@@ -1,6 +1,6 @@
 process.env.NODE_ENV = "development";
 
-import electron from "electron";
+//@ts-ignore
 import chalk from "chalk";
 import path, { join } from "path";
 import { watch } from "rollup";
@@ -10,12 +10,13 @@ import { say } from "cfonts";
 import { spawn } from "child_process";
 import type { ChildProcess } from "child_process";
 import rollupOptions from "./rollup.config";
+import rollupPreloadOptions from "./rollup.preload.config";
 import rimraf from "rimraf";
+//@ts-ignore
 import { deleteAsync } from "del";
 import { doneLog } from "./log";
 
-const preloadOpt = rollupOptions(process.env.NODE_ENV, "preload");
-const pluginsOpt = rollupOptions(process.env.NODE_ENV, "executor");
+const preloadOpt = rollupPreloadOptions(process.env.NODE_ENV);
 
 let electronProcess: ChildProcess | null = null;
 let manualRestart = false;
@@ -116,7 +117,7 @@ function startRenderer(): Promise<void> {
 function startMain(): Promise<void> {
   console.log(chalk.blue(`${"准备主进程脚本..."}`));
   return new Promise((resolve, reject) => {
-    const MainWatcher = watch(rollupOptions(process.env.NODE_ENV, "main"));
+    const MainWatcher = watch(rollupOptions(process.env.NODE_ENV));
     MainWatcher.on("change", (filename) => {
       // 主进程日志部分
       logStats(

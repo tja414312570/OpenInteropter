@@ -10,7 +10,7 @@ import obfuscator from "rollup-plugin-obfuscator";
 import { defineConfig } from "rollup";
 import { readdirSync, readFileSync } from "fs";
 import { getConfig } from "./utils";
-import copy from "rollup-plugin-copy";
+
 import assert from "assert";
 
 const config = getConfig();
@@ -70,12 +70,6 @@ export default (env = "production") => {
                 inlineDynamicImports: includeCustomDependencies, // 如果有自定义依赖，则内嵌所有导入
             },
             plugins: [
-                copy({
-                    targets: [
-                        { src: "prisma", dest: "dist/electron" },
-                    ],
-                    hook: "writeBundle", // 在构建完成后进行文件内容修改
-                }),
                 replace({
                     preventAssignment: true,
                     "process.env.userConfig": config ? JSON.stringify(config) : "{}",

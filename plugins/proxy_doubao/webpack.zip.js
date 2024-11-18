@@ -7,9 +7,20 @@ const archiver = require('archiver');
 class ZipPlugin {
   apply(compiler) {
     compiler.hooks.afterEmit.tap('ZipPlugin', (compilation) => {
+      const manifestPath = path.resolve(
+        __dirname,
+        "./dist/manifest.json"
+      );
+      if(!fs.existsSync(manifestPath)){
+        throw new Error("could not found manifest.json at " + manifestPath)
+      }
+      const manifest = JSON.parse(
+        fs.readFileSync(manifestPath, "utf-8")
+      );
+     const filename = manifest.appId+'-'+manifest.version
       const outputDir = path.resolve(__dirname, 'dist');
       const buildDir = path.resolve(__dirname, 'build');
-      const zipFile = path.join(buildDir, 'dist.zip');
+      const zipFile = path.join(buildDir, filename+'.zip');
 
       if (!fs.existsSync(buildDir)) {
         fs.mkdirSync(buildDir);

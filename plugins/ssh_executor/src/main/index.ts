@@ -166,6 +166,9 @@ class SshExecutor
       });
       try {
         const pty = await pluginContext.resourceManager.require<IPty>("pty");
+        if( process.platform === "win32"){
+          
+        }
         virtualWindow.setCols(pty.cols);
         try {
           const { x, y, buffer } = await (pty as any).getCursor();
@@ -265,12 +268,12 @@ class SshExecutor
     const end_tag = `_${uuidv4()}_`;
     const cmd =
       process.platform === "win32"
-        ? `try { ^
-        ${instruct} ^
-        } catch {^
-        Write-Error $_.Exception.Message ;$_.ErrorRecord ^
-        } finally { ^
-         Write-Host "${end_tag}$?" }` //ps
+        ? 
+  `try { \`
+    ${instruct} \`
+  } catch {\`
+    Write-Error $_.Exception.Message ;$_.ErrorRecord \`
+  } finally { Write-Host "${end_tag}$?" }` //ps
         : `eval "${instruct.replaceAll('"', '\\"')}" ; echo "${end_tag}$?"`; //ssh
     const msg = `命令[${instruct}]开始执行,执行id[${end_tag}],命令：${cmd}`;
     pluginContext.notifyManager.notify(msg);

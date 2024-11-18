@@ -5,15 +5,22 @@ import chalk from "chalk";
 import { join } from "path";
 import { watch } from "rollup";
 import Portfinder from "portfinder";
+import { deleteAsync } from "del";
 import config from "../config";
 import { say } from "cfonts";
 import { spawn } from "child_process";
 import type { ChildProcess } from "child_process";
 import rollupOptions from "./rollup.config";
 
-const preloadOpt = rollupOptions(process.env.NODE_ENV, "preload");
-const pluginsOpt = rollupOptions(process.env.NODE_ENV, "executor");
+import bundlePlugin from './plugin.bundler.config'
 
+const preloadOpt = rollupOptions(process.env.NODE_ENV, "preload");
+async function clean() {
+  await deleteAsync([
+    "dist/*"
+  ]);
+  console.log(`clear done`);
+}
 let electronProcess: ChildProcess | null = null;
 let manualRestart = false;
 
@@ -97,36 +104,7 @@ function startRenderer(): Promise<void> {
   });
 }
 
-function startPlugin(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const MainWatcher = watch(pluginsOpt);
-    MainWatcher.on("change", (filename) => {
-      // 主进程日志部分
-      logStats(
-        `${config.dev.chineseLog ? "插件文件变更" : "Plugin-FileChange"}`,
-        filename
-      );
-    });
-    MainWatcher.on("event", (event) => {
-      if (event.code === "END") {
-        if (electronProcess) {
-          manualRestart = true;
-          electronProcess.pid && process.kill(electronProcess.pid);
-          electronProcess = null;
-          startElectron();
 
-          setTimeout(() => {
-            manualRestart = false;
-          }, 5000);
-        }
-
-        resolve();
-      } else if (event.code === "ERROR") {
-        reject(event.error);
-      }
-    });
-  });
-}
 function startMain(): Promise<void> {
   return new Promise((resolve, reject) => {
     const MainWatcher = watch(rollupOptions(process.env.NODE_ENV, "main"));
@@ -272,9 +250,10 @@ function greeting() {
 
 async function init() {
   greeting();
-
   try {
+    await clean()
     await startRenderer();
+    await bundlePlugin();
     await startMain();
     await startPreload();
     startElectron();
