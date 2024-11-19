@@ -122,22 +122,10 @@ class VirtualWindow {
       const char = remainingText.charAt(0);
       remainingText = remainingText.slice(1);
       if (char === "\n") {
-        this.addCharToBuffer("\n");
         this.cursorY++;
-        this.cursorX = 0;
-        this.ensureLineExists(this.cursorY);
+        this.ensureLineLength(this.cursorY, this.cursorX);
       } else if (char === "\r") {
-        const nextChar = remainingText.length > 0 ? remainingText.charAt(0) : '';
-        if (nextChar === '\n') {
-          this.cursorX = this.buffer[this.cursorY].length;
-          this.addCharToBuffer("\n");
-          this.cursorY++;
-          this.cursorX = 0;
-          remainingText = remainingText.slice(1);
-        } else {
-          this.cursorX = 0; // 回车符重置光标到行首
-          //this.ansiBuffer.delete(this.cursorX);
-        }
+        this.cursorX = 0; // 回车符重置光标到行首
       } else if (char === "\x1b") {
         if (remainingText.charAt(0) === "c") {
           remainingText = remainingText.substring(1);
@@ -287,7 +275,7 @@ class VirtualWindow {
           0,
           Math.min(this.savedCursorX, this.buffer[this.cursorY].length)
         );
-        this.ensureLineExists(this.cursorY);
+
         this.ensureLineLength(this.cursorY, this.cursorX);
         break;
       case "J": // 清屏
@@ -379,6 +367,9 @@ class VirtualWindow {
           result += ansiString;
         }
         y++;
+        if (y < this.buffer.length) {
+          result += '\n'
+        }
       }
       this.renderCache = result;
     }
@@ -392,6 +383,7 @@ class VirtualWindow {
   }
 
   private ensureLineLength(lineIndex: number, minLength: number): void {
+    this.ensureLineExists(lineIndex);
     if (this.buffer[lineIndex].length < minLength) {
       this.buffer[lineIndex] = this.buffer[lineIndex].padEnd(minLength, " ");
     }

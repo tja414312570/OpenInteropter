@@ -5,15 +5,14 @@ import {
   InstructResult,
   InstructResultType,
   pluginContext,
+  Prompter,
 } from "mylib/main";
 import VirtualWindow, { debug } from "virtual-window";
 import { Pluginlifecycle } from "mylib/main";
 import { ExtensionContext } from "mylib/main";
 import { v4 as uuidv4 } from "uuid";
-import fs from "fs";
-import path from "path";
-import util from "util";
 import { IDisposable, IPty } from "node-pty";
+import { prompt } from "./prompt";
 
 const removeInvisibleChars = (str: string) => {
   // 移除 ANSI 转义序列 (\u001b 是转义字符, \[\d*(;\d*)*m 匹配 ANSI 的样式)
@@ -101,8 +100,11 @@ class ExecuteContext {
 
 class SshExecutor
   extends AbstractPlugin
-  implements InstructExecutor, Pluginlifecycle
+  implements InstructExecutor, Pluginlifecycle, Prompter
 {
+  requirePrompt(): Promise<String> {
+    return prompt();
+  }
   private cache: Map<string, ExecuteContext> = new Map();
   currentTask(): string[] {
     return [...this.cache.keys()];
@@ -166,8 +168,7 @@ class SshExecutor
       });
       try {
         const pty = await pluginContext.resourceManager.require<IPty>("pty");
-        if( process.platform === "win32"){
-          
+        if (process.platform === "win32") {
         }
         virtualWindow.setCols(pty.cols);
         try {
@@ -268,9 +269,8 @@ class SshExecutor
     const end_tag = `_${uuidv4()}_`;
     const cmd =
       process.platform === "win32"
-        ? 
-  `try { \`
-    ${instruct} \`
+        ? `try { \`
+    ${instruct.trim()} \`
   } catch {\`
     Write-Error $_.Exception.Message ;$_.ErrorRecord \`
   } finally { Write-Host "${end_tag}$?" }` //ps

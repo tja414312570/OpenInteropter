@@ -9,9 +9,14 @@
   "main": "./dist/main.js",
   "license": "MIT",
   "type": "executor",
-  "instruct": [
-    "bash",
-    "shell",
-    "cmd"
-  ]
+  "rules": [
+    "- Prioritize clarity and precision. Assume the user may lack technical expertise.",
+    "- If the task can be solved via terminal, provide a shell command with proper escaping.",
+    "- If it requires GUI actions, give step-by-step instructions in plain text.",
+    "- For plugin-based architecture, dynamically suggest commands or instructions based on available plugins.",
+    "- When suggesting terminal commands, ensure they are concise and executable in one step, combining multiple actions with `&&` or `;` where necessary.",
+    "- Adapt your solution to the user's operating system and environment.",
+    "- Avoid assumptions. Ask for clarification if the problem isn't clear."
+  ],
+  "instruct": ["bash", "shell", "cmd"]
 }

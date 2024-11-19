@@ -1,18 +1,44 @@
-import Spinner from "cli-spinners";
-import VirtualWindow, { debug, restore } from "../src/index";
+import VirtualWindow, { restore } from "../src/index";
+
 const virtualWindow = new VirtualWindow();
-import stringWidth from 'string-width';
-console.log(stringWidth('\n'))
-// const len = `eval "01234567890123456789012345678901234567890123456789012345678901234567`.length;
-virtualWindow.setCols(109);
-virtualWindow.write("hello word\n");
+virtualWindow.setCols(3); // 设置窗口宽度为 3 列
+// virtualWindow.setRows(5); // 设置窗口高度为 5 行
 
-virtualWindow.onRender(content => {
-  process.stdout.write('\x1b[1J\x1b[H' + content + '\n' + JSON.stringify(virtualWindow.getCursor()))//+ '\n' + debug(content))
-})
-// console.log(debug(`eval "\x0d\x0a`))
+// 渲染回调：每次内容更新时输出到控制台
+virtualWindow.onRender((content) => {
+  process.stdout.write(
+    '\x1b[1J\x1b[H' + content + '\n' + JSON.stringify(virtualWindow.getCursor())
+  );
+});
 
-virtualWindow.write(restore(`eval "osascript -e 'tell application "System Events" to tell appearance preferences to set dark mod \x0de to true'\x0d\x0a> " ; echo "_7822ac59-d7bf-4407-bbef-1be6da11b917_$?"\x0d\x0a24:30: syntax error: 预期是行的结尾，却找到复数类名称。 (-2741)\x0d\x0a_7822ac59-d7bf-4407-bbef-1be6da11b917_1\x0d\x0abash-3.2$`))
-// virtualWindow.write(restore(`> $max=3;for($i=0;$i-le $max;$i++){$p=($i/$max)*100;Write-Progress -Activity "正在处理数据..." -Status "$i%  \x1b[K完\x0d完成" -PercentComplete $p;Start-`))
-// virtualWindow.write(restore(`Sleep -Milliseconds 100}$max=3;for($i=0;$i-le $max;$i++){$p=($i/$max)*100;Wri \x0dte-Progress -Activity "正在处理数据..." -Status "$i% 完成" -PercentComplete $p;Start-Sleep -Milliseconds 100} \x0d\x1b[A\x0d\x0a> " ; echo "_f8c6107f-f9c5-4a90-96bb-d088e943bd9e_$?"\x0d\x0abash: syntax error near unexpected token \`('\x0d\x0a_f8c6107f-f9c5-4a90-96bb-d088e943bd9e_0\x0d\x0abash-3.2$`))
-// // virtualWindow.write(restore(`890123 \x0d456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123 \x0d456789012345678901234567890123456789\x0d\x0a> " ; echo "_c16586e1-af30-431f-91aa-798eced4cff6_$?"\x0d\x0a`))
+// 初始内容填充
+virtualWindow.write("123");
+virtualWindow.write("\n456");
+virtualWindow.write("\n789");
+virtualWindow.write("\nabc");
+virtualWindow.write("\ndef");
+
+// 向上滚动模拟
+console.log("\n--- Scroll Up Test ---\n");
+virtualWindow.write(restore("\x1b[1;5r")); // 设置滚动区域为第 1-5 行
+virtualWindow.write(restore("\x1b[S")); // 向上滚动 1 行
+virtualWindow.write("ghi"); // 插入新内容到当前行
+
+// 向下滚动模拟
+console.log("\n--- Scroll Down Test ---\n");
+virtualWindow.write(restore("\x1b[1;5r")); // 确保滚动区域未变
+virtualWindow.write(restore("\x1b[T")); // 向下滚动 1 行
+virtualWindow.write("jkl"); // 插入新内容到当前行
+
+// 插入行测试
+console.log("\n--- Insert Line Test ---\n");
+virtualWindow.write(restore("\x1b[1;5r")); // 确保滚动区域未变
+virtualWindow.write(restore("\x1b[3;1H")); // 将光标移动到第 3 行
+virtualWindow.write(restore("\x1b[L")); // 插入一行
+virtualWindow.write("mno"); // 插入新内容到插入的行
+
+// 清屏和重置测试
+console.log("\n--- Clear and Reset Test ---\n");
+virtualWindow.write(restore("\x1b[2J")); // 清屏
+virtualWindow.write("reset"); // 插入新内容
+virtualWindow.write("\nnew"); // 新的一行

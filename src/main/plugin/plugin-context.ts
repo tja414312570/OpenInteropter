@@ -1,16 +1,17 @@
 import {
-    DialogOpt, DialogReturnValue, ExtensionContext as ExtExtensionContext, IIpcMain, ISetting, ISettingManager, IWindowManager, NotifyManager, PluginInfo as ExtPluginInfo,
+    DialogOpt, DialogReturnValue, ExtensionContext as ExtExtensionContext, ISetting, ISettingManager, IWindowManager, NotifyManager, PluginInfo as ExtPluginInfo,
     ResourceManager,
     GetIpcApi,
     IpcApi,
     IEnvManager,
-    EnvVariable
+    EnvVariable,
+    IPluginManager
 } from '@lib/main'
 import settingManager from '@main/services/service-setting'
 import path from 'path';
 import appContext from '@main/services/app-context';
 import resourceManager from './resource-manager';
-import { app, dialog, IpcMainInvokeEvent } from 'electron';
+import { app, dialog } from 'electron';
 import windowManager from '@main/services/window-manager';
 import pluginManager from './plugin-manager';
 import { getPreloadFile, getUrl } from "@main/config/static-path";
@@ -52,6 +53,7 @@ export class PluginContext implements ExtensionContext {
     appEnv: { [key: string]: string; };
     envManager: IEnvManager;
     dialog: Electron.Dialog;
+    pluginManager: IPluginManager;
     getPath(path: 'home' | 'appData' | 'userData' | 'sessionData' | 'temp' | 'exe' | 'module' | 'desktop' | 'documents' | 'downloads' | 'music' | 'pictures' | 'videos' | 'recent' | 'logs' | 'crashDumps') {
         return app.getPath(path);
     }
@@ -67,6 +69,7 @@ export class PluginContext implements ExtensionContext {
         this.resourceManager = resourceManager;
         this.env = appContext.env;
         this.appEnv = appContext.appEnv;
+        this.pluginManager = pluginManager as any;
         this.showDialog = dialog.showMessageBox;
         this.dialog = dialog;
         this.envManager = {
@@ -75,7 +78,7 @@ export class PluginContext implements ExtensionContext {
             getProcessEnv: envManager.getProcessEnv.bind(envManager),
             get: envManager.get.bind(envManager),
             getValue: envManager.getValue.bind(envManager),
-            setEnv: (env: EnvVariable | string, value?: string) => {
+            setEnv: (env: EnvVariable | string, value?: string, path = true) => {
                 if (!env) {
                     throw new Error('变量名不能为空')
                 }
@@ -85,6 +88,7 @@ export class PluginContext implements ExtensionContext {
                     env = {
                         name: env,
                         value,
+                        path,
                         source: this.plugin.appId
                     }
                 }

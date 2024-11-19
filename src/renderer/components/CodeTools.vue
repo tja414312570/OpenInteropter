@@ -51,7 +51,7 @@
 
 <script lang="ts" setup>
 import { InstructContent } from '@main/ipc/code-manager';
-import { InstructResultType, PluginStatus } from '@lib/main';
+import { InstructResultType, PluginStatus, PluginType } from '@lib/main';
 import { PluginInfo } from '@lib/main';
 import { IpcEventHandler } from '@renderer/ts/default-ipc';
 import { getIpcApi } from '@preload/lib/ipc-api';
@@ -77,6 +77,9 @@ const found = (id: string) => {
 }
 const sync = (event: string, plugin_: PluginInfo) => {
     plugin_['event'] = event;
+    if (plugin_.status !== PluginStatus.load || plugin_.type !== PluginType.executor) {
+        return;
+    }
     console.log("正在处理:", event, plugin_)
     const { plugin } = found(plugin_.id);
     if (plugin) {

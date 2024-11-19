@@ -1,4 +1,4 @@
-import { ExtensionContext } from "./plugin";
+import { ExtensionContext } from "./plugin-defined";
 
 let context = {} as any;
 const extensionContext = new Proxy(context, {

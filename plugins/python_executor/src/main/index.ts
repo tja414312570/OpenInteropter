@@ -5,6 +5,7 @@ import {
   InstructResult,
   InstructResultType,
   pluginContext,
+  Prompter,
 } from "extlib/main";
 import { Pluginlifecycle } from "extlib/main";
 import { ExtensionContext } from "extlib/main";
@@ -12,12 +13,12 @@ import { watcher } from "extlib/dev";
 import { stringify } from "circular-json";
 import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
-import { runPythonCode } from "./python";
 import util from "util";
 import VirtualWindow from "virtual-window";
 import { ChildProcess, exec, spawn } from "child_process";
 import path from "path";
 import installer from "./installer";
+import { prompt } from "./prompt";
 
 watcher();
 class ExecuteContext {
@@ -85,8 +86,11 @@ class ExecuteContext {
 
 class PythonExecutor
   extends AbstractPlugin
-  implements InstructExecutor, Pluginlifecycle
+  implements InstructExecutor, Pluginlifecycle, Prompter
 {
+  requirePrompt(): Promise<String> {
+    return prompt();
+  }
   currentTask(): string[] {
     return this.executeContext ? [""] : [];
   }

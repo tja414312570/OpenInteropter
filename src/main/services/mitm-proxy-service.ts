@@ -122,13 +122,7 @@ export async function startProxyServer() {
   });
 
   let options: IProxyOptions = { port: 3001, host: '127.0.0.1' };
-  // 判断是否需要使用上游代理
-  // if (upstreamProxy) {
-  //   const proxyUrl = `${upstreamProxy.protocol}//${upstreamProxy.host}:${upstreamProxy.port}`;
-  //   info(`使用上游代理:${proxyUrl}`)
-  //   options.httpAgent = new HttpProxyAgent(proxyUrl);
-  //   options.httpsAgent = new HttpsProxyAgent(proxyUrl);
-  // }
+
   (proxy as any)._onError_bak_ = proxy._onError;
   proxy._onError = (kind, ctx, err) => {
     if ((err as any).code === 'ERR_SSL_SSLV3_ALERT_CERTIFICATE_UNKNOWN') {

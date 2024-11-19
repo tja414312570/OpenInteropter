@@ -116,11 +116,11 @@ class ChatGptBridge extends AbstractPlugin implements Bridge, Pluginlifecycle {
   async onMounted(ctx: ExtensionContext) {
     console.log("proxy代理已挂载");
     this.ipcApi = pluginContext.getIpcApi("agent");
-    this.ipcApi.on("ready", (event, urlString) => {
+    this.ipcApi.on("ready", async (event, urlString) => {
       console.log("请求地址:", urlString);
       const path = this.getPathFromUrl(urlString);
       if (path?.trim() === "/") {
-        this.send(props);
+        this.send(await props());
       }
       console.log(`插件已就绪:[${path}]`);
     });
