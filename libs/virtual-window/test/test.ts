@@ -1,4 +1,4 @@
-import VirtualWindow, { restore } from "../src/index";
+import VirtualWindow, { restore, debug } from "../src/index";
 
 const virtualWindow = new VirtualWindow();
 virtualWindow.setCols(3); // 设置窗口宽度为 3 列
@@ -7,8 +7,7 @@ virtualWindow.setCols(3); // 设置窗口宽度为 3 列
 // 渲染回调：每次内容更新时输出到控制台
 virtualWindow.onRender((content) => {
   process.stdout.write(
-    '\x1b[1J\x1b[H' + content + '\n' + JSON.stringify(virtualWindow.getCursor())
-  );
+    '\x1b[1J\x1b[H' + content + '\n' + JSON.stringify(virtualWindow.getCursor()) + '\n' + debug(content))
 });
 
 // 初始内容填充
