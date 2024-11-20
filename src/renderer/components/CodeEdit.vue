@@ -22,9 +22,7 @@ import context from '@renderer/context';
 import { InstructResultType } from '@lib/main';
 
 
-const code = ref<string>(`
-$max=3;for($i=0;$i-le $max;$i++){$p=($i/$max)*100;Write-Progress -Activity "正在处理数据..." -Status "$i% 完成" -PercentComplete $p;Start-Sleep -Milliseconds 100}
-`);
+const code = ref<string>(`vim "/Users/yanan/Desktop/:..txt"`);
 const editor = shallowRef<monaco.editor.IStandaloneCodeEditor | null>(null);
 const decorations = ref<string[]>([]);
 const currentLine = ref<number>(2); // 当前执行的行，默认是第2行
