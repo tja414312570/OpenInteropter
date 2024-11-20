@@ -55,6 +55,25 @@ export class DataView {
             }
         }
     }
+    switchRow(y1: number, y2: number) {
+        for (const [col, colData] of this.map) {
+            const row = colData.get(y2);
+            if (row) {
+                colData.set(y1, row)
+            }
+            if (colData.size === 0) {
+                this.map.delete(col); // 删除空的列
+            }
+        }
+    }
+    clearRow(y: number) {
+        for (const [col, colData] of this.map) {
+            colData.delete(y);
+            if (colData.size === 0) {
+                this.map.delete(col); // 删除空的列
+            }
+        }
+    }
     // 清理空行
     private cleanupEmptyRows() {
         for (const [x, xData] of this.map) {

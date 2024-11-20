@@ -44,6 +44,8 @@ class VirtualWindow {
   private rows: number = -1;
   renderCallback: ((content: string) => void | undefined) | undefined;
   private _creator: Error;
+  private scrollTop: number | undefined;
+  private scrollBottom: number | undefined;
   setCols(cols: number) {
     this.cols = cols;
   }
@@ -122,6 +124,9 @@ class VirtualWindow {
       const char = remainingText.charAt(0);
       remainingText = remainingText.slice(1);
       if (char === "\n") {
+        if (this.scrollBottom && this.cursorY >= this.scrollBottom) {
+          this.scrollUp(1);
+        }
         this.cursorY++;
         this.cursorX = 0;
         this.ensureLineLength(this.cursorY, this.cursorX);
@@ -231,26 +236,6 @@ class VirtualWindow {
     }
   }
 
-  private scrollUp(lines: number): void {
-    for (let i = 0; i < lines; i++) {
-      if (this.buffer.length > 0) {
-        this.buffer.shift(); // 移除顶部一行
-        this.buffer.push(""); // 在底部添加空行
-      }
-    }
-    this.cursorY = Math.max(0, this.cursorY - lines); // 调整光标位置
-    this.renderCache = undefined; // 清除渲染缓存
-  }
-
-  private scrollDown(lines: number): void {
-    for (let i = 0; i < lines; i++) {
-      this.buffer.pop(); // 移除底部一行
-      this.buffer.unshift(""); // 在顶部添加空行
-    }
-    this.cursorY = Math.min(this.buffer.length - 1, this.cursorY + lines); // 调整光标位置
-    this.renderCache = undefined; // 清除渲染缓存
-  }
-
   private handleEscapeSequence(seq: EscapeSequence): boolean {
     const command = seq.command;
     const [param1, param2] = seq.params.map((p) => parseInt(p) || 0);
@@ -304,7 +289,6 @@ class VirtualWindow {
         if (param1 === 0) {
           // 清除光标到屏幕末尾
           this.ensureLineExists(this.cursorY);
-
           this.buffer[this.cursorY] = this.buffer[this.cursorY].substring(
             0,
             this.cursorX
@@ -357,10 +341,73 @@ class VirtualWindow {
           support = false;
         }
         break;
-      case "S": // 向上滚动 param1 行
+      case "L":
+        const line = param1 || 1;
+        const LSaveTop = this.scrollTop;
+        const LSaveY = this.cursorY;
+        if (this.scrollBottom) {
+          this.scrollDown(line)
+        }
+        this.cursorY = LSaveY;
+        this.scrollTop = LSaveTop;
+        break;
+      case "M":
+        const deleteLine = param1 || 1;
+        const mSaveTop = this.scrollTop;
+        const mSaveY = this.cursorY;
+        this.scrollTop = this.cursorY;
+        this.scrollUp(deleteLine)
+        this.cursorY = mSaveY;
+        this.scrollTop = mSaveTop
+        break;
+      case "@": { // 插入空格
+        const insertCol = param1 || 1; // 插入的空格数，默认为 1
+        const currentLine = this.buffer[this.cursorY] || ''; // 当前行内容
+        const beforeCursor = currentLine.slice(0, this.cursorX); // 光标前的内容
+        const afterCursor = currentLine.slice(this.cursorX); // 光标后的内容
+        // 在光标处插入空格
+        this.buffer[this.cursorY] = beforeCursor + ' '.repeat(insertCol) + afterCursor;
+        break;
+      }
+      case "P": { // 删除字符
+        const deleteCol = param1 || 1; // 删除的字符数，默认为 1
+        const currentLine = this.buffer[this.cursorY] || ''; // 当前行内容
+        const beforeCursor = currentLine.slice(0, this.cursorX); // 光标前的内容
+        const afterCursor = currentLine.slice(this.cursorX + deleteCol); // 光标后的内容，跳过删除的部分
+        // 删除字符并更新当前行
+        this.buffer[this.cursorY] = beforeCursor + afterCursor;
+        break;
+      }
+      // \x1b[{n}@	插入 n 个空格	\x1b[5@
+      //   \x1b[{n}P	删除 n 个字符	\x1b[5P
+      case "r": // 设置滚动区域
+        const top = param1 > 0 ? param1 - 1 : undefined;
+        const bottom = param2 > 0 ? param2 - 1 : undefined;
+        // 参数有效性检查
+        if (top === undefined && bottom === undefined) {
+          // 默认全屏滚动区域
+          this.scrollTop = undefined;
+          this.scrollBottom = undefined;
+          break;
+        }
+
+        if (
+          top === undefined ||
+          bottom === undefined ||
+          top < 0 ||
+          top > bottom
+        ) {
+          throw new Error(`Invalid scroll area: [${top}, ${bottom}]. Buffer length: ${this.buffer.length}`);
+        }
+        this.ensureLineExists(bottom);
+        // 设置滚动区域
+        this.scrollTop = top;
+        this.scrollBottom = bottom;
+        break;
+      case "S": // 向上滚动
         this.scrollUp(param1 || 1);
         break;
-      case "T": // 向下滚动 param1 行
+      case "T": // 向下滚动
         this.scrollDown(param1 || 1);
         break;
       default:
@@ -372,7 +419,58 @@ class VirtualWindow {
     this.ensureLineLength(this.cursorY, this.cursorX);
     return support;
   }
-
+  /**
+   * 1    1
+   * 2 -- 3
+   * 3 -- 
+   * 4    4
+   * @param lines 
+   */
+  private scrollUp(lines: number): void {
+    const { top, bottom } = this.getScrollArea();
+    const delat = bottom - lines;
+    for (let i = top; i <= bottom; i++) {
+      if (i <= delat) {
+        this.buffer[i] = this.buffer[i + lines];
+        this.ansiBuffer.switchRow(i, i + lines)
+      } else {
+        this.buffer[i] = ''
+        this.ansiBuffer.clearRow(i)
+      }
+    }
+  }
+  private getScrollArea() {
+    let top = this.scrollTop;
+    let bottom = this.scrollBottom;
+    if (top === undefined) {
+      top = 0;
+    }
+    if (bottom === undefined) {
+      bottom = this.buffer.length - 1;
+    }
+    return { top, bottom }
+  }
+  /**
+   * 1    1
+   * 2 -- 
+   * 3 -- 2
+   * 4    4
+   * 
+   * @param lines 
+   */
+  private scrollDown(lines: number): void {
+    const { top, bottom } = this.getScrollArea();
+    const delat = lines - top;
+    for (let i = bottom; i >= top; i--) {
+      if (i >= delat) {
+        this.buffer[i] = this.buffer[i - lines];
+        this.ansiBuffer.switchRow(i, i - lines)
+      } else {
+        this.buffer[i] = ''
+        this.ansiBuffer.clear(i)
+      }
+    }
+  }
   render(): string {
     if (!this.renderCache) {
       let y = 0;
