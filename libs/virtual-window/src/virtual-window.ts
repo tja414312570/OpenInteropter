@@ -123,6 +123,7 @@ class VirtualWindow {
       remainingText = remainingText.slice(1);
       if (char === "\n") {
         this.cursorY++;
+        this.cursorX = 0;
         this.ensureLineLength(this.cursorY, this.cursorX);
       } else if (char === "\r") {
         this.cursorX = 0; // 回车符重置光标到行首
@@ -230,6 +231,26 @@ class VirtualWindow {
     }
   }
 
+  private scrollUp(lines: number): void {
+    for (let i = 0; i < lines; i++) {
+      if (this.buffer.length > 0) {
+        this.buffer.shift(); // 移除顶部一行
+        this.buffer.push(""); // 在底部添加空行
+      }
+    }
+    this.cursorY = Math.max(0, this.cursorY - lines); // 调整光标位置
+    this.renderCache = undefined; // 清除渲染缓存
+  }
+
+  private scrollDown(lines: number): void {
+    for (let i = 0; i < lines; i++) {
+      this.buffer.pop(); // 移除底部一行
+      this.buffer.unshift(""); // 在顶部添加空行
+    }
+    this.cursorY = Math.min(this.buffer.length - 1, this.cursorY + lines); // 调整光标位置
+    this.renderCache = undefined; // 清除渲染缓存
+  }
+
   private handleEscapeSequence(seq: EscapeSequence): boolean {
     const command = seq.command;
     const [param1, param2] = seq.params.map((p) => parseInt(p) || 0);
@@ -335,6 +356,12 @@ class VirtualWindow {
         } else {
           support = false;
         }
+        break;
+      case "S": // 向上滚动 param1 行
+        this.scrollUp(param1 || 1);
+        break;
+      case "T": // 向下滚动 param1 行
+        this.scrollDown(param1 || 1);
         break;
       default:
         support = false;
