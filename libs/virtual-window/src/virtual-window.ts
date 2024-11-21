@@ -486,7 +486,7 @@ class VirtualWindow {
           result += char;
           x++;
         }
-        const ansi = this.ansiBuffer.get(x, y);
+        const ansi = this.ansiBuffer.getLineRemain(x, y);
         if (ansi) {
           const ansiString = ansi.join("");
           result += ansiString;

@@ -1,7 +1,7 @@
 import * as pty from 'node-pty';
 const shell = process.platform === 'win32' ? 'powershell.exe' : 'zsh';
 import fs from 'fs'
-import VirtualWindow from '../libs/virtual-window/src/index'
+import VirtualWindow, { restore } from '../libs/virtual-window/src/index'
 import path from 'path';
 const ptyProcess = pty.spawn(shell, [], {
     name: 'xterm-color',
@@ -28,5 +28,9 @@ ptyProcess.on('exit', (code, signal) => {
     console.log(`Process exited with code: ${code}, signal: ${signal}`);
 });
 // ptyProcess.write('clear\r'); // 发送隐藏光标序列
-ptyProcess.write(`vim "/Users/yanan/Desktop/:..txt"`);
-ptyProcess.write('\r')
+ptyProcess.write(`try { \`
+    vim \"C:\\Users\\tja41\\Desktop\\test.txt\" \`
+    } catch {\`
+          Write-Error $_.Exception.Message ;$_.ErrorRecord \`
+    } finally { Write-Host \"_07698a6d-9b50-4ef6-a1d9-8e5f755fd46f_$?\" }`);
+// ptyProcess.write(restore('\n') + `\n`)

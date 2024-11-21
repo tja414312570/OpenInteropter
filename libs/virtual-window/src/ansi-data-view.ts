@@ -133,6 +133,29 @@ export class DataView {
         }
         return null;
     }
+    /**
+     * 获取大于x的所有序列
+     * @param x 
+     * @param y 
+     * @returns 
+     */
+    getLineRemain(x: number, y: number) {
+        const lineRemain: string[] = []
+        for (const [col, colData] of this.map) {
+            for (const [row, rowData] of colData) {
+                if (row === y) {
+                    if (col >= x && rowData && rowData.length > 0) {
+                        lineRemain.push(...rowData)
+                    }
+                }
+            }
+        }
+        const xData = this.map.get(x);
+        if (xData) {
+            return xData.get(y);
+        }
+        return null;
+    }
 }
 
 export class ZDataView {

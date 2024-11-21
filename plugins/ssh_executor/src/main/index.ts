@@ -100,8 +100,7 @@ class ExecuteContext {
 
 class SshExecutor
   extends AbstractPlugin
-  implements InstructExecutor, Pluginlifecycle, Prompter
-{
+  implements InstructExecutor, Pluginlifecycle, Prompter {
   requirePrompt(): Promise<String> {
     return prompt();
   }
@@ -269,11 +268,7 @@ class SshExecutor
     const end_tag = `_${uuidv4()}_`;
     const cmd =
       process.platform === "win32"
-        ? `try { \`
-    ${instruct.trim()} \`
-  } catch {\`
-    Write-Error $_.Exception.Message ;$_.ErrorRecord \`
-  } finally { Write-Host "${end_tag}$?" }` //ps
+        ? `try { ${instruct.trim()} } catch { Write-Error $_.Exception.Message ;$_.ErrorRecord } finally { Write-Host "${end_tag}$?" }` //ps
         : `eval "${instruct.replaceAll('"', '\\"')}" ; echo "${end_tag}$?"`; //ssh
     const msg = `命令[${instruct}]开始执行,执行id[${end_tag}],命令：${cmd}`;
     pluginContext.notifyManager.notify(msg);
@@ -301,7 +296,7 @@ class SshExecutor
     });
   }
 
-  async onMounted(ctx: ExtensionContext) {}
-  onUnmounted(): void {}
+  async onMounted(ctx: ExtensionContext) { }
+  onUnmounted(): void { }
 }
 export default new SshExecutor();
