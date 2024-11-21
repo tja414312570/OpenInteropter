@@ -12,11 +12,11 @@ virtualWindow.onRender((content) => {
 });
 
 // 初始内容填充
-virtualWindow.write(pc.red("1") + "\r\n"); // 红色
-virtualWindow.write(pc.green("2") + "\r\n"); // 绿色
-virtualWindow.write(pc.yellow("3") + "\r\n"); // 黄色
-virtualWindow.write(pc.blue("4") + "\r\n"); // 蓝色
-virtualWindow.write(pc.magenta("5")); // 紫色
+virtualWindow.write(restore("\x1b[33m 1 \x1b[m aaa") + "\r\n"); // 红色
+virtualWindow.write(restore("\x1b[33m 2 \x1b[m bbb") + "\r\n"); // 绿色
+virtualWindow.write(restore("\x1b[33m 3 \x1b[m") + "\r\n"); // 黄色
+virtualWindow.write(restore("\x1b[33m 4 \x1b[m ddd") + "\r\n"); // 蓝色
+virtualWindow.write(restore("\x1b[33m 5 \x1b[m eee")); // 紫色
 
 // virtualWindow.write(pc.red("6") + "\r\n"); // 红色
 // virtualWindow.write(pc.green("7") + "\r\n"); // 绿色
@@ -26,21 +26,23 @@ virtualWindow.write(pc.magenta("5")); // 紫色
 // 向上滚动模拟
 // console.log("\n--- Scroll Up Test ---\n");
 virtualWindow.write(restore("\x1b[1;5r")); // 设置滚动区域为第 1-5 行
-virtualWindow.write(restore("\x1b[1;1H")); // 向上滚动 1 行
+virtualWindow.write(restore("\x1b[1;1H"));
 virtualWindow.write(restore("\x0d\x0a"));
 virtualWindow.write(restore("\x1b[1;6r"));
-//\x1b[?25l\x1b[1;12r\x1b[1;1H\x1b[7M\x1b[1;13r\x1b[6;1Hdata: {"v": "！"}\x0d\x0a\x0d\x0aevent: delta\x0d\x0adata: {"v": "请"}\x0d\x0a\x0d\x0aevent: delta\x0d\x0adata: {"v": "问"}\x1b[6;1H\x1b[?25h
+virtualWindow.write(restore("\x1b[1S")); // 向上滚动 1 行
+virtualWindow.write(restore("\x1b[1T")); // 向上下滚动 1 行
+// //\x1b[?25l\x1b[1;12r\x1b[1;1H\x1b[7M\x1b[1;13r\x1b[6;1Hdata: {"v": "！"}\x0d\x0a\x0d\x0aevent: delta\x0d\x0adata: {"v": "请"}\x0d\x0a\x0d\x0aevent: delta\x0d\x0adata: {"v": "问"}\x1b[6;1H\x1b[?25h
 
-//\x1b[?25l  \x1b[1;12r \x1b[12;1H \x0d\x0a \x1b[1;13r \x1b[12;1H event: delta \x1b[13;1H \x1b[K \x1b[12;1H \x1b[?25h
-virtualWindow.write(pc.cyan("\x1b[5;1Hevent: delta\x0d")); // 青色插入新内容到当前行
+// //\x1b[?25l  \x1b[1;12r \x1b[12;1H \x0d\x0a \x1b[1;13r \x1b[12;1H event: delta \x1b[13;1H \x1b[K \x1b[12;1H \x1b[?25h
+// virtualWindow.write(pc.cyan("\x1b[5;1Hevent: delta\x0d")); // 青色插入新内容到当前行
 
 
-virtualWindow.write(restore("\x1b[1;5r")); // 设置滚动区域为第 1-5 行
-virtualWindow.write(restore("\x1b[5;1H")); // 向上滚动 1 行
-virtualWindow.write(restore("\x0d\x0a"));
-virtualWindow.write(restore("\x1b[1;6r"));
-//\x1b[?25l  \x1b[1;12r \x1b[12;1H \x0d\x0a \x1b[1;13r \x1b[12;1H event: delta \x1b[13;1H \x1b[K \x1b[12;1H \x1b[?25h
-virtualWindow.write(pc.cyan("\x1b[5;1Hevent: delta\x0d"));
+// virtualWindow.write(restore("\x1b[1;5r")); // 设置滚动区域为第 1-5 行
+// virtualWindow.write(restore("\x1b[5;1H")); // 向上滚动 1 行
+// virtualWindow.write(restore("\x0d\x0a"));
+// virtualWindow.write(restore("\x1b[1;6r"));
+// //\x1b[?25l  \x1b[1;12r \x1b[12;1H \x0d\x0a \x1b[1;13r \x1b[12;1H event: delta \x1b[13;1H \x1b[K \x1b[12;1H \x1b[?25h
+// virtualWindow.write(pc.cyan("\x1b[5;1Hevent: delta\x0d"));
 // // 向下滚动模拟
 // console.log("\n--- Scroll Down Test ---\n");
 // virtualWindow.write(restore("\x1b[1;5r")); // 确保滚动区域未变

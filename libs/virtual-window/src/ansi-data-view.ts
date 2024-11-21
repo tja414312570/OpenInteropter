@@ -1,135 +1,107 @@
 
 export class DataView {
+    // row col ansi[]
     private map: Map<number, Map<number, string[]>> = new Map();
-    add(x: number, y: number, ansi: string) {
-        let xData = this.map.get(x);
-        if (!xData) {
-            xData = new Map<number, []>();
-            xData.set(y, []);
-            this.map.set(x, xData);
+    add(row: number, col: number, ansi: string) {
+        let rowData = this.map.get(row);
+        if (!rowData) {
+            rowData = new Map<number, []>();
+            rowData.set(row, []);
+            this.map.set(row, rowData);
         }
-        let yData = xData.get(y);
-        if (!yData) {
-            yData = [];
-            xData.set(y, yData);
+        let colData = rowData.get(col);
+        if (!colData) {
+            colData = [];
+            rowData.set(col, colData);
         }
-        yData.push(ansi);
+        colData.push(ansi);
     }
-    delete(x: number, y?: number) {
-        if (y === undefined) {
-            this.map.delete(x);
+    delete(row: number, col?: number,) {
+        if (col === undefined) {
+            this.map.delete(row);
         } else {
-            const xData = this.map.get(x);
-            if (xData) {
-                xData.delete(y);
-                if (xData.size === 0) {
-                    this.map.delete(x); // 删除空的x映射
+            const rowData = this.map.get(row);
+            if (rowData) {
+                rowData.delete(col);
+                if (rowData.size === 0) {
+                    this.map.delete(row); // 删除空的x映射
                 }
+            }
+        }
+    }
+    private deleteRow(row: number, condition: (col: number) => boolean) {
+        const rowData = this.map.get(row);
+        if (rowData) {
+            for (const _col_key of rowData.keys()) {
+                if ((condition(_col_key))) {
+                    rowData.delete(_col_key);
+                }
+            }
+            if (rowData.size === 0) {
+                this.map.delete(row);
             }
         }
     }
     // 按行清除 (K 指令)
-    deleteRow(x: number, y: number, mode: number) {
-        for (const [col, colData] of this.map) {
-            const rowData = colData.get(y);
-            if (!rowData) continue;
-            switch (mode) {
-                case 0: // 清除从光标位置到行尾
-                    if (col >= x) {
-                        colData.delete(y);
+    reset(row: number, col: number) {
+        this.deleteRow(row, _col_key => _col_key > col)
+    }
+    clearK(row: number, col: number, mode: number) {
+        switch (mode) {
+            case 0: // 清除从光标位置到行尾
+                this.deleteRow(row, _col_key => _col_key >= col)
+                break;
+            case 1: // 清除从行首到光标位置
+                this.deleteRow(row, _col_key => _col_key <= col)
+                break;
+            case 2: // 清除整行
+                this.map.delete(row);
+                break;
+            default:
+                break;
+        }
+    }
+    switchRow(fromRow: number, toRow: number) {
+        const fromData = this.map.get(fromRow);
+        if (fromData) {
+            this.map.set(toRow, fromData);
+            this.map.delete(fromRow);
+        }
+    }
+    private deleteJ(row: number, rowConditionn: (_row_key: number) => boolean, colConditionn: (_col_key: number) => boolean) {
+        for (const _row_key of this.map.keys()) {
+            if (rowConditionn(_row_key)) {
+                this.map.delete(_row_key);
+            } else if (_row_key === row) {
+                const rowData = this.map.get(_row_key);
+                if (rowData) {
+                    for (const _col_key of rowData.keys()) {
+                        if (colConditionn(_col_key)) {
+                            rowData.delete(_col_key);
+                        }
                     }
-                    break;
-                case 1: // 清除从行首到光标位置
-                    if (col <= x) {
-                        colData.delete(y);
-                    }
-                    break;
-                case 2: // 清除整行
-                    colData.delete(y);
-                    break;
-                default:
-                    break;
-            }
-            if (colData.size === 0) {
-                this.map.delete(col); // 删除空的列
+                }
             }
         }
     }
-    switchRow(y1: number, y2: number) {
-        for (const [col, colData] of this.map) {
-            const row = colData.get(y2);
-            if (row) {
-                colData.set(y1, row)
-            }
-            if (colData.size === 0) {
-                this.map.delete(col); // 删除空的列
-            }
-        }
-    }
-    clearRow(y: number) {
-        for (const [col, colData] of this.map) {
-            colData.delete(y);
-            if (colData.size === 0) {
-                this.map.delete(col); // 删除空的列
-            }
-        }
-    }
-    // 清理空行
-    private cleanupEmptyRows() {
-        for (const [x, xData] of this.map) {
-            if (xData.size === 0) {
-                this.map.delete(x);
-            }
+    clearJ(row: number, col: number, mode: number = 0) {
+        if (mode > 1) {
+            this.clear();
+            return;
+        } else if (mode === 0) {
+            this.deleteJ(row, _row_key => _row_key > row, _col_key => _col_key >= col)
+        } else if (mode === 1) {
+            this.deleteJ(row, _row_key => _row_key < row, _col_key => _col_key <= col)
         }
     }
     // 按行和列清除数据 j指令
-    clear(x?: number, y?: number, mode: number = 0) {
-        if (x === undefined || y === undefined || mode > 1) {
-            // 如果 x 或 y 未定义，清除整个结构
-            this.map.clear();
-            return;
-        }
-        switch (mode) {
-            case 0: // 清除从光标位置到屏幕底部
-                for (const [col, colData] of this.map) {
-                    const rows = Array.from(colData.keys());
-                    for (const row of rows) {
-                        if (row >= y) {
-                            if (row === y && col >= x) {
-                                colData.delete(row);
-                            } else if (row > y) {
-                                colData.delete(row);
-                            }
-                        }
-                    }
-                    if (colData.size === 0) {
-                        this.map.delete(col); // 删除空的列
-                    }
-                }
-                break;
-            case 1: // 清除从屏幕顶部到光标位置
-                for (const [col, colData] of this.map) {
-                    const rows = Array.from(colData.keys());
-                    for (const row of rows) {
-                        if (row <= y) {
-                            if (row === y && col <= x) {
-                                colData.delete(row);
-                            } else if (row < y) {
-                                colData.delete(row);
-                            }
-                        }
-                    }
-                    if (colData.size === 0) {
-                        this.map.delete(col); // 删除空的列
-                    }
-                }
-                break;
-        }
+    clear() {
+        this.map.clear()
     }
-    get(x: number, y: number) {
-        const xData = this.map.get(x);
+    get(row: number, col: number) {
+        const xData = this.map.get(row);
         if (xData) {
-            return xData.get(y);
+            return xData.get(col);
         }
         return null;
     }
@@ -139,22 +111,17 @@ export class DataView {
      * @param y 
      * @returns 
      */
-    getLineRemain(x: number, y: number) {
+    getLineRemain(row: number, col: number) {
         const lineRemain: string[] = []
-        for (const [col, colData] of this.map) {
-            for (const [row, rowData] of colData) {
-                if (row === y) {
-                    if (col >= x && rowData && rowData.length > 0) {
-                        lineRemain.push(...rowData)
-                    }
+        const rowData = this.map.get(row);
+        if (rowData) {
+            for (const [_col_key, colData] of rowData) {
+                if (_col_key > col && colData.length > 0) {
+                    lineRemain.push(...colData)
                 }
             }
         }
-        const xData = this.map.get(x);
-        if (xData) {
-            return xData.get(y);
-        }
-        return null;
+        return lineRemain;
     }
 }
 

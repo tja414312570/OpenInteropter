@@ -148,7 +148,7 @@ class VirtualWindow {
           // remainingText = remainingText.substring(seq.fullLength - 1);
           // 确保处理过的控制字符不被保留
           if (seq.command === "m") {
-            this.ansiBuffer.add(this.cursorX, this.cursorY, seq.text);
+            this.ansiBuffer.add(this.cursorY, this.cursorX, seq.text);
           }
         } else {
           if (seq.command)
@@ -159,14 +159,13 @@ class VirtualWindow {
                 )}`
               );
             }
-          this.ansiBuffer.add(this.cursorX, this.cursorY, seq.text);
+          this.ansiBuffer.add(this.cursorY, this.cursorX, seq.text);
         }
         continue;
       } else if (char === "\x07") {
         this.bel = true;
       } else if (char === "\x08") {
         this.cursorX > 0 && this.cursorX--;
-        this.ansiBuffer.delete(this.cursorX, this.cursorY);
       } else {
         this.addCharToBuffer(char);
       }
@@ -183,7 +182,7 @@ class VirtualWindow {
     switch (command) {
       case "m": // 光标移动到指定位置 (row, col)
         if (param1 === 0) {
-          this.ansiBuffer.clear(this.cursorX, this.cursorY);
+          this.ansiBuffer.reset(this.cursorY, this.cursorX);
           support = true;
         }
         break;
@@ -261,7 +260,6 @@ class VirtualWindow {
         this.ensureLineLength(this.cursorY, this.cursorX);
         break;
       case "D": // 光标左移
-        this.ansiBuffer.delete(this.cursorX, this.cursorY);
         this.cursorX = Math.max(0, this.cursorX - (param1 ? param1 : 1));
         break;
       case "G": // 光标移到当前行的指定列
@@ -285,7 +283,7 @@ class VirtualWindow {
         this.ensureLineLength(this.cursorY, this.cursorX);
         break;
       case "J": // 清屏
-        this.ansiBuffer.clear(this.cursorX, this.cursorY, param1);
+        this.ansiBuffer.clearJ(this.cursorY, this.cursorX, param1);
         if (param1 === 0) {
           // 清除光标到屏幕末尾
           this.ensureLineExists(this.cursorY);
@@ -311,7 +309,7 @@ class VirtualWindow {
         }
         break;
       case "K": // 清除当前行光标后的内容
-        this.ansiBuffer.deleteRow(this.cursorX, this.cursorY, param1);
+        this.ansiBuffer.clearK(this.cursorY, this.cursorX, param1);
         this.ensureLineExists(this.cursorY);
         if (param1 === 0) {
           // 清除从光标到行尾
@@ -432,10 +430,10 @@ class VirtualWindow {
     for (let i = top; i <= bottom; i++) {
       if (i <= delat) {
         this.buffer[i] = this.buffer[i + lines];
-        this.ansiBuffer.switchRow(i, i + lines)
+        this.ansiBuffer.switchRow(i + lines, i)
       } else {
         this.buffer[i] = ''
-        this.ansiBuffer.clearRow(i)
+        this.ansiBuffer.delete(i)
       }
     }
   }
@@ -464,10 +462,10 @@ class VirtualWindow {
     for (let i = bottom; i >= top; i--) {
       if (i >= delat) {
         this.buffer[i] = this.buffer[i - lines];
-        this.ansiBuffer.switchRow(i, i - lines)
+        this.ansiBuffer.switchRow(i - lines, i)
       } else {
         this.buffer[i] = ''
-        this.ansiBuffer.clear(i)
+        this.ansiBuffer.delete(i)
       }
     }
   }
@@ -478,7 +476,7 @@ class VirtualWindow {
       for (const line of this.buffer) {
         let x = 0;
         for (const char of line) {
-          const ansi = this.ansiBuffer.get(x, y);
+          const ansi = this.ansiBuffer.get(y, x);
           if (ansi) {
             const ansiString = ansi.join("");
             result += ansiString;
@@ -486,7 +484,7 @@ class VirtualWindow {
           result += char;
           x++;
         }
-        const ansi = this.ansiBuffer.getLineRemain(x, y);
+        const ansi = this.ansiBuffer.getLineRemain(y, x);
         if (ansi) {
           const ansiString = ansi.join("");
           result += ansiString;
