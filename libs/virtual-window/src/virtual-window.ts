@@ -23,8 +23,6 @@ export function restore(data: string) {
   });
 }
 
-
-
 class VirtualWindow {
   private buffer: string[]; // 行缓冲区
   private cursorX: number;
@@ -342,20 +340,17 @@ class VirtualWindow {
       case "L":
         const line = param1 || 1;
         const LSaveTop = this.scrollTop;
-        const LSaveY = this.cursorY;
+        this.scrollTop = this.cursorY;
         if (this.scrollBottom) {
           this.scrollDown(line)
         }
-        this.cursorY = LSaveY;
         this.scrollTop = LSaveTop;
         break;
       case "M":
         const deleteLine = param1 || 1;
         const mSaveTop = this.scrollTop;
-        const mSaveY = this.cursorY;
         this.scrollTop = this.cursorY;
         this.scrollUp(deleteLine)
-        this.cursorY = mSaveY;
         this.scrollTop = mSaveTop
         break;
       case "@": { // 插入空格
@@ -493,6 +488,11 @@ class VirtualWindow {
         if (y < this.buffer.length) {
           result += '\n'
         }
+      }
+      result += restore(`\x1b[${this.cursorY + 1};${this.cursorX + 1}H`);
+      result += restore(`\x1b[?25${this.cursorVisible ? 'h' : 'l'}`)
+      if (this.bel) {
+        result += restore(`\x07`)
       }
       this.renderCache = result;
     }
