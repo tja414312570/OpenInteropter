@@ -3,16 +3,21 @@ export class DataView {
     // row col ansi[]
     private map: Map<number, Map<number, string[]>> = new Map();
     add(row: number, col: number, ansi: string) {
+        if (ansi === null || ansi === undefined) {
+            return;
+        }
         let rowData = this.map.get(row);
         if (!rowData) {
             rowData = new Map<number, []>();
-            rowData.set(row, []);
             this.map.set(row, rowData);
         }
         let colData = rowData.get(col);
         if (!colData) {
             colData = [];
             rowData.set(col, colData);
+        }
+        if (ansi === '') {
+            colData.length = 0;
         }
         colData.push(ansi);
     }
@@ -62,11 +67,12 @@ export class DataView {
         }
     }
     switchRow(fromRow: number, toRow: number) {
+        this.map.delete(toRow);
         const fromData = this.map.get(fromRow);
         if (fromData) {
             this.map.set(toRow, fromData);
-            this.map.delete(fromRow);
         }
+        this.map.delete(fromRow);
     }
     private deleteJ(row: number, rowConditionn: (_row_key: number) => boolean, colConditionn: (_col_key: number) => boolean) {
         for (const _row_key of this.map.keys()) {
@@ -79,6 +85,9 @@ export class DataView {
                         if (colConditionn(_col_key)) {
                             rowData.delete(_col_key);
                         }
+                    }
+                    if (rowData.size === 0) {
+                        this.map.delete(row);
                     }
                 }
             }
@@ -100,10 +109,7 @@ export class DataView {
     }
     get(row: number, col: number) {
         const xData = this.map.get(row);
-        if (xData) {
-            return xData.get(col);
-        }
-        return null;
+        return xData?.get(col);
     }
     /**
      * 获取大于x的所有序列

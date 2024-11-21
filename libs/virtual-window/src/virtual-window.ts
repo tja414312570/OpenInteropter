@@ -124,12 +124,14 @@ class VirtualWindow {
       if (char === "\n") {
         if (this.scrollBottom && this.cursorY >= this.scrollBottom) {
           this.scrollUp(1);
+          continue;
         }
         this.cursorY++;
         this.cursorX = 0;
         this.ensureLineLength(this.cursorY, this.cursorX);
       } else if (char === "\r") {
         this.cursorX = 0; // 回车符重置光标到行首
+        continue;
       } else if (char === "\x1b") {
         if (remainingText.charAt(0) === "c") {
           remainingText = remainingText.substring(1);
@@ -162,8 +164,10 @@ class VirtualWindow {
         continue;
       } else if (char === "\x07") {
         this.bel = true;
+        continue;
       } else if (char === "\x08") {
         this.cursorX > 0 && this.cursorX--;
+        continue;
       } else {
         this.addCharToBuffer(char);
       }
@@ -188,8 +192,12 @@ class VirtualWindow {
     return support;
   }
   private addCharToBuffer(char: string): void {
+    if (char === '@') {
+      restore(char)
+    }
     const chWidth = stringWidth(char)
-    if (this.cols > 0 && stringWidth(this.buffer[this.cursorY]) + chWidth > this.cols) {
+    const charSlice = this.buffer[this.cursorY].slice(0, this.cursorX);
+    if (this.cols > 0 && stringWidth(charSlice) + chWidth > this.cols) {
       this.cursorY++;
       this.cursorX = 0;
     }
@@ -392,7 +400,7 @@ class VirtualWindow {
         ) {
           throw new Error(`Invalid scroll area: [${top}, ${bottom}]. Buffer length: ${this.buffer.length}`);
         }
-        this.ensureLineExists(bottom);
+        // this.ensureLineExists(bottom);
         // 设置滚动区域
         this.scrollTop = top;
         this.scrollBottom = bottom;
