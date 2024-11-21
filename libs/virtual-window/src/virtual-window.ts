@@ -396,7 +396,8 @@ class VirtualWindow {
           top === undefined ||
           bottom === undefined ||
           top < 0 ||
-          top > bottom
+          top > bottom ||
+          bottom < 0
         ) {
           throw new Error(`Invalid scroll area: [${top}, ${bottom}]. Buffer length: ${this.buffer.length}`);
         }
