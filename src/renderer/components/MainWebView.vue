@@ -29,9 +29,9 @@
           <p>应用初始化中，请稍后</p>
         </div>
       </v-overlay>
-      <!-- <webview ref="webviews" v-show="appReady" :src="url" partition="persist:your-partition"
+      <webview ref="webviews" v-show="appReady" :src="url" partition="persist:your-partition"
         useragent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36"
-        class="webview" @did-start-loading="onStartLoading" @did-finish-load="onLoad"></webview> -->
+        class="webview" @did-start-loading="onStartLoading" @did-finish-load="onLoad"></webview>
     </div>
   </div>
 </template>
