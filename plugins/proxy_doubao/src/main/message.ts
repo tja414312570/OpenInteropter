@@ -44,9 +44,9 @@ export interface PushMessage {
      */
     localMessageId: string; // 本地消息ID（可选）
     /**
-     * @generated from protobuf field: int32 index = 5;
+     * @generated from protobuf field: int64 index = 5;
      */
-    index: number; // 索引（可选）
+    index: bigint; // 索引（可选）
     /**
      * @generated from protobuf field: string sec_sender = 6;
      */
@@ -60,9 +60,9 @@ export interface PushMessage {
      */
     status: number; // 状态（可选）
     /**
-     * @generated from protobuf field: int32 create_time = 9;
+     * @generated from protobuf field: int64 create_time = 9;
      */
-    createTime: number; // 创建时间（可选）
+    createTime: bigint; // 创建时间（可选）
     /**
      * @generated from protobuf field: int32 message_type = 10;
      */
@@ -90,9 +90,9 @@ export interface PushMessage {
      */
     nextConnectionType: number; // 下一个连接类型（可选）
     /**
-     * @generated from protobuf field: int32 chunk_seq = 16;
+     * @generated from protobuf field: int64 chunk_seq = 16;
      */
-    chunkSeq: number; // 分块序列（可选）
+    chunkSeq: bigint; // 分块序列（可选）
     /**
      * @generated from protobuf field: bool is_delta = 17;
      */
@@ -120,13 +120,13 @@ export interface PushMessage {
      */
     modelType: number; // 模型类型（可选）
     /**
-     * @generated from protobuf field: int32 update_time = 23;
+     * @generated from protobuf field: int64 update_time = 23;
      */
-    updateTime: number; // 更新时间（可选）
+    updateTime: bigint; // 更新时间（可选）
     /**
-     * @generated from protobuf field: int32 thread_id = 24;
+     * @generated from protobuf field: int64 thread_id = 24;
      */
-    threadId: number; // 线程ID（可选）
+    threadId: bigint; // 线程ID（可选）
 }
 /**
  * @generated from protobuf message msg_pb.PushCmd
@@ -137,9 +137,9 @@ export interface PushCmd {
      */
     cmdType: number; // 命令类型（可选）
     /**
-     * @generated from protobuf field: int32 index = 2;
+     * @generated from protobuf field: int64 index = 2;
      */
-    index: number; // 索引（可选）
+    index: bigint; // 索引（可选）
     /**
      * @generated from protobuf field: string conversation_id = 3;
      */
@@ -244,9 +244,9 @@ export interface AppAction {
  */
 export interface PushEvent {
     /**
-     * @generated from protobuf field: msg_pb.PushEvent.EventType event_type = 1;
+     * @generated from protobuf field: int32 event_type = 1;
      */
-    eventType: PushEvent_EventType; // 事件类型
+    eventType: number; // 事件类型
     /**
      * @generated from protobuf field: msg_pb.PushMessage message = 2;
      */
@@ -271,27 +271,6 @@ export interface PushEvent {
      * @generated from protobuf field: repeated msg_pb.PushMessage message_list = 7;
      */
     messageList: PushMessage[]; // 消息列表
-}
-/**
- * @generated from protobuf enum msg_pb.PushEvent.EventType
- */
-export enum PushEvent_EventType {
-    /**
-     * @generated from protobuf enum value: UNKNOW = 0;
-     */
-    UNKNOW = 0,
-    /**
-     * @generated from protobuf enum value: AppAction = 3;
-     */
-    AppAction = 3,
-    /**
-     * @generated from protobuf enum value: PushCmd = 2;
-     */
-    PushCmd = 2,
-    /**
-     * @generated from protobuf enum value: PushMessage = 1;
-     */
-    PushMessage = 1
 }
 // @generated message type with reflection information, may provide speed optimized methods
 class MetaInfo$Type extends MessageType<MetaInfo> {
@@ -356,26 +335,26 @@ class PushMessage$Type extends MessageType<PushMessage> {
             { no: 2, name: "section_id", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
             { no: 3, name: "message_id", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
             { no: 4, name: "local_message_id", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
-            { no: 5, name: "index", kind: "scalar", T: 5 /*ScalarType.INT32*/ },
+            { no: 5, name: "index", kind: "scalar", T: 3 /*ScalarType.INT64*/, L: 0 /*LongType.BIGINT*/ },
             { no: 6, name: "sec_sender", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
             { no: 7, name: "reply_id", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
             { no: 8, name: "status", kind: "scalar", T: 5 /*ScalarType.INT32*/ },
-            { no: 9, name: "create_time", kind: "scalar", T: 5 /*ScalarType.INT32*/ },
+            { no: 9, name: "create_time", kind: "scalar", T: 3 /*ScalarType.INT64*/, L: 0 /*LongType.BIGINT*/ },
             { no: 10, name: "message_type", kind: "scalar", T: 5 /*ScalarType.INT32*/ },
             { no: 11, name: "content_type", kind: "scalar", T: 5 /*ScalarType.INT32*/ },
             { no: 12, name: "content", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
             { no: 13, name: "tts_content", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
             { no: 14, name: "ext", kind: "map", K: 9 /*ScalarType.STRING*/, V: { kind: "scalar", T: 9 /*ScalarType.STRING*/ } },
             { no: 15, name: "next_connection_type", kind: "scalar", T: 5 /*ScalarType.INT32*/ },
-            { no: 16, name: "chunk_seq", kind: "scalar", T: 5 /*ScalarType.INT32*/ },
+            { no: 16, name: "chunk_seq", kind: "scalar", T: 3 /*ScalarType.INT64*/, L: 0 /*LongType.BIGINT*/ },
             { no: 17, name: "is_delta", kind: "scalar", T: 8 /*ScalarType.BOOL*/ },
             { no: 18, name: "meta_infos", kind: "message", repeat: 1 /*RepeatType.PACKED*/, T: () => MetaInfo },
             { no: 19, name: "local_conversation_id", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
             { no: 20, name: "bot_id", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
             { no: 21, name: "applet_payload", kind: "map", K: 9 /*ScalarType.STRING*/, V: { kind: "scalar", T: 9 /*ScalarType.STRING*/ } },
             { no: 22, name: "model_type", kind: "scalar", T: 5 /*ScalarType.INT32*/ },
-            { no: 23, name: "update_time", kind: "scalar", T: 5 /*ScalarType.INT32*/ },
-            { no: 24, name: "thread_id", kind: "scalar", T: 5 /*ScalarType.INT32*/ }
+            { no: 23, name: "update_time", kind: "scalar", T: 3 /*ScalarType.INT64*/, L: 0 /*LongType.BIGINT*/ },
+            { no: 24, name: "thread_id", kind: "scalar", T: 3 /*ScalarType.INT64*/, L: 0 /*LongType.BIGINT*/ }
         ]);
     }
     create(value?: PartialMessage<PushMessage>): PushMessage {
@@ -384,26 +363,26 @@ class PushMessage$Type extends MessageType<PushMessage> {
         message.sectionId = "";
         message.messageId = "";
         message.localMessageId = "";
-        message.index = 0;
+        message.index = 0n;
         message.secSender = "";
         message.replyId = "";
         message.status = 0;
-        message.createTime = 0;
+        message.createTime = 0n;
         message.messageType = 0;
         message.contentType = 0;
         message.content = "";
         message.ttsContent = "";
         message.ext = {};
         message.nextConnectionType = 0;
-        message.chunkSeq = 0;
+        message.chunkSeq = 0n;
         message.isDelta = false;
         message.metaInfos = [];
         message.localConversationId = "";
         message.botId = "";
         message.appletPayload = {};
         message.modelType = 0;
-        message.updateTime = 0;
-        message.threadId = 0;
+        message.updateTime = 0n;
+        message.threadId = 0n;
         if (value !== undefined)
             reflectionMergePartial<PushMessage>(this, message, value);
         return message;
@@ -425,8 +404,8 @@ class PushMessage$Type extends MessageType<PushMessage> {
                 case /* string local_message_id */ 4:
                     message.localMessageId = reader.string();
                     break;
-                case /* int32 index */ 5:
-                    message.index = reader.int32();
+                case /* int64 index */ 5:
+                    message.index = reader.int64().toBigInt();
                     break;
                 case /* string sec_sender */ 6:
                     message.secSender = reader.string();
@@ -437,8 +416,8 @@ class PushMessage$Type extends MessageType<PushMessage> {
                 case /* int32 status */ 8:
                     message.status = reader.int32();
                     break;
-                case /* int32 create_time */ 9:
-                    message.createTime = reader.int32();
+                case /* int64 create_time */ 9:
+                    message.createTime = reader.int64().toBigInt();
                     break;
                 case /* int32 message_type */ 10:
                     message.messageType = reader.int32();
@@ -458,8 +437,8 @@ class PushMessage$Type extends MessageType<PushMessage> {
                 case /* int32 next_connection_type */ 15:
                     message.nextConnectionType = reader.int32();
                     break;
-                case /* int32 chunk_seq */ 16:
-                    message.chunkSeq = reader.int32();
+                case /* int64 chunk_seq */ 16:
+                    message.chunkSeq = reader.int64().toBigInt();
                     break;
                 case /* bool is_delta */ 17:
                     message.isDelta = reader.bool();
@@ -479,11 +458,11 @@ class PushMessage$Type extends MessageType<PushMessage> {
                 case /* int32 model_type */ 22:
                     message.modelType = reader.int32();
                     break;
-                case /* int32 update_time */ 23:
-                    message.updateTime = reader.int32();
+                case /* int64 update_time */ 23:
+                    message.updateTime = reader.int64().toBigInt();
                     break;
-                case /* int32 thread_id */ 24:
-                    message.threadId = reader.int32();
+                case /* int64 thread_id */ 24:
+                    message.threadId = reader.int64().toBigInt();
                     break;
                 default:
                     let u = options.readUnknownField;
@@ -541,9 +520,9 @@ class PushMessage$Type extends MessageType<PushMessage> {
         /* string local_message_id = 4; */
         if (message.localMessageId !== "")
             writer.tag(4, WireType.LengthDelimited).string(message.localMessageId);
-        /* int32 index = 5; */
-        if (message.index !== 0)
-            writer.tag(5, WireType.Varint).int32(message.index);
+        /* int64 index = 5; */
+        if (message.index !== 0n)
+            writer.tag(5, WireType.Varint).int64(message.index);
         /* string sec_sender = 6; */
         if (message.secSender !== "")
             writer.tag(6, WireType.LengthDelimited).string(message.secSender);
@@ -553,9 +532,9 @@ class PushMessage$Type extends MessageType<PushMessage> {
         /* int32 status = 8; */
         if (message.status !== 0)
             writer.tag(8, WireType.Varint).int32(message.status);
-        /* int32 create_time = 9; */
-        if (message.createTime !== 0)
-            writer.tag(9, WireType.Varint).int32(message.createTime);
+        /* int64 create_time = 9; */
+        if (message.createTime !== 0n)
+            writer.tag(9, WireType.Varint).int64(message.createTime);
         /* int32 message_type = 10; */
         if (message.messageType !== 0)
             writer.tag(10, WireType.Varint).int32(message.messageType);
@@ -574,9 +553,9 @@ class PushMessage$Type extends MessageType<PushMessage> {
         /* int32 next_connection_type = 15; */
         if (message.nextConnectionType !== 0)
             writer.tag(15, WireType.Varint).int32(message.nextConnectionType);
-        /* int32 chunk_seq = 16; */
-        if (message.chunkSeq !== 0)
-            writer.tag(16, WireType.Varint).int32(message.chunkSeq);
+        /* int64 chunk_seq = 16; */
+        if (message.chunkSeq !== 0n)
+            writer.tag(16, WireType.Varint).int64(message.chunkSeq);
         /* bool is_delta = 17; */
         if (message.isDelta !== false)
             writer.tag(17, WireType.Varint).bool(message.isDelta);
@@ -595,12 +574,12 @@ class PushMessage$Type extends MessageType<PushMessage> {
         /* int32 model_type = 22; */
         if (message.modelType !== 0)
             writer.tag(22, WireType.Varint).int32(message.modelType);
-        /* int32 update_time = 23; */
-        if (message.updateTime !== 0)
-            writer.tag(23, WireType.Varint).int32(message.updateTime);
-        /* int32 thread_id = 24; */
-        if (message.threadId !== 0)
-            writer.tag(24, WireType.Varint).int32(message.threadId);
+        /* int64 update_time = 23; */
+        if (message.updateTime !== 0n)
+            writer.tag(23, WireType.Varint).int64(message.updateTime);
+        /* int64 thread_id = 24; */
+        if (message.threadId !== 0n)
+            writer.tag(24, WireType.Varint).int64(message.threadId);
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
@@ -616,7 +595,7 @@ class PushCmd$Type extends MessageType<PushCmd> {
     constructor() {
         super("msg_pb.PushCmd", [
             { no: 1, name: "cmd_type", kind: "scalar", T: 5 /*ScalarType.INT32*/ },
-            { no: 2, name: "index", kind: "scalar", T: 5 /*ScalarType.INT32*/ },
+            { no: 2, name: "index", kind: "scalar", T: 3 /*ScalarType.INT64*/, L: 0 /*LongType.BIGINT*/ },
             { no: 3, name: "conversation_id", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
             { no: 4, name: "message_id", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
             { no: 5, name: "ext", kind: "map", K: 9 /*ScalarType.STRING*/, V: { kind: "scalar", T: 9 /*ScalarType.STRING*/ } },
@@ -627,7 +606,7 @@ class PushCmd$Type extends MessageType<PushCmd> {
     create(value?: PartialMessage<PushCmd>): PushCmd {
         const message = globalThis.Object.create((this.messagePrototype!));
         message.cmdType = 0;
-        message.index = 0;
+        message.index = 0n;
         message.conversationId = "";
         message.messageId = "";
         message.ext = {};
@@ -645,8 +624,8 @@ class PushCmd$Type extends MessageType<PushCmd> {
                 case /* int32 cmd_type */ 1:
                     message.cmdType = reader.int32();
                     break;
-                case /* int32 index */ 2:
-                    message.index = reader.int32();
+                case /* int64 index */ 2:
+                    message.index = reader.int64().toBigInt();
                     break;
                 case /* string conversation_id */ 3:
                     message.conversationId = reader.string();
@@ -694,9 +673,9 @@ class PushCmd$Type extends MessageType<PushCmd> {
         /* int32 cmd_type = 1; */
         if (message.cmdType !== 0)
             writer.tag(1, WireType.Varint).int32(message.cmdType);
-        /* int32 index = 2; */
-        if (message.index !== 0)
-            writer.tag(2, WireType.Varint).int32(message.index);
+        /* int64 index = 2; */
+        if (message.index !== 0n)
+            writer.tag(2, WireType.Varint).int64(message.index);
         /* string conversation_id = 3; */
         if (message.conversationId !== "")
             writer.tag(3, WireType.LengthDelimited).string(message.conversationId);
@@ -948,7 +927,7 @@ export const AppAction = new AppAction$Type();
 class PushEvent$Type extends MessageType<PushEvent> {
     constructor() {
         super("msg_pb.PushEvent", [
-            { no: 1, name: "event_type", kind: "enum", T: () => ["msg_pb.PushEvent.EventType", PushEvent_EventType] },
+            { no: 1, name: "event_type", kind: "scalar", T: 5 /*ScalarType.INT32*/ },
             { no: 2, name: "message", kind: "message", T: () => PushMessage },
             { no: 3, name: "cmd", kind: "message", T: () => PushCmd },
             { no: 4, name: "geo", kind: "message", T: () => GeoInfo },
@@ -971,7 +950,7 @@ class PushEvent$Type extends MessageType<PushEvent> {
         while (reader.pos < end) {
             let [fieldNo, wireType] = reader.tag();
             switch (fieldNo) {
-                case /* msg_pb.PushEvent.EventType event_type */ 1:
+                case /* int32 event_type */ 1:
                     message.eventType = reader.int32();
                     break;
                 case /* msg_pb.PushMessage message */ 2:
@@ -1004,7 +983,7 @@ class PushEvent$Type extends MessageType<PushEvent> {
         return message;
     }
     internalBinaryWrite(message: PushEvent, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
-        /* msg_pb.PushEvent.EventType event_type = 1; */
+        /* int32 event_type = 1; */
         if (message.eventType !== 0)
             writer.tag(1, WireType.Varint).int32(message.eventType);
         /* msg_pb.PushMessage message = 2; */

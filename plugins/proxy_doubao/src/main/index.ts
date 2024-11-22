@@ -102,7 +102,7 @@ class ChatGptBridge extends AbstractPlugin implements Bridge, Pluginlifecycle {
         console.log(
           `dubo解析数据耗时： ${(end - start).toFixed(2)} ms\r\n${data}\r\n`
         );
-        resolve(data.message?.ttsContent);
+        resolve(data.message?.ttsContent || data.message?.ext?.brief);
       });
       handler.onError((err) => {
         reject(err);
