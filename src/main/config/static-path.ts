@@ -18,7 +18,7 @@ const filePath = {
     if (env === 'development') {
       return `http://localhost:${process.env.PORT}/#/${filename}`
     }
-    return `file://${join(app.getAppPath(), "dist", "electron", 'renderer', 'index.html/#/', filename)}`
+    return `file://${join(app.getAppPath(), "dist", "electron", 'renderer', 'index.html#/', filename)}`
   },
   settingURL: {
     development: `http://localhost:${process.env.PORT}/setting.html`,

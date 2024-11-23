@@ -8,28 +8,26 @@ const env = process.env.NODE_ENV;
 const filePath = {
   winURL: {
     development: `http://localhost:${process.env.PORT}`,
-    production: `file://${join(__dirname, "dist", "renderer", "index.html")}`,
+    production: `file://${join(__dirname, "renderer", "index.html")}`,
   },
   loadingURL: {
     development: `http://localhost:${process.env.PORT}/loader.html`,
-    production: `file://${join(__dirname, "dist", "renderer", "loader.html")}`,
+    production: `file://${join(__dirname, "renderer", "loader.html")}`,
   },
   getUrl: (filename?: string) => {
     if (env === "development") {
-      return `http://localhost:${process.env.PORT}${
-        filename ? `/#/${filename}` : ""
-      }`;
+      return `http://localhost:${process.env.PORT}${filename ? `/#/${filename}` : ""
+        }`;
     }
     return `file://${join(
       __dirname,
-      "dist",
       "renderer",
-      `index.html${filename ? `/#/${filename}` : ""}`
+      `index.html${filename ? `#/${filename}` : ""}`
     )}`;
   },
   settingURL: {
     development: `http://localhost:${process.env.PORT}/setting.html`,
-    production: `file://${join(__dirname, "dist", "renderer", "setting.html")}`,
+    production: `file://${join(__dirname, "renderer", "setting.html")}`,
   },
   __static: {
     development: join(
@@ -40,7 +38,7 @@ const filePath = {
       "renderer",
       "public"
     ).replace(/\\/g, "\\\\"),
-    production: join(__dirname, "dist", "renderer").replace(/\\/g, "\\\\"),
+    production: join(__dirname, "renderer").replace(/\\/g, "\\\\"),
   },
   getPreloadFile(fileName: string) {
     if (env !== "development") {

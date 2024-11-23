@@ -21,9 +21,6 @@ export const createWindow = () => {
         show: false,
         frame: false,
         webPreferences: {
-            devTools: process.env.NODE_ENV === "development",
-            // 在macos中启用橡皮动画
-            scrollBounce: process.platform === "darwin",
             preload: getPreloadFile("setting-ipc"),
         },
     });

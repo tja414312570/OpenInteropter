@@ -30,10 +30,11 @@ class WindowManager implements IWindowManager {
         frame: false,
         webPreferences: {
           webSecurity: true,
+          devTools: true,
           scrollBounce: process.platform === "darwin",
           contextIsolation: true,
           nodeIntegration: false,
-          allowRunningInsecureContent: false,
+          allowRunningInsecureContent: true,
         }
       });
       window = new BrowserWindow(mergedOptions)

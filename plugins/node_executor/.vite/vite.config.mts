@@ -35,9 +35,15 @@ export default defineConfig({
       config && config.target ? resolve("dist/web") : resolve("dist/renderer"),
     emptyOutDir: true,
     target: "esnext",
+    assetsInlineLimit: 0, // 禁用内联资源
     cssCodeSplit: false,
   },
-  server: {},
+  server: {
+    cors: {
+      origin: "*", // 允许所有来源
+      methods: ["GET", "POST", "PUT", "DELETE"], // 指定允许的 HTTP 方法
+    },
+  },
   plugins: [
     vueJsx(),
     vuePlugin({
