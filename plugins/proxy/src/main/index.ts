@@ -5,12 +5,14 @@ import {
   IpcApi,
   pluginContext,
   Pluginlifecycle,
+  ModifableIncomingMessage,
 } from "mylib/main";
-import { IContext } from "http-mitm-proxy";
+import { IContext, OnRequestDataCallback } from "http-mitm-proxy";
 import { decompressedBody } from "./decode";
 import { processResponse } from "./dispatcher";
 import { URL } from "url";
 import props from "./promtps";
+import _ from "lodash";
 import path from "path";
 import fs from "fs/promises";
 
@@ -49,20 +51,63 @@ class ChatGptBridge extends AbstractPlugin implements Bridge, Pluginlifecycle {
   onRequest(ctx: IContext): Promise<string | void> {
     // console.log("请求", ctx.proxyToServerRequestOptions.host)
     return new Promise<string | void>((resolve, rejects) => {
-      const requestData = ctx.clientToProxyRequest;
-
-      let body: Uint8Array[] = [];
-      requestData
-        .on("data", (chunk) => {
-          body.push(chunk);
-        })
-        .on("end", () => {
-          const requestBody = Buffer.concat(body).toString();
-          // const logData = `请求拦截: ${requestData.url}\nRequest Body: ${body}\n`;
-          // console.log(logData);
-          resolve(requestBody);
+      const accept = ctx.clientToProxyRequest.headers["accept"] || "";
+      if (accept.includes("text/event-stream")) {
+        const requestData = ctx.clientToProxyRequest;
+        const request = new ModifableIncomingMessage(requestData);
+        request.reset(async (buffer, _callback) => {
+          let requestBody = buffer.toString();
+          console.log(
+            "原始请求:",
+            ctx.clientToProxyRequest.headers["content-length"],
+            requestBody
+          );
+          const systemMessage = {
+            id: _.uniqueId("system-"), // 生成唯一 ID
+            author: { role: "system" },
+            content: {
+              content_type: "text",
+              parts: [await props()],
+            },
+            metadata: {
+              serialization_metadata: { custom_symbol_offsets: [] },
+            },
+            create_time: Date.now() / 1000, // 当前时间戳
+          };
+          let bodyJson = JSON.parse(requestBody);
+          bodyJson.messages = _.concat([systemMessage], bodyJson.messages);
+          requestBody = JSON.stringify(bodyJson);
+          const buffer_ = Buffer.from(requestBody);
+          ctx.proxyToServerRequestOptions!.headers["content-length"] = String(
+            buffer_.length
+          );
+          console.log(
+            "修改后的请求:",
+            ctx.proxyToServerRequestOptions!.headers["content-length"],
+            requestBody
+          );
+          _callback(buffer_);
+          resolve();
         });
+        ctx.clientToProxyRequest = request;
+        requestData.resume();
+      } else {
+        resolve();
+      }
     });
+    //   let body: Uint8Array[] = [];
+    //   requestData
+    //     .on("data", (chunk) => {
+    //       body.push(chunk);
+    //     })
+    //     .on("end", () => {
+
+    //       // const logData = `请求拦截: ${requestData.url}\nRequest Body: ${body}\n`;
+    //       // console.log(logData);
+    //       i
+    //       resolve(requestBody);
+    //     });
+    // });
   }
   onResponse(ctx: IContext): Promise<string | void> {
     return new Promise<string | void>(async (resolve) => {
@@ -120,7 +165,7 @@ class ChatGptBridge extends AbstractPlugin implements Bridge, Pluginlifecycle {
       console.log("请求地址:", urlString);
       const path = this.getPathFromUrl(urlString);
       if (path?.trim() === "/") {
-        this.send(await props());
+        // this.send(await props());
       }
       console.log(`插件已就绪:[${path}]`);
     });

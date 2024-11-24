@@ -72,7 +72,7 @@ export async function startProxyServer() {
     if (module) {
       ctx['agent'] = module
       // 根据请求的协议构建完整的 URL
-      module.onRequest(ctx);
+      await module.onRequest(ctx);
     }
     callback(); // 继续请求
   });
