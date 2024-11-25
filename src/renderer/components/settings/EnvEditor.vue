@@ -65,7 +65,7 @@
 import { reactive, ref, toRaw } from 'vue';
 import { v4 as uuid } from 'uuid';
 import { EnvVariable } from '@main/services/env-manager';
-import { ISetting } from '@lib/main';
+import type { ISetting } from '@lib/main';
 const props = defineProps<{
     menu: ISetting;
     value: Array<EnvVariable>;

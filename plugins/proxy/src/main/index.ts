@@ -63,16 +63,16 @@ class ChatGptBridge extends AbstractPlugin implements Bridge, Pluginlifecycle {
             requestBody
           );
           const systemMessage = {
-            id: _.uniqueId("system-"), // 生成唯一 ID
+            // id: _.uniqueId("system-"), // 生成唯一 ID
             author: { role: "system" },
             content: {
               content_type: "text",
-              parts: [await props()],
+              parts: [await props()],//
             },
-            metadata: {
-              serialization_metadata: { custom_symbol_offsets: [] },
-            },
-            create_time: Date.now() / 1000, // 当前时间戳
+            // metadata: {
+            //   serialization_metadata: { custom_symbol_offsets: [] },
+            // },
+            // create_time: Date.now() / 1000, // 当前时间戳
           };
           let bodyJson = JSON.parse(requestBody);
           bodyJson.messages = _.concat([systemMessage], bodyJson.messages);

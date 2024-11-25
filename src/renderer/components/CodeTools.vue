@@ -51,8 +51,8 @@
 
 <script lang="ts" setup>
 import { InstructContent } from '@main/ipc/code-manager';
-import { InstructResultType, PluginStatus, PluginType } from '@lib/main';
-import { PluginInfo } from '@lib/main';
+import { PluginInfo, PluginStatus, PluginType } from '@lib/main/plugin-defined';
+import { InstructResultType } from '@lib/main/bridge'
 import { IpcEventHandler } from '@renderer/ts/default-ipc';
 import { getIpcApi } from '@preload/lib/ipc-api';
 import { onMounted, onUnmounted, ref, watch } from 'vue';

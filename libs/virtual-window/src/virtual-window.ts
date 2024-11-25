@@ -44,8 +44,16 @@ class VirtualWindow {
   private _creator: Error;
   private scrollTop: number | undefined;
   private scrollBottom: number | undefined;
+  private cursorVisiable = false;
+  private belVisiable = false;
   setCols(cols: number) {
     this.cols = cols;
+  }
+  public setCursorVisible(visible: boolean) {
+    this.cursorVisiable = visible;
+  }
+  public setBelVisiable(visible: boolean) {
+    this.belVisiable = visible;
   }
   destory() {
     this.close();
@@ -498,9 +506,11 @@ class VirtualWindow {
           result += '\n'
         }
       }
-      result += restore(`\x1b[${this.cursorY + 1};${this.cursorX + 1}H`);
-      result += restore(`\x1b[?25${this.cursorVisible ? 'h' : 'l'}`)
-      if (this.bel) {
+      if (this.cursorVisiable) {
+        result += restore(`\x1b[${this.cursorY + 1};${this.cursorX + 1}H`);
+        result += restore(`\x1b[?25${this.cursorVisible ? 'h' : 'l'}`)
+      }
+      if (this.belVisiable && this.bel) {
         result += restore(`\x07`)
       }
       this.renderCache = result;

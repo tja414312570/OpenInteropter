@@ -19,10 +19,10 @@ import CodeDiff from './CodeDiff.vue';
 import { getIpcApi } from '@preload/lib/ipc-api';
 import { IpcEventHandler } from '@renderer/ts/default-ipc';
 import context from '@renderer/context';
-import { InstructResultType } from '@lib/main';
+import { InstructResultType } from '@lib/main/bridge'
 
 
-const code = ref<string>(`vim "/Users/yanan/Desktop/:..txt"`);
+const code = ref<string>(`ls`);
 const editor = shallowRef<monaco.editor.IStandaloneCodeEditor | null>(null);
 const decorations = ref<string[]>([]);
 const currentLine = ref<number>(2); // 当前执行的行，默认是第2行

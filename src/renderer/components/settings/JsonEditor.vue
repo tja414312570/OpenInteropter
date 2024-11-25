@@ -5,7 +5,7 @@
 <script setup lang="ts">
 import { ref, defineProps, onMounted, onBeforeUnmount, watch, toRaw } from 'vue';
 import { Content, ContentErrors, createJSONEditor, JSONEditorPropsOptional, JSONPatchResult, MenuItem } from 'vanilla-jsoneditor';
-import { ISetting } from '@lib/main';
+import type { ISetting } from '@lib/main';
 
 // JSONEditor properties as of version 0.3.60
 const propNames = [

@@ -62,7 +62,7 @@ import { onMounted, onUnmounted, reactive, ref, shallowRef, toRaw, watch, WatchH
 import { getIpcApi } from '@preload/lib/ipc-api';
 import { settingCompents } from '@renderer/ts/setting-compents';
 import JsonEditor from '@renderer/components/settings/JsonEditor.vue';
-import { ISetting } from '@lib/main';
+import type { ISetting } from '@lib/main';
 import path from 'path';
 const coreApi = getIpcApi('ipc-core.window', onUnmounted);
 const selected = ref([])
