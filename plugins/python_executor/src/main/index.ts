@@ -86,8 +86,7 @@ class ExecuteContext {
 
 class PythonExecutor
   extends AbstractPlugin
-  implements InstructExecutor, Pluginlifecycle, Prompter
-{
+  implements InstructExecutor, Pluginlifecycle, Prompter {
   requirePrompt(): Promise<String> {
     return prompt();
   }
@@ -157,7 +156,10 @@ class PythonExecutor
         fs.writeFileSync(js_file, code);
         childProcess = spawn("python", [`${js_file}`], {
           stdio: ["pipe", "pipe", "pipe"],
-          env: { ...env, FORCE_COLOR: "1" },
+          env: {
+            ...env, FORCE_COLOR: "1",
+            PYTHONIOENCODING: "utf-8", // 强制 Python 使用 UTF-8
+          },
         });
         childProcess.stdout?.setEncoding("utf8");
         childProcess.stdout?.on("data", (data) => {
