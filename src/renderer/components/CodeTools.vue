@@ -214,7 +214,9 @@ codeApi.on('insertLine', (event: any, lineDiff: { code: string, id: string, line
         if (type !== InstructResultType.executing) {
             isExecuting.value = false;
             if (isAutoSend.value && current_code.indexOf(id) === -1) {
-                codeApi.send('send_execute-result', code)
+                setTimeout(() => {
+                    codeApi.send('send_execute-result', code)
+                }, 1);
                 current_code.push(id);
                 if (current_code.length > 10) {
                     current_code.shift()

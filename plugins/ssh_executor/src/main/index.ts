@@ -11,7 +11,7 @@ import VirtualWindow, { debug } from "virtual-window";
 import { Pluginlifecycle } from "mylib/main";
 import { ExtensionContext } from "mylib/main";
 import { v4 as uuidv4 } from "uuid";
-import * as pty from 'node-pty';
+import * as pty from "node-pty";
 import { prompt } from "./prompt";
 
 const removeInvisibleChars = (str: string) => {
@@ -45,6 +45,7 @@ class ExecuteContext {
   private _error: ((data: Error) => void) | undefined;
   private _end: ((data?: string) => void) | undefined;
   private _abort: ((message?: any) => void) | undefined;
+  public pty: pty.IPty | undefined;
   callData(data: string) {
     if (!this._data) {
       throw new Error("没有响应回调");
@@ -100,7 +101,8 @@ class ExecuteContext {
 
 class SshExecutor
   extends AbstractPlugin
-  implements InstructExecutor, Pluginlifecycle, Prompter {
+  implements InstructExecutor, Pluginlifecycle, Prompter
+{
   requirePrompt(): Promise<String> {
     return prompt();
   }
@@ -136,6 +138,7 @@ class SshExecutor
         throw new Error("代码正在执行中");
       }
       const executeContext = new ExecuteContext();
+      this.cache.set(id, executeContext);
       const virtualWindow = new VirtualWindow();
       const render = (data: string, type: InstructResultType) => {
         virtualWindow.write(data);
@@ -151,9 +154,11 @@ class SshExecutor
       };
       const destory = () => {
         this.cache.delete(id);
+        executeContext.pty?.kill();
       };
       executeContext.onError((err) => {
-        render(`程序异常:${err}`, InstructResultType.completed), destory();
+        destory();
+        render(`程序异常:${err}`, InstructResultType.completed);
         const output = virtualWindow.render();
         resolve({
           id: instruct.id,
@@ -163,57 +168,64 @@ class SshExecutor
         });
       });
       try {
-        const shell = process.platform === 'win32' ? 'powershell.exe' : 'bash';
+        const shell = process.platform === "win32" ? "powershell.exe" : "bash";
         console.log("启动shell:", shell);
-        const params = process.platform === 'win32' ? ["-NoLogo ", "-NonInteractive", "-Command", `${code.trim()}`] : []
-        const ptyProcess = pty.spawn(shell, params, {
-          name: 'xterm-color',
+        const params =
+          process.platform === "win32"
+            ? ["-NoLogo ", "-NonInteractive", "-Command", `${code.trim()}`]
+            : ["-c", `${code.trim()}`];
+        const ptyProcess = (executeContext.pty = pty.spawn(shell, params, {
+          name: "xterm-color",
           cols: 256,
           rows: 256,
           cwd: process.env.HOME,
-          env: pluginContext.env
-        });
+          env: pluginContext.env,
+        }));
         virtualWindow.setCols(ptyProcess.cols);
-        this.cache.set(id, executeContext);
         ptyProcess.onData((data: string) => {
           render(data, InstructResultType.executing); // 将数据写入虚拟窗口
         });
         // ptyProcess.on('error', (error: string) => {
         //     virtualWindow.write(error); // 将数据写入虚拟窗口
         // });
-        ptyProcess.onExit(exit => {
-          ptyProcess.kill();
+        ptyProcess.onExit((exit) => {
+          destory();
           if (exit.exitCode === 0) {
-            render(`程序执行成功！`, InstructResultType.completed) // 将数据写入虚拟窗口
+            render(`程序执行成功！`, InstructResultType.completed); // 将数据写入虚拟窗口
             resolve({
               id,
               std: virtualWindow.render(),
               ret: exit.exitCode + "",
               type: InstructResultType.completed,
-              execId
+              execId,
             });
           } else {
-            render(`程序执行失败,退出码:${exit.exitCode},信号:${exit.signal}`, InstructResultType.failed); // 将数据写入虚拟窗口
+            render(
+              `程序执行失败,退出码:${exit.exitCode},信号:${exit.signal}`,
+              InstructResultType.failed
+            ); // 将数据写入虚拟窗口
             resolve({
               id,
               std: virtualWindow.render(),
               ret: exit.exitCode + "",
               type: InstructResultType.failed,
-              execId
+              execId,
             });
           }
         });
         executeContext.onAbort((err) => {
-          ptyProcess.kill("用户主动终止");
+          ptyProcess.write("\x03");
+          ptyProcess.kill("SIGKILL");
         });
       } catch (error: any) {
+        console.error(error);
         executeContext.error(error);
         reject(error);
       }
     });
   }
 
-  async onMounted(ctx: ExtensionContext) { }
-  onUnmounted(): void { }
+  async onMounted(ctx: ExtensionContext) {}
+  onUnmounted(): void {}
 }
 export default new SshExecutor();

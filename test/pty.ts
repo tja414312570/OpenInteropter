@@ -3,9 +3,12 @@ const shell = process.platform === 'win32' ? 'powershell.exe' : 'zsh';
 import fs from 'fs'
 import VirtualWindow, { restore } from '../libs/virtual-window/src/index'
 import path from 'path';
-const ptyProcess = pty.spawn(shell, ["-NoLogo ", "-NonInteractive", "-Command", `Stop-Process -Name explorer
-Start-Process explorer
-`], {
+const params =
+    process.platform === "win32"
+        ? ["-NoLogo ", "-NonInteractive", "-Command"]
+        : ["-x", "-c", 'echo Hello, World!'];
+console.log(process.env)
+const ptyProcess = pty.spawn(shell, params, {
     name: 'xterm-color',
     cwd: process.env.HOME,
     env: process.env,
