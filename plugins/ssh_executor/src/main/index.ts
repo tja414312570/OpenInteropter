@@ -11,7 +11,7 @@ import VirtualWindow, { debug } from "virtual-window";
 import { Pluginlifecycle } from "mylib/main";
 import { ExtensionContext } from "mylib/main";
 import { v4 as uuidv4 } from "uuid";
-import { IDisposable, IPty } from "node-pty";
+import * as pty from 'node-pty';
 import { prompt } from "./prompt";
 
 const removeInvisibleChars = (str: string) => {
@@ -149,9 +149,7 @@ class SshExecutor
           type,
         });
       };
-      let dispose: IDisposable;
       const destory = () => {
-        dispose?.dispose();
         this.cache.delete(id);
       };
       executeContext.onError((err) => {
@@ -159,140 +157,59 @@ class SshExecutor
         const output = virtualWindow.render();
         resolve({
           id: instruct.id,
-          // ret: output,
           std: output,
           execId,
           type: InstructResultType.failed,
         });
       });
       try {
-        const pty = await pluginContext.resourceManager.require<IPty>("pty");
-        if (process.platform === "win32") {
-        }
-        virtualWindow.setCols(pty.cols);
-        try {
-          const { x, y, buffer } = await (pty as any).getCursor();
-          // const spaces = " ".repeat(x);
-          virtualWindow.write(buffer.slice(0, x));
-        } catch (err) {
-          console.warn(
-            "没有获取到xterm的原有缓存，可能影响虚拟窗口渲染效果",
-            err
-          );
-        }
+        const shell = process.platform === 'win32' ? 'powershell.exe' : 'bash';
+        console.log("启动shell:", shell);
+        const params = process.platform === 'win32' ? ["-NoLogo ", "-NonInteractive", "-Command", `${code.trim()}`] : []
+        const ptyProcess = pty.spawn(shell, params, {
+          name: 'xterm-color',
+          cols: 256,
+          rows: 256,
+          cwd: process.env.HOME,
+          env: pluginContext.env
+        });
+        virtualWindow.setCols(ptyProcess.cols);
         this.cache.set(id, executeContext);
-        executeContext.onWrite((data) => pty.write(data));
-        // const path_ = path.join(__dirname, "frames.txt");
-
-        // let frame = 0;
-        dispose = pty.onData((data: string) => {
-          console.log(debug(data));
-          render(data, InstructResultType.executing);
-          const output = virtualWindow.render();
-          // fs.appendFileSync(path_,"\r\n=========================原始帧【"+(frame++)+'\r\n')
-          // fs.appendFileSync(path_,debug(data),'utf-8')
-          // fs.appendFileSync(path_,"\r\n-------------------------渲染帧【"+(frame++)+'\r\n')
-          // fs.appendFileSync(path_,debug(output).replace(/\x0a/g,'\r\n'),'utf-8')
-          executeContext.callData(output);
+        ptyProcess.onData((data: string) => {
+          render(data, InstructResultType.executing); // 将数据写入虚拟窗口
         });
-
-        executeContext.onEnd((data?: string) => {
-          render(data ? data : "", InstructResultType.completed);
-          const output = virtualWindow.render();
-          resolve({
-            id: instruct.id,
-            // ret: output,
-            std: output,
-            execId,
-            type: InstructResultType.completed,
-          });
-          destory();
-        });
-
-        executeContext.onAbort((err) => {
-          pty.write("\x03");
-          render(`程序终止执行:${err}`, InstructResultType.completed),
-            destory();
-          const output = virtualWindow.render();
-          resolve({
-            id: instruct.id,
-            // ret: output,
-            std: output,
-            execId,
-            type: InstructResultType.completed,
-          });
-        });
-
-        // const code_splits = instruct.code
-        //   .split(/\r?\n/)
-        //   .filter((line) => line.trim() && !/^\s*(#|REM|::)/i.test(line));
-        // (async () => {
-        //   for (const instruct of code_splits) {
-        try {
-          const exitCode = await this.executeLine(
-            id,
-            instruct.code,
-            line,
-            execId,
-            executeContext
-          );
-          if (!isCommandSuccessful(exitCode)) {
-            executeContext.abort(`程序异常退出，退出码${exitCode}`);
-            // break;
+        // ptyProcess.on('error', (error: string) => {
+        //     virtualWindow.write(error); // 将数据写入虚拟窗口
+        // });
+        ptyProcess.onExit(exit => {
+          ptyProcess.kill();
+          if (exit.exitCode === 0) {
+            render(`程序执行成功！`, InstructResultType.completed) // 将数据写入虚拟窗口
+            resolve({
+              id,
+              std: virtualWindow.render(),
+              ret: exit.exitCode + "",
+              type: InstructResultType.completed,
+              execId
+            });
+          } else {
+            render(`程序执行失败,退出码:${exit.exitCode},信号:${exit.signal}`, InstructResultType.failed); // 将数据写入虚拟窗口
+            resolve({
+              id,
+              std: virtualWindow.render(),
+              ret: exit.exitCode + "",
+              type: InstructResultType.failed,
+              execId
+            });
           }
-          // 如果需要在执行成功后处理 result，可以在这里添加逻辑
-        } catch (error: any) {
-          // 在此捕获执行过程中可能发生的错误
-          console.error(`Error executing line: ${instruct}`, error);
-          executeContext.error(error);
-          // break; // 如果发生错误，可以选择中断循环
-        }
-        // }
-        executeContext.end();
-        // })();
+        });
+        executeContext.onAbort((err) => {
+          ptyProcess.kill("用户主动终止");
+        });
       } catch (error: any) {
         executeContext.error(error);
         reject(error);
       }
-    });
-  }
-
-  executeLine(
-    id: string,
-    instruct: string,
-    line: number,
-    execId: string,
-    executeContext: ExecuteContext
-  ): Promise<string> {
-    let executeing = true;
-    const end_tag = `_${uuidv4()}_`;
-    const cmd =
-      process.platform === "win32"
-        ? `try { ${instruct.trim()} } catch { Write-Error $_.Exception.Message ;$_.ErrorRecord } finally { Write-Host "${end_tag}$?" }` //ps
-        : `eval "${instruct.replaceAll('"', '\\"')}" ; echo "${end_tag}$?"`; //ssh
-    const msg = `命令[${instruct}]开始执行,执行id[${end_tag}],命令：${cmd}`;
-    pluginContext.notifyManager.notify(msg);
-    return new Promise((resolve) => {
-      // 将 PTY 输出发送到前端
-      let remainingText;
-      executeContext.onData((data: string) => {
-        remainingText = data;
-        let index;
-        while ((index = remainingText.indexOf("\n")) > -1) {
-          const _line = remainingText.substring(0, index);
-          const lineTrim = removeInvisibleChars(_line);
-          if (lineTrim.length > 1 && lineTrim.startsWith(end_tag)) {
-            executeing = false;
-            const exitCode = lineTrim.substring(end_tag.length);
-            const msg = `命令[${instruct}]执行完成,执行id[${end_tag}]，退出状态[${exitCode}]`;
-            pluginContext.notifyManager.notify(msg);
-            resolve(exitCode);
-          }
-          remainingText = remainingText.substring(index + 1);
-        }
-      });
-      executeContext.write(cmd);
-      executeContext.write("\r");
     });
   }
 
