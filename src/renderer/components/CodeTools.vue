@@ -126,7 +126,7 @@ onMounted(() => {
             // 优先匹配到 language 的排前面
             return bMatchesLanguage - aMatchesLanguage;
         });
-        selected.value = executors.value[0]['id']
+        selected.value = executors.value.filter(item => item.instruct?.includes(props.language))?.[0]?.['id'] || '';
         loading.value = false
     }).catch(err => {
         console.error("获取到插件失败", err)
