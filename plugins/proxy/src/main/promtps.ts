@@ -1,4 +1,9 @@
-import { pluginContext, PluginStatus, PluginType } from "mylib/main";
+import {
+  pluginContext,
+  PluginStatus,
+  PluginType,
+  adjustParagraphIndent,
+} from "mylib/main";
 import os from "os";
 
 export default async () => {
@@ -6,15 +11,22 @@ export default async () => {
   const plugins = pluginManager.getAllPlugins();
   let prompts = "";
   for (const plugin of plugins) {
+    if (plugin.type === PluginType.agent) {
+      continue;
+    }
     if (plugin.status === PluginStatus.load) {
       const instance = await pluginManager.getModule(plugin as any);
       if ("requirePrompt" in instance) {
         const prompt = await instance["requirePrompt"]();
-        prompts += `
-        This user current plugin is "${plugin.manifest.name}".
-        - This plugin can perform the following tasks: ${prompt}
-        - Always use this plugin for tasks it supports. Do not suggest manual alternatives unless explicitly requested by the user.
-      `;
+        prompts += adjustParagraphIndent(
+          `
+        ## The plugin of "${plugin.manifest.name}".
+          - This plugin descript:
+          ${adjustParagraphIndent(prompt, 14)}
+          - Always use this plugin for tasks it supports. Do not suggest manual alternatives unless explicitly requested by the user.
+      `,
+          2
+        );
       }
     }
   }
@@ -52,7 +64,7 @@ Rules:
   Current user system platform :${os.platform()}
   Current user system arch:${os.arch()}
   Current user system version:${os.version()}
-  Current env cwd:${pluginContext.env.HOME}
+  Current user home:${pluginContext.env.HOME}
   Current user language: ${userLanguage}
   Always respond to the user in their language: ${userLanguage}.
    `;

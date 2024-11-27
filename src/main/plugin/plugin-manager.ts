@@ -53,6 +53,7 @@ export interface PluginEventMap {
     // [event: string]: any[];
 }
 class PluginManager extends EventEmitter<PluginEventMap> {
+
     private pluginDirs: Set<string> = new Set();           // 插件目录
     private pluginSet: Set<PluginInfo> = new Set(); // 已加载的插件列表
     private idMapping: Map<string, PluginInfo> = new Map();
@@ -231,11 +232,15 @@ class PluginManager extends EventEmitter<PluginEventMap> {
             throw err;
         }
     }
-    public async getModule(pluginInfo: PluginInfo & PluginProxy) {
+    public async getModule(pluginInfo: PluginInfo) {
         if (!pluginInfo.module) {
-            await this.load(pluginInfo)
+            await this.load(pluginInfo as any)
         }
-        return pluginInfo.proxy;
+        return (pluginInfo as any).proxy;
+    }
+    async getModuleById(id: string) {
+        const plugin = this.getPluginFromId(id);
+        return plugin && await this.getModule(plugin as any);
     }
     public getPluginFromDir(plugin_path: string) {
         for (const value of this.idMapping.values()) {

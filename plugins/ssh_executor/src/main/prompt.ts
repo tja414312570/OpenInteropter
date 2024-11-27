@@ -9,7 +9,10 @@ export const prompt = async () => {
 
   // 生成命令行提示信息
   const promptMessage = `
-  Current user shell is ${userShell} ，the markdown code mark is shell like \`\`\`shell some instruct \`\`\`
+  Current user shell is ${userShell} ，the markdown code mark is shell like 
+  \`\`\`shell
+  some instruct 
+  \`\`\`
   ## Rules:
   - Single Command Rule: Always return a single, executable command for any given task. Do not output explanations, extra steps, or sequences of commands. If the task requires multiple steps, request the user to break down the task or clarify the request.
   - Clarity Check: If the user's request is unclear or open-ended, do not attempt to guess. Prompt the user to provide a more specific and actionable description of their task.

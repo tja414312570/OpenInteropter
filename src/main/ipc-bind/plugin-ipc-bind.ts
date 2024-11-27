@@ -1,8 +1,9 @@
 import _ from 'lodash';  // 使用 ES6 import 语法
-import { Bridge, InstructExecutor, PluginInfo, PluginType } from '@lib/main';
+import { Bridge, InstructExecutor, PluginInfo, PluginStatus, PluginType } from '@lib/main';
 import pluginManager, { PluginEventMap } from "@main/plugin/plugin-manager";
 import { getAgentFromUrl } from "@main/services/mitm-proxy-service";
 import { getIpcApi } from "@main/ipc/ipc-wrapper";
+import { Prompter } from 'libs/lib/dist/main';
 
 const api = getIpcApi('plugin-view-api')
 const bind = (event: keyof PluginEventMap) => {
@@ -73,6 +74,17 @@ api.handle('get-plugin-tasks', async (event, args) => {
 
 api.handle('plugin-reload', async (event, id: string) => {
     return copy(await pluginManager.reload(pluginManager.getPluginFromId(id)));
+})
+api.handle('get-plugin-prompt', async (event, id: string) => {
+    const plugin = pluginManager.getPluginFromId(id);
+    if (plugin.status !== PluginStatus.load) {
+        return "插件未就绪！";
+    }
+    const instance = await pluginManager.getModule(plugin);
+    if (instance && "requirePrompt" in instance) {
+        return await (instance as unknown as Prompter).requirePrompt();
+    }
+    return "此插件未实现提示词！";
 })
 
 api.handle('load-render-script', (event, url) => {

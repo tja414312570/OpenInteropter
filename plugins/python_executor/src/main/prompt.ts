@@ -2,10 +2,11 @@ import install from "./installer";
 
 export const prompt = async () => {
   try {
-    const python_version = install.getFromCurrentEnv();
+    const python_version = await install.getFromCurrentEnv();
     // 生成命令行提示信息
     const promptMessage = `
-The current Python version for the user is ${python_version}. Please use the following format to write Python scripts or commands: \`\`\`python
+The current Python version for the user is ${python_version}. Please use the following format to write Python scripts or commands: 
+\`\`\`python
 your python code here
 \`\`\`
 

@@ -20,11 +20,11 @@
       "@preload/*": ["src/preload/*"],
       "@main/*": ["src/main/*"],
       "@store/*": ["src/renderer/store/modules/*"],
-      "@lib/*": ["lib/src/*"]
+      "@lib/*": ["libs/lib/src/*"]
     },
     "typeRoots": ["node_modules/@types"],
     "lib": ["ES2022", "dom"]
   },
-  "include": ["src/**/*", "types/*", "lib/**/*"],
+  "include": ["src/**/*", "types/*", "libs/lib/**/*"],
   "exclude": ["node_modules"]
 }

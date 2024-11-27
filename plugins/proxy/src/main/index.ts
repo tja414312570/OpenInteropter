@@ -18,6 +18,7 @@ import fs from "fs/promises";
 
 class ChatGptBridge extends AbstractPlugin implements Bridge, Pluginlifecycle {
   ipcApi: IpcApi | undefined;
+  requirePrompt = props;
   renderScript(): Promise<string | void> {
     return new Promise((resolve, reject) => {
       const path_ = path.join(
@@ -67,7 +68,7 @@ class ChatGptBridge extends AbstractPlugin implements Bridge, Pluginlifecycle {
             author: { role: "system" },
             content: {
               content_type: "text",
-              parts: [await props()],//
+              parts: [await this.requirePrompt()], //
             },
             // metadata: {
             //   serialization_metadata: { custom_symbol_offsets: [] },

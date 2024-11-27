@@ -119,7 +119,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "D:\\git\\OpenInteropter\\src\\main\\prisma\\generated\\client",
+      "value": "/Volumes/mac_data/git/OpenInteropter/src/main/prisma/generated/client",
       "fromEnvVar": null
     },
     "config": {
@@ -128,16 +128,16 @@ const config = {
     "binaryTargets": [
       {
         "fromEnvVar": null,
-        "value": "windows",
+        "value": "darwin",
         "native": true
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "D:\\git\\OpenInteropter\\prisma\\schema.prisma",
+    "sourceFilePath": "/Volumes/mac_data/git/OpenInteropter/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": "../../../../../.env",
+    "rootEnvPath": null,
     "schemaEnvPath": "../../../../../.env"
   },
   "relativePath": "../../../../../prisma",
@@ -147,6 +147,7 @@ const config = {
     "db"
   ],
   "activeProvider": "sqlite",
+  "postinstall": true,
   "inlineDatasources": {
     "db": {
       "url": {

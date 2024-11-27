@@ -22,7 +22,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@main': resolve('src/main'),
-      '@lib': resolve('lib/src'),
+      '@lib': resolve('libs/lib/src'),
       '@preload': resolve('src/preload'),
       "@renderer": root,
       "@store": join(root, "/store/modules"),

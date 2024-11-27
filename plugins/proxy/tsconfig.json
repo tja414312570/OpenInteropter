@@ -6,6 +6,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "moduleResolution": "nodenext",
+    "resolveJsonModule": true,
     "forceConsistentCasingInFileNames": true,
     "noEmitOnError": true,
     "outDir": "./dist"
