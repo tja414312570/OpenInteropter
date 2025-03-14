@@ -142,8 +142,6 @@ function reloadPage() {
   display: flex;
   align-items: center;
   padding: 8px;
-  background-color: #f5f5f5;
-  border-bottom: 1px solid #ccc;
 }
 
 .v-btn {

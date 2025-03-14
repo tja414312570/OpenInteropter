@@ -64,7 +64,7 @@ const config = reactive<CodeLayoutConfig>({
   statusBar: true,
   menuBar: true,
   bottomPanelMaximize: false,
-  secondarySideBar: true,
+  secondarySideBar: false,
   secondarySideBarWidth: 50,
   secondarySideBarMinWidth: 170,
   secondarySideBarAsActivityBar: true,
@@ -213,7 +213,7 @@ const loadOther = () => {
       name: 'code.view',
       tabStyle: "single",
       badge: "12",
-      startOpen: true,
+      startOpen: false,
       actions: [
         {
           name: '调试',
