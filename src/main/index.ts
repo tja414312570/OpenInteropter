@@ -31,10 +31,12 @@ import './services/service-menu'
 import "./services/window-settings";
 import remoteWebviewManager from './services/remote-webview-manager';
 import "./services/window-prompt"
-import './services/model-service'
+import modelService from './services/model-service'; './services/model-service'
 
+modelService.set(new OllamaModel())
 // import { onAppReady } from "./ipc-bind/core-ipc-bind";
 import { getIpcApi } from "./ipc/ipc-wrapper";
+import { OllamaModel } from './model-provider/ollama';
 function startWindow(proxy: string) {
   // const { disableF12 } = useDisableButton();
   // const { renderProcessGone } = useProcessException();

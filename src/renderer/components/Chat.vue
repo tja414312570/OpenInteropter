@@ -40,9 +40,11 @@ import MarkdownIt from 'markdown-it'
 import { getIpcApi } from '@preload/lib/ipc-api';
 
 
-let chatViewApi = getIpcApi("chat-view", onUnmounted)
-const list = await chatViewApi.invoke("list")
-console.log("模型列表:", list)
+let chatViewApi = getIpcApi("chat-view", onUnmounted);
+(async () => {
+    const list = await chatViewApi.invoke("list")
+    console.log("模型列表:", list)
+})()
 // 定义消息和工具的数据类型
 interface ChatMessage {
     content: string
@@ -67,14 +69,17 @@ const tools = ref<Tool[]>([
 const md = new MarkdownIt({
     html: true,
 })
-
+chatViewApi.on('onMessage', (event, message) => {
+    console.log("搜到响应:", event, message)
+})
 // 发送消息：将消息和附件加入消息列表，并重置输入框和附件
 function sendMessage(): void {
     if (!inputMessage.value.trim() && !attachment.value) return
-    messages.value.push({
-        content: inputMessage.value,
-        attachment: attachment.value,
-    })
+    // messages.value.push({
+    //     content: inputMessage.value,
+    //     attachment: attachment.value,
+    // })
+    chatViewApi.invoke('chat', null, inputMessage.value)
     inputMessage.value = ''
     attachment.value = null
     // TODO: 若需要将消息发送到后端处理，可在此处添加 API 调用

@@ -51,6 +51,7 @@
     "node-fetch": "^3.3.2",
     "node-pty": "https://github.com/microsoft/node-pty",
     "ollama": "^0.5.13",
+    "openai": "^4.87.3",
     "portscanner": "^2.2.0",
     "semver": "^7.6.3",
     "splitpanes": "^3.1.5",
