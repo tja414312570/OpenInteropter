@@ -31,6 +31,7 @@ import './services/service-menu'
 import "./services/window-settings";
 import remoteWebviewManager from './services/remote-webview-manager';
 import "./services/window-prompt"
+import './services/model-service'
 
 // import { onAppReady } from "./ipc-bind/core-ipc-bind";
 import { getIpcApi } from "./ipc/ipc-wrapper";

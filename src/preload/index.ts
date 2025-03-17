@@ -6,6 +6,7 @@ import './index-plugin-view'
 import './index-instruct-view'
 import './core-api-pre'
 import './remote-webview'
+import './chat-view'
 exposeInMainWorld('pty');
 
 exposeInMainWorld('ipc-notify', ipcRenderer => ({

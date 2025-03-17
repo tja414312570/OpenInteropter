@@ -35,9 +35,14 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { onUnmounted, ref } from 'vue'
 import MarkdownIt from 'markdown-it'
+import { getIpcApi } from '@preload/lib/ipc-api';
 
+
+let chatViewApi = getIpcApi("chat-view", onUnmounted)
+const list = await chatViewApi.invoke("list")
+console.log("模型列表:", list)
 // 定义消息和工具的数据类型
 interface ChatMessage {
     content: string
