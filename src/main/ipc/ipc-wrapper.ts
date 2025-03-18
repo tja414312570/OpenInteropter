@@ -2,6 +2,75 @@ import { ipcMain, IpcMainEvent, IpcMainInvokeEvent, WebContents, webContents } f
 import { getWebContentIds, handleChannelBind, handleChannelUnbind, removeListenerChannel } from "@main/services/web-content-listener";
 import { showErrorDialog } from "@main/utils/dialog";
 
+export interface Stream {
+    id: string,
+    closed: boolean,
+    write(arg: any): void
+    end(arg: any): void
+    error: (arg: any) => void
+    onCancel(listener: (event: IpcMainEvent, ...args: any[]) => void): void
+}
+export interface StreamIpcMainInvokeEvent extends IpcMainInvokeEvent {
+    stream: Stream
+}
+//最后一个参数返回{ type: 'stream', id: request_id }
+function processArgs(ipc: IpcApi, event: IpcMainInvokeEvent, args: any[]) {
+    if (args.length > 0) {
+        const lastArg = args[args.length - 1];
+        if (lastArg?.type === 'stream' && typeof lastArg.id === 'string') {
+            wrapperEvent(ipc, event, lastArg)
+            return args.slice(0, args.length - 1);
+        }
+    }
+    return args;
+}
+function wrapperEvent(ipc: IpcApi, event: IpcMainInvokeEvent, stream: {
+    closed: boolean; type: string, id: string
+}): StreamIpcMainInvokeEvent {
+    const streamEvent = (event as StreamIpcMainInvokeEvent);
+    const removeAllListener = () => {
+        ipcMain.removeAllListeners('end-cancel-' + stream.id);
+        ipcMain.removeAllListeners('cancel-cancel-' + stream.id);
+    }
+    streamEvent.stream = {
+        id: stream.id,
+        closed: false,
+        write: (arg) => {
+            if (streamEvent.stream.closed) {
+                return;
+            }
+            console.log("写入流" + stream.id)
+            event.sender.send('stream-data-' + stream.id, arg);
+        },
+        end: (arg) => {
+            if (streamEvent.stream.closed) {
+                return;
+            }
+            console.log("结束流" + stream.id)
+            event.sender.send('end-stream-' + stream.id, arg);
+        }, error: (arg) => {
+            if (streamEvent.stream.closed) {
+                return;
+            }
+            console.log("流错误" + stream.id)
+            event.sender.send('error-stream-' + stream.id, arg);
+        }, onCancel(listener: (event: IpcMainEvent, ...args: any[]) => void) {
+            console.log("客户端主动结束流" + stream.id)
+            ipcMain.on('cancel-stream-' + stream.id, (event: IpcMainEvent, ...args: any[]) => {
+                removeAllListener()
+                listener(event, ...args);
+                streamEvent.stream.closed = true;
+
+            })
+        },
+    }
+    ipcMain.on('close-stream-' + stream.id, () => {
+        console.log("客户端结束流" + stream.id)
+        streamEvent.stream.closed = true;
+        removeAllListener()
+    })
+    return streamEvent;
+}
 export class IpcApi {
     private api: string;
     constructor(api: string) {
@@ -10,7 +79,10 @@ export class IpcApi {
     wrapper(listener: (...args: any[]) => (Promise<any>) | (any)) {
         return async (...args: any[]) => {
             try {
-                return await listener(...args);
+                const event = args[0];
+                let realArgs = args.slice(1);
+                realArgs = processArgs(this, event, realArgs)
+                return await listener(event, ...realArgs);
             } catch (err) {
                 // console.error(`Error in listener: ${err.message}`, err);
                 throw err;

@@ -56,6 +56,7 @@ export interface DefaultApi {
     on: (channel: string, listener: (event: IpcRendererEvent, ...args: any[]) => void) => IpcRenderer;
     send: (channel: string, ...args: any[]) => void;
     invoke: (channel: string, ...args: any[]) => Promise<any>;
+    request: <T>(channel: string, ...args: any[]) => AsyncIterableIterator<T>
 }
 const notifyError = (message: string) => {
     console.error(new Error(message))

@@ -2,9 +2,10 @@
 import { BindIpc, handle, on } from "@main/ipc/ipc-decorator";
 import { PrismaClient, Message, Conversation } from '../prisma/generated/client';
 import { ModelProvider } from "@main/model-provider/ModelType";
-import { getIpcApi, IpcApi } from "@main/ipc/ipc-wrapper";
+import { getIpcApi, IpcApi, StreamIpcMainInvokeEvent } from "@main/ipc/ipc-wrapper";
 import { OllamaModel } from "@main/model-provider/ollama";
 import dbManager from "./db-manager";
+import { IpcMainInvokeEvent } from "electron";
 const prisma = dbManager.getClient();
 @BindIpc("chat-view")
 class ModelService {
@@ -28,7 +29,7 @@ class ModelService {
         return this.currentModel;
     }
     @handle()
-    async chat(conversationId: string, content: string): Promise<string> {
+    async chat(conversationId: string, content: string, event: StreamIpcMainInvokeEvent): Promise<string> {
         const role = "user";
         const userId = '1';
         const model = this.currentModel.model;
@@ -94,12 +95,21 @@ class ModelService {
         messages.push(message as any);
         let data = "";
         const response = this.currentModel.chat(messages);
+        let i = 0;
         for await (const part of response) {
             process.stdout.write('\n')
             process.stdout.write(JSON.stringify(part))
-            this.ipc.send("onMessage", part.message.content)
+            // this.ipc.send("onMessage", part.message.content)
+            event.stream.write(part.message.content);
             data += part.message.content;
+            i++;
+            if (i > 10) {
+                event.stream.error("超时错误")
+                // break;
+            }
         }
+        event.stream.end('done');
+        console.log("会话结束")
         await prisma.message.create({
             data: {
                 conversationId: parseInt(conversationId),

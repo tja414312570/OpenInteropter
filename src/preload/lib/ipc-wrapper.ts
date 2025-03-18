@@ -1,3 +1,4 @@
+import { v4 as uuidv4, v4 } from 'uuid';
 import { contextBridge, IpcRenderer, ipcRenderer, IpcRendererEvent } from "electron";
 
 const invokers: Map<string, Map<string, (event: any, data: any) => void>> = new Map;
@@ -10,17 +11,19 @@ const bindListener = (_id_: string, channel: string, listener: any) => {
 const removeListener = (_id_: string, channel: string) => {
   const _child = invokers.get(_id_);
   if (_child) {
-    _child.delete(channel)
+    _child.delete(channel);
     if (_child.size === 0) {
       invokers.delete(_id_);
+      ipcRenderer.send('ipc-core.remove-id-listener', { id: _id_ }); // 清理无用的 ID
     }
   }
-}
+};
 interface IpcRendererExtended extends IpcRenderer {
   _id_?: string | undefined;
   _setId_: (call: string | Function) => void;
   off: (channel: string, listener?: any) => this;
   offAll: () => void;
+  request: <T>(channel: string, ...args: any[]) => AsyncIterableIterator<T>;
 }
 
 class IpcReanderMapper implements IpcRendererExtended {
@@ -28,6 +31,84 @@ class IpcReanderMapper implements IpcRendererExtended {
   _id_: string | undefined;
   constructor(namespace: string) {
     this.namespace = namespace;
+  }
+  async *request<T>(channel: string, ...args: any[]): AsyncIterableIterator<T> {
+    console.log("发送request请求:", channel, args)
+    // async function* stream() {
+    console.log("发送request stream请求:", channel, args)
+    const request_id = v4();
+    let cancel = false;
+    const dataQueue: T[] = [];
+    let resolveQueue: (value: T) => void;
+    let queuePromise = new Promise<T>(resolve => {
+      resolveQueue = resolve;
+    });
+    const resetQueue = (data: any) => {
+      resolveQueue(data);
+      // 重置 promise 以便等待下一个数据
+      queuePromise = new Promise<T>(resolve => {
+        resolveQueue = resolve;
+      });
+    }
+    const dataListener = (_event: Electron.IpcRendererEvent, data: T) => {
+      console.log("stream data:", data)
+      if (cancel) return;
+      dataQueue.push(data);
+      // 通知生成器有新数据到来
+      resetQueue(data)
+    };
+    const removeListener = () => {
+      ipcRenderer.send('close-stream-' + request_id)
+      ipcRenderer.removeAllListeners('stream-data-' + request_id)
+      ipcRenderer.removeAllListeners('error-data-' + request_id)
+      ipcRenderer.removeAllListeners('end-data-' + request_id)
+    }
+    ipcRenderer.on('stream-data-' + request_id, dataListener);
+    let error = null;
+    // 监听取消事件
+    ipcRenderer.once('error-stream-' + request_id, (_event: Electron.IpcRendererEvent, data: string) => {
+      cancel = true;
+      console.log('Stream error');
+      error = data;
+      removeListener();
+      resolveQueue(Promise.reject(new Error(data)) as unknown as T);
+    });
+    ipcRenderer.once('end-stream-' + request_id, (_event: Electron.IpcRendererEvent, data: any) => {
+      cancel = true;
+      console.log('Stream end');
+      resetQueue(data)
+    });
+
+    // 向主进程请求数据流
+    try {
+      console.log("发送request invoke请求:", channel, args)
+      this.invoke(channel, ...args, { type: 'stream', id: request_id });
+    } catch (error) {
+      throw error;
+    }
+    // finally {
+    //   ipcRenderer.removeListener('stream-data', dataListener);
+    // }
+    console.log("开始释放队列")
+    // 当流未被取消时，不断产出数据
+    while (!cancel || dataQueue.length) {
+      console.log("流状态:", cancel, dataQueue.length);
+      if (cancel && dataQueue.length === 0) {
+        removeListener();
+        if (error) {
+          throw new Error(error);
+        }
+        console.log(`流已终止，错误内容:${error}`);
+        return; // 生成器结束
+      }
+      if (dataQueue.length === 0) {
+        await queuePromise;
+      }
+      while (dataQueue.length) {
+        yield dataQueue.shift() as T;
+      }
+    }
+
   }
   _setId_(call: string | Function) {
     if (typeof call === 'function')
@@ -134,7 +215,7 @@ class IpcReanderMapper implements IpcRendererExtended {
   }
   sendToHost(channel: string, ...args: any[]): void {
     channel = `${this.namespace}.${channel}`;
-    ipcRenderer.sendToHost(channel);
+    ipcRenderer.sendToHost(channel, ...args);
   }
   setMaxListeners(n: number): this {
     ipcRenderer.setMaxListeners(n);
@@ -185,6 +266,7 @@ export const exposeInMainWorld = (namespace: string, api?: (ipcRenderer: IpcRean
     on: ipcRenderMapper.on.bind(ipcRenderMapper),
     send: ipcRenderMapper.send.bind(ipcRenderMapper),
     invoke: ipcRenderMapper.invoke.bind(ipcRenderMapper),
+    request: ipcRenderMapper.request.bind(ipcRenderMapper),
     ...newApi
   }
   contextBridge.exposeInMainWorld(namespace, wrrpperApi);

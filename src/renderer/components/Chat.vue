@@ -41,6 +41,7 @@ import { getIpcApi } from '@preload/lib/ipc-api';
 
 
 let chatViewApi = getIpcApi("chat-view", onUnmounted);
+
 (async () => {
     const list = await chatViewApi.invoke("list")
     console.log("模型列表:", list)
@@ -78,8 +79,16 @@ function sendMessage(): void {
     messages.value.push({
         content: inputMessage.value,
         attachment: attachment.value,
-    })
-    chatViewApi.invoke('chat', null, inputMessage.value)
+    });
+    (async () => {
+        const res = chatViewApi.request('chat', null, inputMessage.value)
+        let data = ""
+        for await (const part of res) {
+            console.log("得到数据:", part)
+            data += part;
+        }
+        console.log("数据响应完成：", data)
+    })()
     inputMessage.value = ''
     attachment.value = null
     // TODO: 若需要将消息发送到后端处理，可在此处添加 API 调用
