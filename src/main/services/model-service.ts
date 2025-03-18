@@ -4,8 +4,8 @@ import { PrismaClient, Message, Conversation } from '../prisma/generated/client'
 import { ModelProvider } from "@main/model-provider/ModelType";
 import { getIpcApi, IpcApi } from "@main/ipc/ipc-wrapper";
 import { OllamaModel } from "@main/model-provider/ollama";
-const prisma = new PrismaClient();
-prisma.$connect()
+import dbManager from "./db-manager";
+const prisma = dbManager.getClient();
 @BindIpc("chat-view")
 class ModelService {
     private currentModel: ModelProvider;

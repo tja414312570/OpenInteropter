@@ -1,32 +1,16 @@
 import { PrismaClient, History } from '../prisma/generated/client';
 import path from 'path';
-import fs from 'fs';
-import appContext from './app-context';
-const databasePath = path.join(appContext.appPath, './History.db');
+import dbManager from './db-manager';
+
 class HistoryService {
     private prisma: PrismaClient;
     private _isInitialized = false;
 
     constructor() {
-        process.env.DATABASE_URL = `file:${databasePath}`;
-        this.prisma = new PrismaClient();
+        this.prisma = dbManager.getClient();
     }
-    // 初始化（对于 Prisma 不需要显式同步数据库）
-    private initDatabase = async (): Promise<void> => {
-        if (!this._isInitialized) {
-            if (!fs.existsSync(databasePath)) {
-                const fsPath = path.join(__dirname, '../', 'prisma', 'History.db');
-                fs.copyFileSync(fsPath, databasePath);
-                console.log(`File copied from ${fsPath} to ${databasePath}`);
-            }
-            await this.prisma.$connect();
-            this._isInitialized = true;
-        }
-    };
-
     // 保存历史记录
     saveHistory = async (url: string, title: string): Promise<void> => {
-        await this.initDatabase();
         await this.prisma.history.create({
             data: {
                 url,
@@ -46,7 +30,6 @@ class HistoryService {
         pageSize: number;
         data: History[];
     }> => {
-        await this.initDatabase();
         const offset = (page - 1) * pageSize;
         const [data, total] = await Promise.all([
             this.prisma.history.findMany({
@@ -67,7 +50,6 @@ class HistoryService {
 
     // 删除指定的历史记录
     deleteHistory = async (ids: number[]): Promise<number> => {
-        await this.initDatabase();
         const { count } = await this.prisma.history.deleteMany({
             where: { id: { in: ids } },
         });
@@ -76,7 +58,6 @@ class HistoryService {
 
     // 删除所有历史记录
     deleteAllHistory = async (): Promise<number> => {
-        await this.initDatabase();
         const { count } = await this.prisma.history.deleteMany({});
         return count;
     };

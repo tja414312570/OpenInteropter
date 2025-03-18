@@ -75,10 +75,10 @@ chatViewApi.on('onMessage', (event, message) => {
 // 发送消息：将消息和附件加入消息列表，并重置输入框和附件
 function sendMessage(): void {
     if (!inputMessage.value.trim() && !attachment.value) return
-    // messages.value.push({
-    //     content: inputMessage.value,
-    //     attachment: attachment.value,
-    // })
+    messages.value.push({
+        content: inputMessage.value,
+        attachment: attachment.value,
+    })
     chatViewApi.invoke('chat', null, inputMessage.value)
     inputMessage.value = ''
     attachment.value = null

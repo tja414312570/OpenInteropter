@@ -1,10 +1,11 @@
-import ollama, { AbortableAsyncIterator } from 'ollama'
+import { AbortableAsyncIterator, Ollama } from 'ollama'
 import { ChatResponse, ModelProvider, Message as Msg } from './ModelType';
 import { Message } from '@main/prisma/generated/client';
 const ModelType = {
     chat: "chat",
     embding: "embding"
 }
+const ollama = new Ollama({ host: 'http://192.168.3.200:11434' })
 export class OllamaModel implements ModelProvider {
     name: "ollama";
     type = ModelType.chat;
