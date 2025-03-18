@@ -103,10 +103,6 @@ class ModelService {
             event.stream.write(part.message.content);
             data += part.message.content;
             i++;
-            if (i > 10) {
-                event.stream.error("超时错误")
-                // break;
-            }
         }
         event.stream.end('done');
         console.log("会话结束")
