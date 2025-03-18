@@ -33,9 +33,7 @@ class IpcReanderMapper implements IpcRendererExtended {
     this.namespace = namespace;
   }
   async *request<T>(channel: string, ...args: any[]): AsyncIterableIterator<T> {
-    console.log("发送request请求:", channel, args)
     // async function* stream() {
-    console.log("发送request stream请求:", channel, args)
     const request_id = v4();
     let cancel = false;
     const dataQueue: T[] = [];
@@ -51,7 +49,6 @@ class IpcReanderMapper implements IpcRendererExtended {
       });
     }
     const dataListener = (_event: Electron.IpcRendererEvent, data: T) => {
-      console.log("stream data:", data)
       if (cancel) return;
       dataQueue.push(data);
       // 通知生成器有新数据到来
@@ -68,20 +65,17 @@ class IpcReanderMapper implements IpcRendererExtended {
     // 监听取消事件
     ipcRenderer.once('error-stream-' + request_id, (_event: Electron.IpcRendererEvent, data: string) => {
       cancel = true;
-      console.log('Stream error');
       error = data;
       removeListener();
       resolveQueue(Promise.reject(new Error(data)) as unknown as T);
     });
     ipcRenderer.once('end-stream-' + request_id, (_event: Electron.IpcRendererEvent, data: any) => {
       cancel = true;
-      console.log('Stream end');
       resetQueue(data)
     });
 
     // 向主进程请求数据流
     try {
-      console.log("发送request invoke请求:", channel, args)
       this.invoke(channel, ...args, { type: 'stream', id: request_id });
     } catch (error) {
       throw error;
@@ -89,10 +83,8 @@ class IpcReanderMapper implements IpcRendererExtended {
     // finally {
     //   ipcRenderer.removeListener('stream-data', dataListener);
     // }
-    console.log("开始释放队列")
     // 当流未被取消时，不断产出数据
     while (!cancel || dataQueue.length) {
-      console.log("流状态:", cancel, dataQueue.length);
       if (cancel && dataQueue.length === 0) {
         removeListener();
         if (error) {

@@ -39,23 +39,19 @@ function wrapperEvent(ipc: IpcApi, event: IpcMainInvokeEvent, stream: {
             if (streamEvent.stream.closed) {
                 return;
             }
-            console.log("写入流" + stream.id)
             event.sender.send('stream-data-' + stream.id, arg);
         },
         end: (arg) => {
             if (streamEvent.stream.closed) {
                 return;
             }
-            console.log("结束流" + stream.id)
             event.sender.send('end-stream-' + stream.id, arg);
         }, error: (arg) => {
             if (streamEvent.stream.closed) {
                 return;
             }
-            console.log("流错误" + stream.id)
             event.sender.send('error-stream-' + stream.id, arg);
         }, onCancel(listener: (event: IpcMainEvent, ...args: any[]) => void) {
-            console.log("客户端主动结束流" + stream.id)
             ipcMain.on('cancel-stream-' + stream.id, (event: IpcMainEvent, ...args: any[]) => {
                 removeAllListener()
                 listener(event, ...args);
@@ -65,7 +61,6 @@ function wrapperEvent(ipc: IpcApi, event: IpcMainInvokeEvent, stream: {
         },
     }
     ipcMain.on('close-stream-' + stream.id, () => {
-        console.log("客户端结束流" + stream.id)
         streamEvent.stream.closed = true;
         removeAllListener()
     })
