@@ -1,7 +1,7 @@
 <template>
     <v-container fluid>
         <!-- 聊天记录列表 -->
-        <v-list class="chat-list" two-line>
+        <v-list class="chat-list" ref="chatList" two-line>
             <v-list-item v-for="(msg, index) in messages" :key="index">
                 <v-card class="mb-2" outlined>
                     <!-- 消息内容：利用 v-html 渲染 markdown 转换后的 HTML -->
@@ -35,20 +35,42 @@
 </template>
 
 <script lang="ts" setup>
-import { onUnmounted, ref } from 'vue'
+import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import MarkdownIt from 'markdown-it'
+import 'highlight.js/styles/github.css';
+import hljs from 'highlight.js'
 import { getIpcApi } from '@preload/lib/ipc-api';
-
+import { VList } from 'vuetify/lib/components/index.mjs';
+const chatList = ref<VList | null>(null);
 
 let chatViewApi = getIpcApi("chat-view", onUnmounted);
+const messages = ref<ChatMessage[]>([])
+watch(messages, async () => {
+    await nextTick();
+    if (chatList.value) {
+        chatList.value.$el.scrollTop = chatList.value.$el.scrollHeight;
+    }
+}, {
+    deep: true
+});
 
-(async () => {
-    const list = await chatViewApi.invoke("list")
-    console.log("模型列表:", list)
-})()
+onMounted(async () => {
+    await nextTick();
+    if (chatList.value) {
+        chatList.value.$el.scrollTop = chatList.value.$el.scrollHeight;
+    }
+
+    // 获取对话模型列表
+    const list = await chatViewApi.invoke("list");
+    console.log("模型列表:", list);
+});
+
+let conversationId = null;
 // 定义消息和工具的数据类型
 interface ChatMessage {
     content: string
+    id?: string
+    role: string
     attachment?: File | { name: string } | null
 }
 
@@ -58,7 +80,7 @@ interface Tool {
 }
 
 // 定义响应式变量
-const messages = ref<ChatMessage[]>([])
+
 const inputMessage = ref<string>('')
 const attachment = ref<File | null>(null)
 const tools = ref<Tool[]>([
@@ -69,38 +91,69 @@ const tools = ref<Tool[]>([
 // 初始化 markdown-it 实例，允许 HTML 标签
 const md = new MarkdownIt({
     html: true,
+    highlight: function (str, lang) {
+        if (lang && hljs.getLanguage(lang)) {
+            try {
+                return `<pre class="hljs"><code>${hljs.highlight(str, { language: lang }).value}</code></pre>`
+            } catch (__) { }
+        }
+        return `<pre class="hljs"><code>${md.utils.escapeHtml(str)}</code></pre>`
+    }
 })
-chatViewApi.on('onMessage', (event, message) => {
-    console.log("搜到响应:", event, message)
-})
+const updateMessage = (message: ChatMessage) => {
+    console.log("更新消息:", message)
+    if (message.id) {
+        const oldMsg = messages.value.filter(item => item.id === message.id).at(0);
+        if (oldMsg) {
+            oldMsg.content += message.content;
+            return;
+        }
+    }
+    messages.value.push(message);
+}
 // 发送消息：将消息和附件加入消息列表，并重置输入框和附件
 function sendMessage(): void {
     if (!inputMessage.value.trim() && !attachment.value) return
     messages.value.push({
+        role: 'user',
         content: inputMessage.value,
         attachment: attachment.value,
     });
     (async () => {
-        const res = chatViewApi.request('chat', null, inputMessage.value)
+        const msg = { conversationId, content: inputMessage.value, tool: [], attachment: [] }
+        const res = chatViewApi.request('chat', msg)
         let data = ""
+        inputMessage.value = ''
+        attachment.value = null
         for await (const part of res) {
             console.log("得到数据:", part)
-            data += part;
+            const par = (part as any);
+            conversationId = par.conversationId
+            updateMessage({
+                id: par.id,
+                content: par.message.content,
+                role: par.message.role
+            })
+            data += par.message.content;
         }
         console.log("数据响应完成：", data)
     })()
-    inputMessage.value = ''
-    attachment.value = null
+
     // TODO: 若需要将消息发送到后端处理，可在此处添加 API 调用
 }
 
 // 渲染 Markdown，同时替换特殊标记 (open:xxx) 为可点击的元素
 function renderMarkdown(content: string): string {
+    content = content.replace(/<think>/g, '[[THINK_START]]')
+        .replace(/<\/think>/g, '[[THINK_END]]')
     let rendered = md.render(content)
     rendered = rendered.replace(
         /\(open:([^)]+)\)/g,
         '<span class="open-link" data-open="$1" style="color: blue; cursor: pointer;">$1</span>'
     )
+    rendered = rendered.replace(/<p>\[\[THINK_START\]\]/g, '<span class="think" style="color: gray; font-style: italic;"><p>')
+        .replace(/\[\[THINK_END\]\]<\/p>/g, '</p></span>')
+    console.log("匹配后:", rendered)
     return rendered
 }
 
@@ -164,6 +217,11 @@ function selectTool(tool: Tool): void {
 
 :deep(.v-input .v-input__details) {
     display: none;
+}
+
+.think {
+    color: gray;
+    font-style: italic;
 }
 
 :deep(.v-btn--icon.v-btn--density-default) {

@@ -12,7 +12,7 @@ datasource db {
 }
 
 model History {
-  id           Int      @id @default(autoincrement())
+  id           String      @id 
   url          String
   title        String?
   time DateTime @default(now())
@@ -20,18 +20,18 @@ model History {
 
 
 model Conversation {
-  id                     Int        @id @default(autoincrement())  // 会话ID
+  id                     String     @id   // 会话ID
   userId                 String     // 用户标识
   model                  String     // 使用的模型（例如 "deepseek-r1:latest"）
   startedAt              DateTime   @default(now()) // 会话开始时间
   endedAt                DateTime?  // 会话结束时间，可能为空
-  
+  title                  String     //会话标题
   messages               Message[]  // 关联到该会话的所有消息
 }
 
 model Message {
-  id            Int       @id @default(autoincrement())  // 消息ID
-  conversationId Int       // 外键，关联到Conversation
+  id            String       @id  // 消息ID
+  conversationId String       // 外键，关联到Conversation
   role          String    // 角色（例如 "assistant"）
   content       String    // 消息内容
   createdAt     DateTime  @default(now()) // 消息创建时间戳

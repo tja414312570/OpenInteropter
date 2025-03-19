@@ -1,27 +1,45 @@
 import { AbortableAsyncIterator, Ollama } from 'ollama'
 import { ChatResponse, ModelProvider, Message as Msg } from './ModelType';
 import { Message } from '@main/prisma/generated/client';
+
 const ModelType = {
     chat: "chat",
     embding: "embding"
-}
-const ollama = new Ollama({ host: 'http://192.168.3.200:11434' })
+};
+
+const ollama = new Ollama({ host: 'http://192.168.3.200:11434' });
+
 export class OllamaModel implements ModelProvider {
     name: "ollama";
     type = ModelType.chat;
-    model = 'deepseek-r1:latest'
+    model = 'deepseek-r1:latest';
     private response: AbortableAsyncIterator<ChatResponse>;
-    // 修改后的 chat 方法，返回 AsyncIterator 类型
-    async *chat(messages?: Message[]): AsyncIterableIterator<ChatResponse> {
-        console.log(messages);
-        // 调用 Ollama API 获取响应
+
+    // chat 方法的重载
+    async chat(message: { messages: Msg[], stream: true }): Promise<AsyncIterableIterator<ChatResponse>>;
+    async chat(message: { messages: Msg[], stream: false }): Promise<ChatResponse>;
+
+    // 实现方法
+    async chat(message: { messages: Msg[], stream: boolean }): Promise<ChatResponse | AsyncIterableIterator<ChatResponse>> {
+        console.log(message);
+
+        if (!message.stream) {
+            return await ollama.chat({
+                model: this.model,
+                messages: message.messages,
+            });
+        }
+
+        return this.chatStream(message);
+    }
+
+    private async *chatStream(message: { messages: Msg[], stream: boolean }): AsyncIterableIterator<ChatResponse> {
         this.response = await ollama.chat({
             model: this.model,
-            messages,
-            stream: true
+            messages: message.messages,
+            stream: true,
         });
 
-        // 逐步返回数据
         for await (const part of this.response) {
             yield {
                 model: part.model,
@@ -31,6 +49,7 @@ export class OllamaModel implements ModelProvider {
             };
         }
     }
+
     abort() {
         this.response.abort();
     }

@@ -21,5 +21,6 @@ export interface ChatResponse {
 export interface ModelProvider {
     name: string
     model: string
-    chat(messages?: Message[]): AsyncIterableIterator<ChatResponse>
+    chat(message: { messages: Message[], stream: true }): Promise<AsyncIterableIterator<ChatResponse>>
+    chat(message: { messages: Message[], stream?: false }): Promise<ChatResponse>
 }

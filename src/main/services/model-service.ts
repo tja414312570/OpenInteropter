@@ -1,11 +1,10 @@
 
-import { BindIpc, handle, on } from "@main/ipc/ipc-decorator";
-import { PrismaClient, Message, Conversation } from '../prisma/generated/client';
-import { ModelProvider } from "@main/model-provider/ModelType";
+import { BindIpc, handle } from "@main/ipc/ipc-decorator";
+import { Message } from '../prisma/generated/client';
+import { ModelProvider, Message as Msg } from "@main/model-provider/ModelType";
 import { getIpcApi, IpcApi, StreamIpcMainInvokeEvent } from "@main/ipc/ipc-wrapper";
-import { OllamaModel } from "@main/model-provider/ollama";
 import dbManager from "./db-manager";
-import { IpcMainInvokeEvent } from "electron";
+import { v4 } from 'uuid';
 const prisma = dbManager.getClient();
 @BindIpc("chat-view")
 class ModelService {
@@ -28,30 +27,74 @@ class ModelService {
     current(): ModelProvider {
         return this.currentModel;
     }
+    async generalTitle(conversationId: string) {
+        const messages = await prisma.message.findMany({
+            where: {
+                conversationId: {
+                    equals: conversationId
+                }
+            }
+        })
+        const messagesList = messages.map(item => { return { role: item.role, content: item.content } });
+        let response = await this.currentModel.chat({
+            messages: [{
+                role: "user",
+                content: `我希望你充当会话标题生成器。当我提供一段文本时，请根据该文本生成一个简洁、准确且吸引人的标题，标题长度不超过 15 个字。
+                    请注意该文本的作用是作为和llm对话的用户的第一个文本。
+                    如果你认为上下文不够，可以返回固定输出:Unknow，我将稍后提供更多的上下文。
+                    请确保标题能够准确反映文本的主题和核心内容。提供的文本：\n${JSON.stringify(messagesList)}`,
+            }]
+        });
+        const title = response.message.content.replace(/<think>[\s\S]*?<\/think>/g, '').trim()
+        if (title !== 'unknow') {
+            console.log("更新标题:" + title)
+            prisma.conversation.update({
+                data: {
+                    title: title
+                },
+                where: {
+                    id: conversationId
+                }
+            })
+        }
+
+    }
     @handle()
-    async chat(conversationId: string, content: string, event: StreamIpcMainInvokeEvent): Promise<string> {
+    async chat(msg: { conversationId: string, content: string, tool: string[], attachment: string[] }, event: StreamIpcMainInvokeEvent): Promise<string> {
         const role = "user";
         const userId = '1';
         const model = this.currentModel.model;
+        let conversationId = msg.conversationId;
         if (!conversationId) {
+            conversationId = v4();
             console.log(process.env.DATABASE_URL);
             const conversation = await prisma.conversation.create({
                 data: {
+                    title: "Unknow",
+                    id: conversationId,
                     userId,
                     model,
                     startedAt: new Date(),
                 },
             });
-            conversationId = conversation.id + "";
+        }
+        const conversation = await prisma.conversation.findFirst({
+            where: {
+                id: conversationId
+            }
+        });
+        if (conversation && conversation.title === 'Unknow') {
+            this.generalTitle(conversationId);
         }
         let messages = await prisma.message.findMany({
-            where: { conversationId: { equals: parseInt(conversationId) } },
+            where: { conversationId: { equals: conversationId } },
         })
         console.log("是否新的会话:" + (messages.length === 0))
         if (messages.length === 0) {
-            const tip = {
-                conversationId: parseInt(conversationId),
-                role: 'user',
+            const tip: Message = {
+                id: v4(),
+                conversationId: conversationId,
+                role: 'system',
                 done: true,
                 totalDuration: 10,
                 createdAt: new Date(),
@@ -74,41 +117,44 @@ class ModelService {
                 ### 不要一次性写多个不确定和假设性代码，对于实际不能解决的，可以告知用户不能执行操作
                 ### 如果用户提供的需求不明确，或则没有需求，你不要主动猜测用户的需求，要主动询问用户的需求是什么
             `} as Message; // 用户上传的文件：["1.csv","2.csv","3.csv"]  ### llm:开头的是框架层反馈，user：开头的是用户信息。
-
             messages.push(tip)
             await prisma.message.create({
                 data: tip
             })
         }
         // 向会话中添加消息
-        const message = {
-            conversationId: parseInt(conversationId),
+
+        const message: Message = {
+            conversationId: conversationId,
             role,
+            id: v4(),
             done: true,
             totalDuration: 10,
-            content,
+            content: msg.content,
+            doneReason: "user input",
             createdAt: new Date(),
         };
         await prisma.message.create({
             data: message,
         });
-        messages.push(message as any);
+        messages.push(message);
         let data = "";
-        const response = this.currentModel.chat(messages);
-        let i = 0;
+        const response = await this.currentModel.chat({ stream: true, messages });
+        const messageId = v4();
         for await (const part of response) {
             process.stdout.write('\n')
-            process.stdout.write(JSON.stringify(part))
-            // this.ipc.send("onMessage", part.message.content)
-            event.stream.write(part.message.content);
+            process.stdout.write(JSON.stringify(part));
+            (part as any).id = messageId;
+            (part as any).conversationId = conversationId
+            event.stream.write(part);
             data += part.message.content;
-            i++;
         }
         event.stream.end('done');
         console.log("会话结束")
         await prisma.message.create({
             data: {
-                conversationId: parseInt(conversationId),
+                id: messageId,
+                conversationId: conversationId,
                 role: 'assistant',
                 content: data,
                 done: true,
