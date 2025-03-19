@@ -39,6 +39,7 @@ model Message {
   done                   Boolean    // 会话是否完成
   doneReason             String?    // 会话完成的原因（例如 "stop"）
   totalDuration          Int        // 会话的总持续时间（单位：微秒）
+  model                  String?     // 使用的模型（例如 "deepseek-r1:latest"）
   // loadDuration           Int        // 加载时长（单位：微秒）
   // promptEvalCount        Int        // 提示评估次数
   // promptEvalDuration     Int        // 提示评估总时长（单位：微秒）

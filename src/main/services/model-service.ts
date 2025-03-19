@@ -126,6 +126,7 @@ class ModelService {
 
         const message: Message = {
             conversationId: conversationId,
+            model,
             role,
             id: v4(),
             done: true,
@@ -141,6 +142,8 @@ class ModelService {
         let data = "";
         const response = await this.currentModel.chat({ stream: true, messages });
         const messageId = v4();
+        let doneReason = "";
+        let model_ = "";
         for await (const part of response) {
             process.stdout.write('\n')
             process.stdout.write(JSON.stringify(part));
@@ -148,6 +151,8 @@ class ModelService {
             (part as any).conversationId = conversationId
             event.stream.write(part);
             data += part.message.content;
+            doneReason = part.done_reason;
+            model_ = part.model;
         }
         event.stream.end('done');
         console.log("会话结束")
@@ -158,6 +163,7 @@ class ModelService {
                 role: 'assistant',
                 content: data,
                 done: true,
+                model: model_,
                 totalDuration: 100,
                 createdAt: new Date(),
             },
