@@ -70,6 +70,7 @@ let conversationId = null;
 interface ChatMessage {
     content: string
     id?: string
+    conversationId: string
     role: string
     attachment?: File | { name: string } | null
 }
@@ -115,21 +116,24 @@ const updateMessage = (message: ChatMessage) => {
 function sendMessage(): void {
     if (!inputMessage.value.trim() && !attachment.value) return
     messages.value.push({
+        conversationId: conversationId,
         role: 'user',
         content: inputMessage.value,
         attachment: attachment.value,
     });
+    console.log(messages);
     (async () => {
-        const msg = { conversationId, content: inputMessage.value, tool: [], attachment: [] }
+        const msg = { conversationId, id: null, content: inputMessage.value, tool: [], attachment: [] }
         const res = chatViewApi.request('chat', msg)
         let data = ""
         inputMessage.value = ''
         attachment.value = null
         for await (const part of res) {
-            console.log("得到数据:", part)
+            // console.log("得到数据:", part)
             const par = (part as any);
             conversationId = par.conversationId
             updateMessage({
+                conversationId,
                 id: par.id,
                 content: par.message.content,
                 role: par.message.role

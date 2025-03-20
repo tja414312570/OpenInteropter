@@ -41,21 +41,22 @@ class ModelService {
                 role: "user",
                 content: `我希望你充当会话标题生成器。当我提供一段文本时，请根据该文本生成一个简洁、准确且吸引人的标题，标题长度不超过 15 个字。
                     请注意该文本的作用是作为和llm对话的用户的第一个文本。
-                    如果你认为上下文不够，可以返回固定输出:Unknow，我将稍后提供更多的上下文。
+                    如果你认为上下文不够，可以返回固定输出:Unknow。
                     请确保标题能够准确反映文本的主题和核心内容。提供的文本：\n${JSON.stringify(messagesList)}`,
             }]
         });
         const title = response.message.content.replace(/<think>[\s\S]*?<\/think>/g, '').trim()
         if (title !== 'unknow') {
-            console.log("更新标题:" + title)
-            prisma.conversation.update({
-                data: {
-                    title: title
-                },
-                where: {
-                    id: conversationId
-                }
-            })
+            console.log("更新标题:" + title, conversationId)
+            try {
+                const updatedConversation = await prisma.conversation.update({
+                    where: { id: conversationId },
+                    data: { title: title },
+                });
+                console.log('更新成功:', updatedConversation);
+            } catch (error) {
+                console.error('更新失败:', error);
+            }
         }
 
     }
