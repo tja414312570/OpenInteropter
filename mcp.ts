@@ -1,14 +1,15 @@
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
+// import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+// import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-
+import McpManagerServer from './src/main/services/mcp-service'
+import { MemoryMcp } from './src/main/mcp/mcp-in-memory'
 // Create an MCP server
-const server = new McpServer({
+const mcpServer = new MemoryMcp({
     name: "Demo",
     version: "1.0.0"
 });
-
+const server = mcpServer.getServer();
 // Add an addition tool
 server.tool("add",
     { a: z.number(), b: z.number() },
@@ -53,23 +54,11 @@ server.prompt(
     })
 );
 (async () => {
-    let clientTransport: InMemoryTransport;
-    let serverTransport: InMemoryTransport;
-    [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-
-    // Start receiving messages on stdin and sending messages on stdout
-    await server.connect(serverTransport);
-    const client = new Client(
-        {
-            name: "example-client",
-            version: "1.0.0"
-        }
-    );
-    await client.connect(clientTransport);
-
+    const client = mcpServer;
+    mcpServer.connect()
     // List prompts
-    // const prompts = await client.listPrompts();
-    // console.log(JSON.stringify(prompts))
+    const prompts = await client.listPrompts();
+    console.log(JSON.stringify(prompts))
     // Get a prompt
     // List resources
     const resources = await client.listResources();
@@ -77,8 +66,8 @@ server.prompt(
     const resourcesT = await client.listResourceTemplates();
     console.log(JSON.stringify(resourcesT))
     // Read a resource
-    // const tools = await client.listTools();
-    // console.log(JSON.stringify(tools))
+    const tools = await client.listTools();
+    console.log(JSON.stringify(tools))
     // Call a tool
     const result = await client.callTool({
         name: "add",
