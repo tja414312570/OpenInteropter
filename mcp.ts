@@ -1,6 +1,6 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 
 // Create an MCP server
@@ -19,12 +19,22 @@ server.tool("add",
 
 // Add a dynamic greeting resource
 server.resource(
-    "greeting",
-    new ResourceTemplate("greeting://{name}", { list: undefined }),
-    async (uri, { name }) => ({
+    "echo",
+    new ResourceTemplate("echo://{message}", { list: undefined }),
+    async (uri, { message }) => ({
         contents: [{
             uri: uri.href,
-            text: `Hello, ${name}!`
+            text: `Resource echo: ${message}`
+        }]
+    })
+);
+server.resource(
+    "echo2",
+    new ResourceTemplate("echo://{message}", { list: undefined }),
+    async (uri, { message }) => ({
+        contents: [{
+            uri: uri.href,
+            text: `Resource echo: ${message}`
         }]
     })
 );
@@ -43,7 +53,44 @@ server.prompt(
     })
 );
 (async () => {
+    let clientTransport: InMemoryTransport;
+    let serverTransport: InMemoryTransport;
+    [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+
     // Start receiving messages on stdin and sending messages on stdout
-    const transport = new StdioServerTransport();
-    await server.connect(transport);
+    await server.connect(serverTransport);
+    const client = new Client(
+        {
+            name: "example-client",
+            version: "1.0.0"
+        }
+    );
+    await client.connect(clientTransport);
+
+    // List prompts
+    // const prompts = await client.listPrompts();
+    // console.log(JSON.stringify(prompts))
+    // Get a prompt
+    // List resources
+    const resources = await client.listResources();
+    console.log(JSON.stringify(resources))
+    const resourcesT = await client.listResourceTemplates();
+    console.log(JSON.stringify(resourcesT))
+    // Read a resource
+    // const tools = await client.listTools();
+    // console.log(JSON.stringify(tools))
+    // Call a tool
+    const result = await client.callTool({
+        name: "add",
+        arguments: {
+            a: 1,
+            b: 2
+        }
+    });
+    console.log("计算结果:", result)
+    const resource = await client.readResource({
+        name: "echo",
+        uri: "echo://test"
+    });
+    console.log("资源结果:", resource)
 })()
